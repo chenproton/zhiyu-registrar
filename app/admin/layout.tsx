@@ -1,4 +1,4 @@
-import { PlatformShell } from "@/platform-navigation-shell"
+import { PlatformShell } from "@/components/platform-shell"
 import { registrarNavigationConfig } from "@/lib/navigation-config"
 
 export default function AdminLayout({
