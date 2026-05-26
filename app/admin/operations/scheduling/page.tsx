@@ -577,6 +577,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
 function ExportTab({ selectedGrade }: { selectedGrade: string }) {
   const [exportType, setExportType] = useState('class')
   const [selectedDay, setSelectedDay] = useState<string>('all')
+  const [showVersion, setShowVersion] = useState(false)
 
   const gradeData = grades.find((g) => g.id === selectedGrade)
   const gradeClasses = gradeData
@@ -705,6 +706,9 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
                           )}
                         >
                           <div className="font-medium truncate">{task.courseName}</div>
+                          {showVersion && (
+                            <div className="text-[10px] text-blue-600">{task.courseVersion}</div>
+                          )}
                           <div className="text-muted-foreground">{task.facultyName}</div>
                           <div className="text-muted-foreground text-[10px]">
                             {task.venueName}
@@ -787,6 +791,16 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
               {d === 'all' ? '全部' : `周${dayLabels[Number(d) - 1].replace('周', '')}`}
             </Button>
           ))}
+          <div className="flex items-center gap-2 ml-4">
+            <Switch
+              id="show-version"
+              checked={showVersion}
+              onCheckedChange={setShowVersion}
+            />
+            <Label htmlFor="show-version" className="text-sm font-medium cursor-pointer">
+              显示版本号
+            </Label>
+          </div>
         </div>
       </div>
 

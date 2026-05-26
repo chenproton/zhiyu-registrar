@@ -58,6 +58,7 @@ import {
   tasks,
   courseAssignments,
   trainingPrograms,
+  curriculumCoursePool,
   curriculumPracticePool,
   type Task,
 } from '@/lib/mock-data'
@@ -153,6 +154,7 @@ function ScheduleGrid({
                     )}
                   >
                     <div className="font-medium truncate">{task.courseName}</div>
+                    <div className="text-[10px] text-muted-foreground">{task.courseVersion}</div>
                     <div className="text-muted-foreground">{task.facultyName}</div>
                     <div className="text-muted-foreground flex items-center gap-1">
                       <MapPin className="h-3 w-3" />
@@ -475,6 +477,11 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
     []
   )
 
+  const selectedItemVersion = useMemo(() => {
+    const pool = taskType === 'course' ? curriculumCoursePool : curriculumPracticePool
+    return pool.find((p) => p.id === linkedItemId)?.version
+  }, [taskType, linkedItemId])
+
   const classOptions = useMemo(
     () => classes.map((c) => ({ value: c.id, label: c.name })),
     []
@@ -545,6 +552,11 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
               options={taskType === 'course' ? courseOptions : practiceOptions}
               placeholder={`请选择${taskType === 'course' ? '课程' : '实践场景'}`}
             />
+            {selectedItemVersion && (
+              <div className="text-xs text-muted-foreground mt-1">
+                版本号: <span className="font-medium text-foreground">{selectedItemVersion}</span>
+              </div>
+            )}
 
             {/* 参与班级 */}
             <SearchableSelect
@@ -756,6 +768,12 @@ function EditTaskDialog({
               options={taskType === 'course' ? courseOptions : practiceOptions}
               placeholder={`请选择${taskType === 'course' ? '课程' : '实践场景'}`}
             />
+
+            {/* 课程版本号 */}
+            <div className="space-y-2">
+              <Label>课程版本号</Label>
+              <Input value={task.courseVersion || '—'} readOnly className="bg-muted text-muted-foreground" />
+            </div>
 
             {/* 参与班级 */}
             <SearchableSelect
@@ -1126,6 +1144,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
                         <TableHead>任务编码</TableHead>
                         <TableHead>类型</TableHead>
                         <TableHead>课程/实践场景</TableHead>
+                        <TableHead>版本号</TableHead>
                         <TableHead>班级</TableHead>
                         <TableHead>教师</TableHead>
                         <TableHead>时间</TableHead>
@@ -1135,7 +1154,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
                     <TableBody>
                       {currentTasks.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                             暂无任务数据
                           </TableCell>
                         </TableRow>
@@ -1156,6 +1175,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
                               </Badge>
                             </TableCell>
                             <TableCell className="font-medium">{task.courseName}</TableCell>
+                            <TableCell>{task.courseVersion || '—'}</TableCell>
                             <TableCell>{task.className}</TableCell>
                             <TableCell>{task.facultyName}</TableCell>
                             <TableCell className="text-xs text-muted-foreground">

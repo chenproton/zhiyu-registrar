@@ -14,7 +14,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Switch } from '@/components/ui/switch'
+import { cn } from '@/lib/utils'
 import {
   Select,
   SelectContent,
@@ -29,9 +31,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Eye, FileText, Building2, Users, UserPlus } from 'lucide-react'
-import { trainingPrograms as initialPrograms, majors, departments, grades } from '@/lib/mock-data'
-import type { TrainingProgram } from '@/lib/mock-data'
+import { Plus, Pencil, Trash2, Eye, FileText, Building2, Users, UserPlus, Lock } from 'lucide-react'
+import { trainingPrograms as initialPrograms, majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues } from '@/lib/mock-data'
+import type { TrainingProgram, CoursePlan } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
 const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
@@ -54,12 +56,25 @@ const emptyProgram: TrainingProgram = {
   electiveCredits: 0,
   practiceCredits: 0,
   courses: [],
+  practiceScenes: [],
   status: 'draft',
   startDate: '',
   endDate: '',
   creator: '',
   collaborators: [],
   createdAt: '',
+}
+
+function getDefaultCoursesForMajor(majorId: string): CoursePlan[] {
+  // Return a basic set of default courses based on major
+  // For now, use a simple mapping with courses from the pool
+  const commonCourses: CoursePlan[] = [
+    { id: `c-${Date.now()}-1`, name: '程序设计基础', code: 'CS101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0' },
+    { id: `c-${Date.now()}-2`, name: '高等数学', code: 'MATH101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0' },
+    { id: `c-${Date.now()}-3`, name: '线性代数', code: 'MATH102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0' },
+    { id: `c-${Date.now()}-4`, name: '企业认知实习', code: 'PRAC001', credits: 2, hours: 32, semester: 3, nature: '实践', assessment: '报告', version: 'v1.0' },
+  ]
+  return commonCourses
 }
 
 export default function ProgramsPage() {
@@ -103,6 +118,17 @@ export default function ProgramsPage() {
   const openCreate = () => {
     const defaultMajor = deptMajors[0]
     const defaultYear = selectedYear !== 'all' ? Number(selectedYear) : (allYears[0] || 2026)
+
+    // Build version map from pools
+    const versionMap: Record<string, string> = {}
+    curriculumCoursePool.forEach(c => versionMap[c.code] = c.version)
+    curriculumPracticePool.forEach(c => versionMap[c.code] = c.version)
+
+    const defaultCourses = (defaultMajor ? getDefaultCoursesForMajor(defaultMajor.id) : []).map(c => ({
+      ...c,
+      version: versionMap[c.code] || 'v1.0'
+    }))
+
     setEditingProgram({
       ...emptyProgram,
       id: `tp${Date.now()}`,
@@ -110,6 +136,7 @@ export default function ProgramsPage() {
       entryYear: defaultYear,
       creator: '当前用户',
       createdAt: new Date().toISOString().split('T')[0],
+      courses: defaultCourses,
     })
     setCreateOpen(true)
   }
@@ -324,6 +351,12 @@ export default function ProgramsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant={statusMap[tp.status].variant}>{statusMap[tp.status].label}</Badge>
+                      {tp.status === 'published' && tp.frozenAt && (
+                        <Badge variant="outline" className="gap-1">
+                          <Lock className="h-3 w-3" />
+                          版本已固化
+                        </Badge>
+                      )}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(tp)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -339,20 +372,20 @@ export default function ProgramsPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-4 gap-4 text-sm">
                     <div className="space-y-1">
-                      <p className="text-muted-foreground">总学分</p>
+                      <p className="text-muted-foreground">课程总学分</p>
                       <p className="font-medium">{tp.totalCredits}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-muted-foreground">必修学分</p>
+                      <p className="text-muted-foreground">课程必修学分</p>
                       <p className="font-medium">{tp.requiredCredits}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-muted-foreground">选修学分</p>
+                      <p className="text-muted-foreground">课程选修学分</p>
                       <p className="font-medium">{tp.electiveCredits}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-muted-foreground">实践学分</p>
-                      <p className="font-medium">{tp.practiceCredits}</p>
+                      <p className="text-muted-foreground">实践场景学分</p>
+                      <p className="font-medium">{tp.practiceScenes.reduce((s, c) => s + c.credits, 0)}</p>
                     </div>
                   </div>
 
@@ -385,33 +418,88 @@ export default function ProgramsPage() {
                   </div>
 
                   {expandedId === tp.id && (
-                    <div className="border rounded-lg overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>课程编码</TableHead>
-                            <TableHead>课程名称</TableHead>
-                            <TableHead>学分</TableHead>
-                            <TableHead>学时</TableHead>
-                            <TableHead>学期</TableHead>
-                            <TableHead>课程性质</TableHead>
-                            <TableHead>考核方式</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {tp.courses.map((c) => (
-                            <TableRow key={c.id}>
-                              <TableCell>{c.code}</TableCell>
-                              <TableCell>{c.name}</TableCell>
-                              <TableCell>{c.credits}</TableCell>
-                              <TableCell>{c.hours}</TableCell>
-                              <TableCell>第{c.semester}学期</TableCell>
-                              <TableCell><Badge variant="outline">{c.nature}</Badge></TableCell>
-                              <TableCell>{c.assessment}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                    <div className="space-y-4">
+                      <Tabs defaultValue="courses">
+                        <TabsList>
+                          <TabsTrigger value="courses">课程计划</TabsTrigger>
+                          <TabsTrigger value="practice">实践场景</TabsTrigger>
+                          <TabsTrigger value="combined">综合课表</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="courses" className="space-y-4 mt-4">
+                          {/* Existing course table + timetable */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>课程编码</TableHead>
+                                  <TableHead>课程名称</TableHead>
+                                  <TableHead>学分</TableHead>
+                                  <TableHead>学时</TableHead>
+                                  <TableHead>学期</TableHead>
+                                  <TableHead>课程性质</TableHead>
+                                  <TableHead>考核方式</TableHead>
+                                  <TableHead>版本号</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {tp.courses.map((c) => (
+                                  <TableRow key={c.id}>
+                                    <TableCell>{c.code}</TableCell>
+                                    <TableCell>{c.name}</TableCell>
+                                    <TableCell>{c.credits}</TableCell>
+                                    <TableCell>{c.hours}</TableCell>
+                                    <TableCell>第{c.semester}学期</TableCell>
+                                    <TableCell><Badge variant="outline">{c.nature}</Badge></TableCell>
+                                    <TableCell>{c.assessment}</TableCell>
+                                    <TableCell>{c.version}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+
+                        </TabsContent>
+
+                        <TabsContent value="practice" className="space-y-4 mt-4">
+                          {/* Practice scenes table + timetable */}
+                          <div className="border rounded-lg overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>场景编码</TableHead>
+                                  <TableHead>场景名称</TableHead>
+                                  <TableHead>学分</TableHead>
+                                  <TableHead>学时</TableHead>
+                                  <TableHead>学期</TableHead>
+                                  <TableHead>性质</TableHead>
+                                  <TableHead>考核方式</TableHead>
+                                  <TableHead>版本号</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {tp.practiceScenes.map((c) => (
+                                  <TableRow key={c.id}>
+                                    <TableCell>{c.code}</TableCell>
+                                    <TableCell>{c.name}</TableCell>
+                                    <TableCell>{c.credits}</TableCell>
+                                    <TableCell>{c.hours}</TableCell>
+                                    <TableCell>第{c.semester}学期</TableCell>
+                                    <TableCell><Badge variant="outline" className="border-orange-300 text-orange-600">{c.nature}</Badge></TableCell>
+                                    <TableCell>{c.assessment}</TableCell>
+                                    <TableCell>{c.version}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </div>
+
+                        </TabsContent>
+
+                        <TabsContent value="combined" className="space-y-4 mt-4">
+                          <ProgramScheduleView program={tp} />
+                        </TabsContent>
+                      </Tabs>
                     </div>
                   )}
                 </CardContent>
@@ -493,6 +581,241 @@ export default function ProgramsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+function ProgramScheduleView({ program }: { program: TrainingProgram }) {
+  const [exportType, setExportType] = useState<'class' | 'teacher' | 'venue'>('class')
+  const [showVersion, setShowVersion] = useState(false)
+
+  const exportTypes = [
+    { id: 'class', label: '班级课表' },
+    { id: 'teacher', label: '教师课表' },
+    { id: 'venue', label: '场地课表' },
+  ]
+  const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+  const days = [1, 2, 3, 4, 5, 6, 7]
+  const periods = ['1-2节', '3-4节', '5-6节', '7-8节']
+
+  // 找到该培养方案对应的年级和班级
+  const programGrade = grades.find((g) => g.entryYear === program.entryYear)
+  const programClasses = classes.filter((c) => c.gradeId === programGrade?.id)
+  const classIds = programClasses.map((c) => c.id)
+
+  // 筛选相关任务
+  const programTasks = tasks.filter((t) => classIds.includes(t.classId))
+
+  const renderPeriodTable = (
+    items: { id: string; name: string }[],
+    getTasks: (id: string) => typeof programTasks,
+    nameLabel: string
+  ) => (
+    <div className="border rounded-lg overflow-hidden overflow-x-auto">
+      <table className="w-full border-collapse text-sm min-w-[600px]">
+        <thead>
+          <tr className="bg-muted">
+            <th className="border p-3 text-left font-medium w-[140px]">{nameLabel}</th>
+            <th className="border p-3 text-center font-medium w-[72px]">节次</th>
+            {days.map((d) => (
+              <th key={d} className="border p-3 text-center font-medium">
+                {dayLabels[d - 1]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => {
+            const itemTasks = getTasks(item.id)
+            return periods.map((period, idx) => (
+              <tr key={`${item.id}-${period}`} className="border-t">
+                {idx === 0 && (
+                  <td
+                    rowSpan={periods.length}
+                    className="border p-3 font-medium align-middle text-center bg-muted/20"
+                  >
+                    {item.name}
+                  </td>
+                )}
+                <td className="border p-2 text-center text-muted-foreground text-xs bg-muted/10">
+                  {period}
+                </td>
+                {days.map((day) => {
+                  const task = itemTasks.find(
+                    (t) => t.dayOfWeek === day && t.period === period
+                  )
+                  return (
+                    <td key={day} className="border p-2 min-w-[120px] align-top">
+                      {task ? (
+                        <div
+                          className={cn(
+                            'text-xs rounded px-2 py-1 space-y-0.5',
+                            task.type === 'scene'
+                              ? 'bg-orange-50 border border-orange-100'
+                              : 'bg-blue-50 border border-blue-100'
+                          )}
+                        >
+                          <div className="font-medium truncate">{task.courseName}</div>
+                          {showVersion && (
+                            <div className="text-[10px] text-blue-600">{task.courseVersion}</div>
+                          )}
+                          <div className="text-muted-foreground">{task.facultyName}</div>
+                          <div className="text-muted-foreground text-[10px]">
+                            {task.venueName}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground/20 text-xs">-</span>
+                      )}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+
+  // 班级课表
+  const classItems = programClasses.map((c) => ({ id: c.id, name: c.name }))
+  const classTable = renderPeriodTable(
+    classItems,
+    (id) => programTasks.filter((t) => t.classId === id),
+    '班级名称'
+  )
+
+  // 教师课表
+  const teacherIds = Array.from(new Set(programTasks.map((t) => t.facultyId)))
+  const teacherItems = faculty
+    .filter((f) => teacherIds.includes(f.id))
+    .map((f) => ({ id: f.id, name: `${f.name} (${f.title})` }))
+  const teacherTable = renderPeriodTable(
+    teacherItems,
+    (id) => programTasks.filter((t) => t.facultyId === id),
+    '教师名称'
+  )
+
+  // 场地课表
+  const venueIds = Array.from(new Set(programTasks.map((t) => t.venueId)))
+  const venueItems = venues
+    .filter((v) => venueIds.includes(v.id))
+    .map((v) => ({ id: v.id, name: v.name }))
+  const venueTable = renderPeriodTable(
+    venueItems,
+    (id) => programTasks.filter((t) => t.venueId === id),
+    '场地名称'
+  )
+
+  const currentTable =
+    {
+      class: classTable,
+      teacher: teacherTable,
+      venue: venueTable,
+    }[exportType] || classTable
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">课表类型：</span>
+          {exportTypes.map((t) => (
+            <Button
+              key={t.id}
+              size="sm"
+              variant={exportType === t.id ? 'default' : 'outline'}
+              onClick={() => setExportType(t.id as typeof exportType)}
+            >
+              {t.label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id={`show-version-${program.id}`}
+            checked={showVersion}
+            onCheckedChange={setShowVersion}
+          />
+          <Label htmlFor={`show-version-${program.id}`} className="text-sm font-medium cursor-pointer">
+            显示版本号
+          </Label>
+        </div>
+      </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-base">
+            {exportTypes.find((t) => t.id === exportType)?.label}预览
+          </CardTitle>
+        </CardHeader>
+        <CardContent>{currentTable}</CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function ProgramTimetable({
+  courses,
+  title = '课表视图',
+  cardClassName = '',
+  showType = false,
+}: {
+  courses: CoursePlan[]
+  title?: string
+  cardClassName?: string
+  showType?: boolean
+}) {
+  const semesterGroups = useMemo(() => {
+    const groups: Record<number, CoursePlan[]> = {}
+    courses.forEach(c => {
+      if (!groups[c.semester]) groups[c.semester] = []
+      groups[c.semester].push(c)
+    })
+    return groups
+  }, [courses])
+
+  if (courses.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-8 border rounded-lg">
+        暂无课程
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h4 className="text-sm font-medium mb-3">{title}</h4>
+      <div className="space-y-3">
+        {Object.entries(semesterGroups)
+          .sort((a, b) => Number(a[0]) - Number(b[0]))
+          .map(([semester, semCourses]) => (
+            <Card key={semester} className="mb-3">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">第{semester}学期</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {semCourses.map(c => (
+                    <div key={c.id} className={`border rounded-lg p-3 space-y-1 ${cardClassName} ${showType ? (c.code.startsWith('PRAC') ? 'border-orange-200 bg-orange-50' : 'border-blue-200 bg-blue-50') : ''}`}>
+                      <div className="font-medium text-sm">{c.name}</div>
+                      <div className="text-xs text-muted-foreground">{c.code}</div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <Badge variant="outline">{c.nature}</Badge>
+                        <span className="text-muted-foreground">{c.credits}学分</span>
+                      </div>
+                      {showType && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {c.code.startsWith('PRAC') ? '实践场景' : '课程'}
+                        </Badge>
+                      )}
+                      <div className="text-xs text-blue-600">版本: {c.version}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+      </div>
     </div>
   )
 }
