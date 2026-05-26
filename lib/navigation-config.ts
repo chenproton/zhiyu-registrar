@@ -40,6 +40,7 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       children: [
         { id: "departments", label: "院系管理", href: "/admin/organization/departments", matchers: ["/admin/organization/departments"] },
         { id: "majors", label: "专业管理", href: "/admin/organization/majors", matchers: ["/admin/organization/majors"] },
+        { id: "grades", label: "年级/届别管理", href: "/admin/organization/grades", matchers: ["/admin/organization/grades"] },
         { id: "classes", label: "班级管理", href: "/admin/organization/classes", matchers: ["/admin/organization/classes"] },
         { id: "faculty", label: "师资管理", href: "/admin/organization/faculty", matchers: ["/admin/organization/faculty"] },
         { id: "students", label: "学生学籍管理", href: "/admin/organization/students", matchers: ["/admin/organization/students"] },
@@ -47,26 +48,18 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       ],
     },
     {
-      id: "programs",
-      label: "培养方案管理",
-      icon: "bookOpen",
-      children: [
-        { id: "programs-list", label: "方案列表", href: "/admin/programs", matchers: ["/admin/programs$"] },
-        { id: "programs-approval", label: "方案审批", href: "/admin/programs/approval", matchers: ["/admin/programs/approval"] },
-      ],
-    },
-    {
       id: "operations",
       label: "教学运行中心",
       icon: "calendar",
       children: [
-        { id: "calendar", label: "教学日历", href: "/admin/operations/calendar", matchers: ["/admin/operations/calendar"] },
-        { id: "schedule", label: "排课管理", href: "/admin/operations/schedule", matchers: ["/admin/operations/schedule"] },
-        { id: "adjustments", label: "调课管理", href: "/admin/operations/adjustments", matchers: ["/admin/operations/adjustments"] },
-        { id: "progress", label: "教学进度监控", href: "/admin/operations/progress", matchers: ["/admin/operations/progress"] },
-        { id: "evaluation-templates", label: "评价模板", href: "/admin/operations/evaluation/templates", matchers: ["/admin/operations/evaluation/templates"] },
-        { id: "evaluation-activities", label: "评价活动", href: "/admin/operations/evaluation/activities", matchers: ["/admin/operations/evaluation/activities"] },
-        { id: "evaluation-results", label: "评价结果汇总", href: "/admin/operations/evaluation/results", matchers: ["/admin/operations/evaluation/results"] },
+        { id: "programs", label: "培养方案管理", href: "/admin/programs", matchers: ["/admin/programs"] },
+        { id: "scheduling", label: "排课中心", href: "/admin/operations/scheduling", matchers: ["/admin/operations/scheduling"] },
+        { id: "adjustments", label: "任务调度", href: "/admin/operations/adjustments", matchers: ["/admin/operations/adjustments"] },
+        { id: "progress", label: "任务进度看板", href: "/admin/operations/progress", matchers: ["/admin/operations/progress"] },
+        { id: "evaluation-templates", label: "任务评价模板", href: "/admin/operations/evaluation/templates", matchers: ["/admin/operations/evaluation/templates"] },
+        { id: "evaluation-activities", label: "任务评价活动", href: "/admin/operations/evaluation/activities", matchers: ["/admin/operations/evaluation/activities"] },
+        { id: "evaluation-results", label: "任务评价结果", href: "/admin/operations/evaluation/results", matchers: ["/admin/operations/evaluation/results"] },
+        { id: "review", label: "任务复盘", href: "/admin/operations/review", matchers: ["/admin/operations/review"] },
       ],
     },
     {

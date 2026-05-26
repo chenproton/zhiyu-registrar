@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { teachingAchievements, departments } from '@/lib/mock-data'
+import { toast } from 'sonner'
 
 export default function AchievementsApprovalPage() {
   const pending = teachingAchievements.filter((ta) => ta.status === '已提交' || ta.status === '审批中')
@@ -49,8 +50,8 @@ export default function AchievementsApprovalPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="text-green-600"><CheckCircle className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" className="text-red-600"><XCircle className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-green-600" onClick={() => toast.success('审批通过')}><CheckCircle className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" className="text-red-600" onClick={() => toast.error('已驳回')}><XCircle className="h-4 w-4" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>

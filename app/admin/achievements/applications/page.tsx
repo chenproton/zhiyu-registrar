@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { Plus } from 'lucide-react'
 import { teachingAchievements, departments } from '@/lib/mock-data'
+import { toast } from 'sonner'
 
 export default function AchievementsApplicationsPage() {
   return (
@@ -22,7 +23,7 @@ export default function AchievementsApplicationsPage() {
           <h1 className="text-2xl font-bold">成果申报</h1>
           <p className="text-muted-foreground">教师教学成果申报入口</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" />申报成果</Button>
+        <Button onClick={() => toast('申报功能开发中')}><Plus className="h-4 w-4 mr-2" />申报成果</Button>
       </div>
 
       <Card>
@@ -51,7 +52,7 @@ export default function AchievementsApplicationsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">查看</Button>
+                    <Button variant="ghost" size="sm" onClick={() => toast('查看详情')}>查看</Button>
                   </TableCell>
                 </TableRow>
               ))}

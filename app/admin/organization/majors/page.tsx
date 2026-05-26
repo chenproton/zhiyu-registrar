@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -12,13 +14,31 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
 import { Plus, Pencil } from 'lucide-react'
 import { majors, departments } from '@/lib/mock-data'
+import { toast } from 'sonner'
 
 export default function MajorsPage() {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({ department: 'all', level: 'all' })
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [selectedMajor, setSelectedMajor] = useState<typeof majors[0] | null>(null)
 
   const filtered = useMemo(() => {
     return majors.filter((m) => {
@@ -39,7 +59,7 @@ export default function MajorsPage() {
           <h1 className="text-2xl font-bold">专业管理</h1>
           <p className="text-muted-foreground">维护各院系下设专业信息</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" />新建专业</Button>
+        <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建专业</Button>
       </div>
 
       <Card>
@@ -99,7 +119,7 @@ export default function MajorsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setSelectedMajor(m); setEditOpen(true) }}><Pencil className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -114,6 +134,60 @@ export default function MajorsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* 新建专业弹窗 */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>新建专业</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>专业编码</Label><Input placeholder="请输入专业编码" /></div>
+              <div className="space-y-2"><Label>专业名称</Label><Input placeholder="请输入专业名称" /></div>
+            </div>
+            <div className="space-y-2"><Label>所属院系</Label>
+              <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>培养层次</Label>
+                <Select><SelectTrigger><SelectValue placeholder="选择层次" /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+              </div>
+              <div className="space-y-2"><Label>学制（年）</Label><Input type="number" placeholder="如 4" /></div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => { toast.success('新建专业成功'); setCreateOpen(false) }}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑专业弹窗 */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>编辑专业 — {selectedMajor?.name}</DialogTitle></DialogHeader>
+          {selectedMajor && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>专业编码</Label><Input defaultValue={selectedMajor.code} /></div>
+                <div className="space-y-2"><Label>专业名称</Label><Input defaultValue={selectedMajor.name} /></div>
+              </div>
+              <div className="space-y-2"><Label>所属院系</Label>
+                <Select defaultValue={selectedMajor.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>培养层次</Label>
+                  <Select defaultValue={selectedMajor.level}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+                </div>
+                <div className="space-y-2"><Label>学制（年）</Label><Input type="number" defaultValue={selectedMajor.duration} /></div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
+            <Button onClick={() => { toast.success('保存成功'); setEditOpen(false) }}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

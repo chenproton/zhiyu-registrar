@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Send } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function PublicationPage() {
   const records = [
@@ -31,7 +32,7 @@ export default function PublicationPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge variant={r.status === '已发布' ? 'default' : 'outline'}>{r.status}</Badge>
-                  {r.status === '待发布' && <Button size="sm"><Send className="h-4 w-4 mr-1" />发布</Button>}
+                  {r.status === '待发布' && <Button size="sm" onClick={() => toast.success('发布成功')}><Send className="h-4 w-4 mr-1" />发布</Button>}
                 </div>
               </div>
             </CardContent>

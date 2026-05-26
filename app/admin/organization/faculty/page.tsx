@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -12,13 +14,31 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
 import { Plus, Pencil } from 'lucide-react'
 import { faculty, departments } from '@/lib/mock-data'
+import { toast } from 'sonner'
 
 export default function FacultyPage() {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({ department: 'all', status: 'all' })
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
 
   const filtered = useMemo(() => {
     return faculty.filter((f) => {
@@ -39,7 +59,7 @@ export default function FacultyPage() {
           <h1 className="text-2xl font-bold">师资管理</h1>
           <p className="text-muted-foreground">维护教师档案、授课资格与企业导师信息</p>
         </div>
-        <Button><Plus className="h-4 w-4 mr-2" />新建教师</Button>
+        <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
       </div>
 
       <Card>
@@ -82,7 +102,6 @@ export default function FacultyPage() {
                 <TableHead>所属院系</TableHead>
                 <TableHead>职称</TableHead>
                 <TableHead>学历</TableHead>
-                <TableHead>授课资格</TableHead>
                 <TableHead>企业导师</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -98,13 +117,6 @@ export default function FacultyPage() {
                   <TableCell>{f.title}</TableCell>
                   <TableCell>{f.education}</TableCell>
                   <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {f.teachingQualifications.map((q) => (
-                        <Badge key={q} variant="outline" className="text-xs">{q}</Badge>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell>
                     {f.isEnterpriseMentor ? (
                       <Badge variant="default" className="text-xs">是</Badge>
                     ) : (
@@ -115,13 +127,13 @@ export default function FacultyPage() {
                     <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}><Pencil className="h-4 w-4" /></Button>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -130,6 +142,82 @@ export default function FacultyPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* 新建教师弹窗 */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>新建教师</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>工号</Label><Input placeholder="请输入工号" /></div>
+              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>性别</Label>
+                <Select><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+              </div>
+              <div className="space-y-2"><Label>所属院系</Label>
+                <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>职称</Label><Input placeholder="如 副教授" /></div>
+              <div className="space-y-2"><Label>学历</Label><Input placeholder="如 博士" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>企业导师</Label>
+                <Select><SelectTrigger><SelectValue placeholder="是否企业导师" /></SelectTrigger><SelectContent><SelectItem value="true">是</SelectItem><SelectItem value="false">否</SelectItem></SelectContent></Select>
+              </div>
+              <div className="space-y-2"><Label>状态</Label>
+                <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
+            <Button onClick={() => { toast.success('新建教师成功'); setCreateOpen(false) }}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 编辑教师弹窗 */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>编辑教师 — {selectedFaculty?.name}</DialogTitle></DialogHeader>
+          {selectedFaculty && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>工号</Label><Input defaultValue={selectedFaculty.employeeId} /></div>
+                <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedFaculty.name} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>性别</Label>
+                  <Select defaultValue={selectedFaculty.gender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+                </div>
+                <div className="space-y-2"><Label>所属院系</Label>
+                  <Select defaultValue={selectedFaculty.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>职称</Label><Input defaultValue={selectedFaculty.title} /></div>
+                <div className="space-y-2"><Label>学历</Label><Input defaultValue={selectedFaculty.education} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>企业导师</Label>
+                  <Select defaultValue={String(selectedFaculty.isEnterpriseMentor)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="true">是</SelectItem><SelectItem value="false">否</SelectItem></SelectContent></Select>
+                </div>
+                <div className="space-y-2"><Label>状态</Label>
+                  <Select defaultValue={selectedFaculty.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
+            <Button onClick={() => { toast.success('保存成功'); setEditOpen(false) }}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

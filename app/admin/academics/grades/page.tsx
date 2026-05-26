@@ -15,6 +15,7 @@ import {
 import { FilterBar } from '@/components/shared/filter-bar'
 import { CheckCircle, XCircle, Send } from 'lucide-react'
 import { gradeRecords, students } from '@/lib/mock-data'
+import { toast } from 'sonner'
 
 const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
   '待确认': { label: '待确认', variant: 'secondary' },
@@ -47,7 +48,7 @@ export default function GradesPage() {
           <h1 className="text-2xl font-bold">成绩认定</h1>
           <p className="text-muted-foreground">成绩同步、确认、审核、认定与发布</p>
         </div>
-        <Button><Send className="h-4 w-4 mr-2" />发布成绩</Button>
+        <Button onClick={() => toast.success('成绩发布成功')}><Send className="h-4 w-4 mr-2" />发布成绩</Button>
       </div>
 
       <Card>
@@ -109,9 +110,9 @@ export default function GradesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {g.status === '待确认' && <Button variant="ghost" size="icon"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
-                        {g.status === '待审核' && <Button variant="ghost" size="icon"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
-                        {g.status === '待认定' && <Button variant="ghost" size="icon"><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
+                        {g.status === '待确认' && <Button variant="ghost" size="icon" onClick={() => toast.success('成绩已确认')}><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
+                        {g.status === '待审核' && <Button variant="ghost" size="icon" onClick={() => toast.success('成绩已审核')}><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
+                        {g.status === '待认定' && <Button variant="ghost" size="icon" onClick={() => toast.success('成绩已认定')}><CheckCircle className="h-4 w-4 text-green-600" /></Button>}
                       </div>
                     </TableCell>
                   </TableRow>

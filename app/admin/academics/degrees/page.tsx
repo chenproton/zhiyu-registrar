@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { CheckCircle, XCircle } from 'lucide-react'
 import { degreeRecognitions, students, trainingPrograms } from '@/lib/mock-data'
+import { toast } from 'sonner'
 
 export default function DegreesPage() {
   return (
@@ -76,8 +77,8 @@ export default function DegreesPage() {
                 )}
 
                 <div className="mt-4 flex items-center gap-2">
-                  <Button size="sm" className="gap-1"><CheckCircle className="h-4 w-4" />审核通过</Button>
-                  <Button size="sm" variant="outline" className="gap-1 text-red-600"><XCircle className="h-4 w-4" />不符合条件</Button>
+                  <Button size="sm" className="gap-1" onClick={() => toast.success('审核通过')}><CheckCircle className="h-4 w-4" />审核通过</Button>
+                  <Button size="sm" variant="outline" className="gap-1 text-red-600" onClick={() => toast.error('不符合条件')}><XCircle className="h-4 w-4" />不符合条件</Button>
                 </div>
               </CardContent>
             </Card>
