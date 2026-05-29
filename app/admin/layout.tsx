@@ -1,5 +1,6 @@
 import { PlatformShell } from "@/components/platform-shell"
 import { registrarNavigationConfig } from "@/lib/navigation-config"
+import { DataProvider } from "@/components/providers/data-provider"
 
 export default function AdminLayout({
   children,
@@ -7,8 +8,10 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <PlatformShell config={registrarNavigationConfig}>
-      {children}
-    </PlatformShell>
+    <DataProvider>
+      <PlatformShell config={registrarNavigationConfig}>
+        {children}
+      </PlatformShell>
+    </DataProvider>
   )
 }

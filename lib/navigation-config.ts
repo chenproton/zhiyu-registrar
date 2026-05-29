@@ -35,7 +35,7 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
     },
     {
       id: "organization",
-      label: "数据治理中心",
+      label: "基础数据管理",
       icon: "folderKanban",
       children: [
         { id: "departments", label: "院系管理", href: "/admin/organization/departments", matchers: ["/admin/organization/departments"] },
@@ -44,7 +44,7 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
         { id: "classes", label: "班级管理", href: "/admin/organization/classes", matchers: ["/admin/organization/classes"] },
         { id: "faculty", label: "师资管理", href: "/admin/organization/faculty", matchers: ["/admin/organization/faculty"] },
         { id: "students", label: "学生学籍管理", href: "/admin/organization/students", matchers: ["/admin/organization/students"] },
-        { id: "resources", label: "教学资源管理", href: "/admin/organization/resources", matchers: ["/admin/organization/resources"] },
+        { id: "resources", label: "场地资源管理", href: "/admin/organization/resources", matchers: ["/admin/organization/resources"] },
       ],
     },
     {
@@ -52,13 +52,12 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       label: "教学运行中心",
       icon: "calendar",
       children: [
-        { id: "programs", label: "培养方案管理", href: "/admin/programs", matchers: ["/admin/programs"] },
+        { id: "programs", label: "人培方案管理", href: "/admin/programs", matchers: ["/admin/programs"] },
         { id: "scheduling", label: "排课中心", href: "/admin/operations/scheduling", matchers: ["/admin/operations/scheduling"] },
         { id: "adjustments", label: "任务调度", href: "/admin/operations/adjustments", matchers: ["/admin/operations/adjustments"] },
-        { id: "progress", label: "任务进度看板", href: "/admin/operations/progress", matchers: ["/admin/operations/progress"] },
-        { id: "evaluation-templates", label: "任务评价模板", href: "/admin/operations/evaluation/templates", matchers: ["/admin/operations/evaluation/templates"] },
-        { id: "evaluation-activities", label: "任务评价活动", href: "/admin/operations/evaluation/activities", matchers: ["/admin/operations/evaluation/activities"] },
-        { id: "evaluation-results", label: "任务评价结果", href: "/admin/operations/evaluation/results", matchers: ["/admin/operations/evaluation/results"] },
+        { id: "tasks", label: "学习任务中心", href: "/admin/operations/tasks", matchers: ["/admin/operations/tasks"] },
+        { id: "program-progress", label: "教学进度监控", href: "/admin/operations/program-progress", matchers: ["/admin/operations/program-progress"] },
+        { id: "anomalies", label: "异常监控", href: "/admin/operations/anomalies", matchers: ["/admin/operations/anomalies"] },
         { id: "review", label: "任务复盘", href: "/admin/operations/review", matchers: ["/admin/operations/review"] },
       ],
     },
@@ -68,9 +67,9 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       icon: "graduationCap",
       children: [
         { id: "grades", label: "成绩认定", href: "/admin/academics/grades", matchers: ["/admin/academics/grades"] },
+        { id: "competency", label: "能力认定", href: "/admin/academics/competency", matchers: ["/admin/academics/competency"] },
         { id: "degrees", label: "学历认定", href: "/admin/academics/degrees", matchers: ["/admin/academics/degrees"] },
-        { id: "publication", label: "认定发布", href: "/admin/academics/publication", matchers: ["/admin/academics/publication"] },
-        { id: "archives", label: "学业档案", href: "/admin/academics/archives", matchers: ["/admin/academics/archives"] },
+        { id: "archives", label: "学生档案管理", href: "/admin/academics/archives", matchers: ["/admin/academics/archives"] },
       ],
     },
     {

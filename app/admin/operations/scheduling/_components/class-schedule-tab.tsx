@@ -37,7 +37,7 @@ interface PeriodRow {
   name: string
   sequence: number
   timeSlot: 'morning_self' | 'morning' | 'afternoon' | 'evening'
-  type: 'class' | 'morning_self' | 'break_big' | 'evening'
+  type: 'class' | 'afternoon_class' | 'morning_self' | 'evening'
   cells: ScheduleCell[]
 }
 
@@ -46,8 +46,10 @@ interface PeriodSettings {
   morningClassCount: number
   afternoonClassCount: number
   eveningClassCount: number
-  classDuration: number
-  breakDuration: number
+  morningClassDuration: number
+  morningBreakDuration: number
+  afternoonClassDuration: number
+  afternoonBreakDuration: number
   morningSelfDuration: number
   morningSelfBreak: number
   eveningDuration: number
@@ -60,10 +62,10 @@ interface PeriodSettings {
 const dayNames = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日']
 
 const typeStyleMap: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
-  class: { label: '正课', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-400' },
+  class: { label: '上午', bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', dot: 'bg-amber-400' },
+  afternoon_class: { label: '下午', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', dot: 'bg-green-400' },
   morning_self: { label: '早自习', bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-sky-200', dot: 'bg-sky-400' },
   evening: { label: '晚自习', bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', dot: 'bg-indigo-400' },
-  break_big: { label: '大课间', bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', dot: 'bg-green-400' },
 }
 
 // ==================== Time Helpers ====================
@@ -112,7 +114,7 @@ function generateRows(settings: PeriodSettings): PeriodRow[] {
   if (settings.morningSelfCount > 0) {
     current = parseTime('07:30')
     for (let i = 0; i < settings.morningSelfCount; i++) {
-      add('morning_self', 'morning_self', `早自习${i + 1}`, settings.morningSelfDuration)
+      add('morning_self', 'morning_self', `早自习 ${i + 1}`, settings.morningSelfDuration)
       if (i < settings.morningSelfCount - 1) current += settings.morningSelfBreak
     }
   }
@@ -120,24 +122,18 @@ function generateRows(settings: PeriodSettings): PeriodRow[] {
   // 上午
   current = parseTime('08:00')
   for (let i = 0; i < settings.morningClassCount; i++) {
-    add('morning', 'class', `上${i + 1}`, settings.classDuration)
+    add('morning', 'class', `上午 ${i + 1}`, settings.morningClassDuration)
     if (i < settings.morningClassCount - 1) {
-      current += settings.breakDuration
-      if (settings.morningBigBreak.enabled && settings.morningBigBreak.afterPeriod === i + 1) {
-        add('morning', 'break_big', '大课间', settings.morningBigBreak.duration)
-      }
+      current += settings.morningBreakDuration
     }
   }
 
   // 下午
   current = parseTime('14:00')
   for (let i = 0; i < settings.afternoonClassCount; i++) {
-    add('afternoon', 'class', `下${i + 1}`, settings.classDuration)
+    add('afternoon', 'afternoon_class', `下午 ${i + 1}`, settings.afternoonClassDuration)
     if (i < settings.afternoonClassCount - 1) {
-      current += settings.breakDuration
-      if (settings.afternoonBigBreak.enabled && settings.afternoonBigBreak.afterPeriod === i + 1) {
-        add('afternoon', 'break_big', '大课间', settings.afternoonBigBreak.duration)
-      }
+      current += settings.afternoonBreakDuration
     }
   }
 
@@ -145,7 +141,7 @@ function generateRows(settings: PeriodSettings): PeriodRow[] {
   if (settings.eveningClassCount > 0) {
     current = parseTime('18:30')
     for (let i = 0; i < settings.eveningClassCount; i++) {
-      add('evening', 'evening', `晚${i + 1}`, settings.eveningDuration)
+      add('evening', 'evening', `晚自习 ${i + 1}`, settings.eveningDuration)
       if (i < settings.eveningClassCount - 1) current += settings.eveningBreak
     }
   }
@@ -157,16 +153,18 @@ function generateRows(settings: PeriodSettings): PeriodRow[] {
 const defaultSettings: PeriodSettings = {
   morningSelfCount: 1,
   morningClassCount: 4,
-  afternoonClassCount: 3,
+  afternoonClassCount: 4,
   eveningClassCount: 1,
-  classDuration: 45,
-  breakDuration: 10,
+  morningClassDuration: 45,
+  morningBreakDuration: 10,
+  afternoonClassDuration: 45,
+  afternoonBreakDuration: 10,
   morningSelfDuration: 20,
   morningSelfBreak: 10,
   eveningDuration: 45,
   eveningBreak: 10,
-  morningBigBreak: { enabled: true, duration: 20, afterPeriod: 2 },
-  afternoonBigBreak: { enabled: true, duration: 20, afterPeriod: 2 },
+  morningBigBreak: { enabled: false, duration: 20, afterPeriod: 2 },
+  afternoonBigBreak: { enabled: false, duration: 20, afterPeriod: 2 },
 }
 
 // ==================== Main Component ====================
@@ -180,20 +178,8 @@ export default function ClassScheduleTab() {
   const [showHelp, setShowHelp] = useState(false)
 
   const handleSettingsChange = useCallback((next: PeriodSettings) => {
-    // Clamp big-break afterPeriod to valid range
-    const clamped = {
-      ...next,
-      morningBigBreak: {
-        ...next.morningBigBreak,
-        afterPeriod: Math.min(next.morningBigBreak.afterPeriod, Math.max(1, next.morningClassCount - 1)),
-      },
-      afternoonBigBreak: {
-        ...next.afternoonBigBreak,
-        afterPeriod: Math.min(next.afternoonBigBreak.afterPeriod, Math.max(1, next.afternoonClassCount - 1)),
-      },
-    }
-    setSettings(clamped)
-    setRows(generateRows(clamped))
+    setSettings(next)
+    setRows(generateRows(next))
   }, [])
 
   const handleCellClick = (row: PeriodRow, dayOfWeek: number) => {
@@ -347,37 +333,39 @@ export default function ClassScheduleTab() {
           {/* Duration settings */}
           <div>
             <h4 className="text-sm font-semibold mb-3">课程时间设置</h4>
-            <div className="space-y-2.5">
-              <DurationRow label="课程时长" value={settings.classDuration} onChange={(v) => updateSetting('classDuration', v)} />
-              <DurationRow label="课间时长" value={settings.breakDuration} onChange={(v) => updateSetting('breakDuration', v)} />
-              <DurationRow label="早自习课程时长" value={settings.morningSelfDuration} onChange={(v) => updateSetting('morningSelfDuration', v)} />
-              <DurationRow label="早自习课间时长" value={settings.morningSelfBreak} onChange={(v) => updateSetting('morningSelfBreak', v)} />
-              <DurationRow label="晚自习课程时长" value={settings.eveningDuration} onChange={(v) => updateSetting('eveningDuration', v)} />
-              <DurationRow label="晚自习课间时长" value={settings.eveningBreak} onChange={(v) => updateSetting('eveningBreak', v)} />
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5">早自习</p>
+                <div className="space-y-2">
+                  <DurationRow label="节次时长" value={settings.morningSelfDuration} onChange={(v) => updateSetting('morningSelfDuration', v)} />
+                  <DurationRow label="课间时长" value={settings.morningSelfBreak} onChange={(v) => updateSetting('morningSelfBreak', v)} />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5">上午</p>
+                <div className="space-y-2">
+                  <DurationRow label="节次时长" value={settings.morningClassDuration} onChange={(v) => updateSetting('morningClassDuration', v)} />
+                  <DurationRow label="课间时长" value={settings.morningBreakDuration} onChange={(v) => updateSetting('morningBreakDuration', v)} />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5">下午</p>
+                <div className="space-y-2">
+                  <DurationRow label="节次时长" value={settings.afternoonClassDuration} onChange={(v) => updateSetting('afternoonClassDuration', v)} />
+                  <DurationRow label="课间时长" value={settings.afternoonBreakDuration} onChange={(v) => updateSetting('afternoonBreakDuration', v)} />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1.5">晚自习</p>
+                <div className="space-y-2">
+                  <DurationRow label="节次时长" value={settings.eveningDuration} onChange={(v) => updateSetting('eveningDuration', v)} />
+                  <DurationRow label="课间时长" value={settings.eveningBreak} onChange={(v) => updateSetting('eveningBreak', v)} />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="h-px bg-border" />
 
-          {/* Big breaks */}
-          <div className="space-y-3">
-            <BigBreakSetting
-              label="上午大课间设置"
-              enabled={settings.morningBigBreak.enabled}
-              duration={settings.morningBigBreak.duration}
-              afterPeriod={settings.morningBigBreak.afterPeriod}
-              maxPeriod={settings.morningClassCount}
-              onChange={(v) => updateSetting('morningBigBreak', v)}
-            />
-            <BigBreakSetting
-              label="下午大课间设置"
-              enabled={settings.afternoonBigBreak.enabled}
-              duration={settings.afternoonBigBreak.duration}
-              afterPeriod={settings.afternoonBigBreak.afterPeriod}
-              maxPeriod={settings.afternoonClassCount}
-              onChange={(v) => updateSetting('afternoonBigBreak', v)}
-            />
-          </div>
         </CardContent>
       </Card>
 
@@ -418,7 +406,7 @@ export default function ClassScheduleTab() {
             <p>1. 在右侧面板配置各时段的节次数量，左侧表格会自动生成。</p>
             <p>2. 可设置课程时长、课间时长等参数，系统会自动推算每个节次的时间段。</p>
             <p>3. 点击表格中的任意单元格，可单独调整该节次在当天的起止时间。</p>
-            <p>4. 大课间可设置在上午或下午的指定节次之后。</p>
+            
           </div>
           <DialogFooter>
             <Button onClick={() => setShowHelp(false)}>知道了</Button>

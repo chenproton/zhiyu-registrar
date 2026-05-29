@@ -31,17 +31,10 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Eye, FileText, Building2, Users, UserPlus, Lock } from 'lucide-react'
-import { trainingPrograms as initialPrograms, majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues } from '@/lib/mock-data'
+import { Plus, Pencil, Trash2, Eye, FileText, Building2, Users, UserPlus, ArrowRight, Copy } from 'lucide-react'
+import { trainingPrograms as initialPrograms, majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues, allPeriods } from '@/lib/mock-data'
 import type { TrainingProgram, CoursePlan } from '@/lib/mock-data'
 import { toast } from 'sonner'
-
-const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
-  draft: { label: '草稿', variant: 'secondary' },
-  pending: { label: '审批中', variant: 'outline' },
-  published: { label: '已发布', variant: 'default' },
-  deprecated: { label: '已废止', variant: 'destructive' },
-}
 
 const emptyProgram: TrainingProgram = {
   id: '',
@@ -57,7 +50,6 @@ const emptyProgram: TrainingProgram = {
   practiceCredits: 0,
   courses: [],
   practiceScenes: [],
-  status: 'draft',
   startDate: '',
   endDate: '',
   creator: '',
@@ -79,7 +71,7 @@ function getDefaultCoursesForMajor(majorId: string): CoursePlan[] {
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<TrainingProgram[]>(initialPrograms)
-  const [selectedDeptId, setSelectedDeptId] = useState<string>(departments[0]?.id || '')
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
   const [selectedYear, setSelectedYear] = useState<string>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -94,10 +86,13 @@ export default function ProgramsPage() {
 
   // 当前选中院系下的专业列表
   const deptMajors = useMemo(() => {
+    if (selectedDeptId === 'all') return majors
     return majors.filter((m) => m.departmentId === selectedDeptId)
   }, [selectedDeptId])
 
-  const selectedDeptName = departments.find((d) => d.id === selectedDeptId)?.name || ''
+  const selectedDeptName = selectedDeptId === 'all'
+    ? '全部院系'
+    : (departments.find((d) => d.id === selectedDeptId)?.name || '')
 
   // 所有不重复的入学年份
   const allYears = useMemo(() => {
@@ -109,7 +104,7 @@ export default function ProgramsPage() {
   const filteredPrograms = useMemo(() => {
     return programs.filter((p) => {
       const major = majors.find((m) => m.id === p.majorId)
-      if (major?.departmentId !== selectedDeptId) return false
+      if (selectedDeptId !== 'all' && major?.departmentId !== selectedDeptId) return false
       if (selectedYear !== 'all' && p.entryYear !== Number(selectedYear)) return false
       return true
     })
@@ -149,6 +144,21 @@ export default function ProgramsPage() {
   const handleDelete = (programId: string) => {
     setPrograms((prev) => prev.filter((p) => p.id !== programId))
     toast.success('删除成功')
+  }
+
+  const handleClone = (program: TrainingProgram) => {
+    const cloned: TrainingProgram = {
+      ...program,
+      id: `tp${Date.now()}`,
+      code: `${program.code}-CLONE`,
+      name: `${program.name}（克隆）`,
+      status: 'draft',
+      createdAt: new Date().toISOString().split('T')[0],
+      creator: '当前用户',
+      collaborators: [],
+    }
+    setPrograms((prev) => [cloned, ...prev])
+    toast.success('克隆成功')
   }
 
   const handleSaveCreate = () => {
@@ -285,28 +295,59 @@ export default function ProgramsPage() {
           <span className="text-sm font-medium text-muted-foreground">二级学院/院系</span>
         </div>
         <div className="space-y-1">
-          {departments.map((d) => (
-            <button
-              key={d.id}
-              onClick={() => {
-                setSelectedDeptId(d.id)
-                setSelectedYear('all')
-                setExpandedId(null)
-              }}
-              className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
-                selectedDeptId === d.id
-                  ? 'bg-primary text-primary-foreground font-medium'
-                  : 'hover:bg-muted text-foreground'
+          <button
+            onClick={() => {
+              setSelectedDeptId('all')
+              setSelectedYear('all')
+              setExpandedId(null)
+            }}
+            className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
+              selectedDeptId === 'all'
+                ? 'bg-primary text-primary-foreground font-medium'
+                : 'hover:bg-muted text-foreground'
+            }`}
+          >
+            <span>全部院系</span>
+            <span
+              className={`text-xs ${
+                selectedDeptId === 'all' ? 'text-primary-foreground/70' : 'text-muted-foreground'
               }`}
             >
-              <div className="flex items-center justify-between">
+              {programs.length}个方案
+            </span>
+          </button>
+          {departments.map((d) => {
+            const count = programs.filter((p) => {
+              const major = majors.find((m) => m.id === p.majorId)
+              return major?.departmentId === d.id
+            }).length
+            return (
+              <button
+                key={d.id}
+                onClick={() => {
+                  setSelectedDeptId(d.id)
+                  setSelectedYear('all')
+                  setExpandedId(null)
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
+                  selectedDeptId === d.id
+                    ? 'bg-primary text-primary-foreground font-medium'
+                    : 'hover:bg-muted text-foreground'
+                }`}
+              >
                 <span>{d.name}</span>
-                <span className={`text-xs ${selectedDeptId === d.id ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                  {majors.filter((m) => m.departmentId === d.id).length}个专业
+                <span
+                  className={`text-xs ${
+                    selectedDeptId === d.id
+                      ? 'text-primary-foreground/70'
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  {count}个方案
                 </span>
-              </div>
-            </button>
-          ))}
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -314,7 +355,7 @@ export default function ProgramsPage() {
       <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">培养方案管理</h1>
+            <h1 className="text-2xl font-bold">人培方案管理</h1>
             <p className="text-muted-foreground text-sm">
               {selectedDeptName} · 共 {filteredPrograms.length} 个培养方案
             </p>
@@ -350,15 +391,33 @@ export default function ProgramsPage() {
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={statusMap[tp.status].variant}>{statusMap[tp.status].label}</Badge>
-                      {tp.status === 'published' && tp.frozenAt && (
-                        <Badge variant="outline" className="gap-1">
-                          <Lock className="h-3 w-3" />
-                          版本已固化
-                        </Badge>
-                      )}
+                      {(() => {
+                        const programClasses = classes.filter((c) => {
+                          const grade = grades.find((g) => g.id === c.gradeId)
+                          return c.majorId === tp.majorId && grade?.entryYear === tp.entryYear
+                        })
+                        const hasScheduled = tasks.some((t) => programClasses.some((c) => c.id === t.classId))
+                        return (
+                          <>
+                            <Badge variant={hasScheduled ? 'default' : 'secondary'} className="text-xs">
+                              是否已排课：{hasScheduled ? '是' : '否'}
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => window.location.href = `/admin/operations/scheduling?programId=${tp.id}`}
+                            >
+                              前往排课 <ArrowRight className="h-3 w-3" />
+                            </Button>
+                          </>
+                        )
+                      })()}
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(tp)}>
                         <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleClone(tp)}>
+                        <Copy className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setInviteProgram(tp); setInviteName(''); setInviteOpen(true) }}>
                         <UserPlus className="h-3.5 w-3.5" />
@@ -596,7 +655,7 @@ function ProgramScheduleView({ program }: { program: TrainingProgram }) {
   ]
   const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
   const days = [1, 2, 3, 4, 5, 6, 7]
-  const periods = ['1-2节', '3-4节', '5-6节', '7-8节']
+  const periods = allPeriods
 
   // 找到该培养方案对应的年级和班级
   const programGrade = grades.find((g) => g.entryYear === program.entryYear)
@@ -642,7 +701,7 @@ function ProgramScheduleView({ program }: { program: TrainingProgram }) {
                 </td>
                 {days.map((day) => {
                   const task = itemTasks.find(
-                    (t) => t.dayOfWeek === day && t.period === period
+                    (t) => t.dayOfWeek === day && t.periods.includes(period)
                   )
                   return (
                     <td key={day} className="border p-2 min-w-[120px] align-top">

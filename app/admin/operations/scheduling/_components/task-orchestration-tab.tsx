@@ -60,35 +60,39 @@ import {
   trainingPrograms,
   curriculumCoursePool,
   curriculumPracticePool,
+  allPeriods,
   type Task,
 } from '@/lib/mock-data'
 
 const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-const periods = ['1-2节', '3-4节', '5-6节', '7-8节']
 
 function isSceneTask(task: Task) {
   return task.type === 'scene' || task.externalPlatformType === 'scene'
 }
 
 // ==================== Conflict Detection ====================
+function periodsOverlap(a: string[], b: string[]) {
+  return a.some((p) => b.includes(p))
+}
+
 function detectConflicts(
   task: Task,
   allTasks: Task[],
   newDayOfWeek?: number,
-  newPeriod?: string,
+  newPeriods?: string[],
   newVenueId?: string,
   newFacultyId?: string
 ) {
   const conflicts: { type: 'teacher' | 'venue' | 'class'; with: string; taskName: string }[] = []
   const targetDay = newDayOfWeek ?? task.dayOfWeek
-  const targetPeriod = newPeriod ?? task.period
+  const targetPeriods = newPeriods ?? task.periods
   const targetVenue = newVenueId ?? task.venueId
   const targetFaculty = newFacultyId ?? task.facultyId
   const targetClass = task.classId
 
   for (const t of allTasks) {
     if (t.id === task.id) continue
-    if (t.dayOfWeek !== targetDay || t.period !== targetPeriod) continue
+    if (t.dayOfWeek !== targetDay || !periodsOverlap(t.periods, targetPeriods)) continue
 
     if (t.facultyId === targetFaculty) {
       conflicts.push({ type: 'teacher', with: t.facultyName, taskName: t.courseName })
@@ -125,11 +129,11 @@ function ScheduleGrid({
           </div>
         ))}
       </div>
-      {periods.map((p) => (
+      {allPeriods.map((p) => (
         <div key={p} className="grid grid-cols-8 border-t">
           <div className="p-3 text-sm text-muted-foreground border-r bg-muted/30">{p}</div>
           {[1, 2, 3, 4, 5, 6, 7].map((d) => {
-            const task = taskList.find((e) => e.dayOfWeek === d && e.period === p)
+            const task = taskList.find((e) => e.dayOfWeek === d && e.periods.includes(p))
             const conflicts = task ? detectConflicts(task, allTasks) : []
             const hasConflict = conflicts.length > 0
             const scene = task ? isSceneTask(task) : false
@@ -456,7 +460,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
   const [selectedClassId, setSelectedClassId] = useState('')
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
   const [selectedDay, setSelectedDay] = useState('1')
-  const [selectedPeriod, setSelectedPeriod] = useState('1-2节')
+  const [selectedPeriods, setSelectedPeriods] = useState<string[]>([])
   const [selectedVenueId, setSelectedVenueId] = useState('')
 
   const courseOptions = useMemo(
@@ -577,37 +581,45 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
             />
 
             {/* 节次 - 二级联动 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>星期</Label>
-                <Select value={selectedDay} onValueChange={setSelectedDay}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">周一</SelectItem>
-                    <SelectItem value="2">周二</SelectItem>
-                    <SelectItem value="3">周三</SelectItem>
-                    <SelectItem value="4">周四</SelectItem>
-                    <SelectItem value="5">周五</SelectItem>
-                    <SelectItem value="6">周六</SelectItem>
-                    <SelectItem value="7">周日</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>节次</Label>
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1-2节">1-2节</SelectItem>
-                    <SelectItem value="3-4节">3-4节</SelectItem>
-                    <SelectItem value="5-6节">5-6节</SelectItem>
-                    <SelectItem value="7-8节">7-8节</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <Label>星期</Label>
+              <Select value={selectedDay} onValueChange={setSelectedDay}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">周一</SelectItem>
+                  <SelectItem value="2">周二</SelectItem>
+                  <SelectItem value="3">周三</SelectItem>
+                  <SelectItem value="4">周四</SelectItem>
+                  <SelectItem value="5">周五</SelectItem>
+                  <SelectItem value="6">周六</SelectItem>
+                  <SelectItem value="7">周日</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>节次（可多选）</Label>
+              <div className="flex flex-wrap gap-2">
+                {allPeriods.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPeriods((prev) =>
+                        prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+                      )
+                    }}
+                    className={cn(
+                      'px-3 py-1.5 text-xs rounded-md border transition-colors',
+                      selectedPeriods.includes(p)
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -654,7 +666,7 @@ function EditTaskDialog({
   const [selectedClassId, setSelectedClassId] = useState('')
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
   const [selectedDay, setSelectedDay] = useState('1')
-  const [selectedPeriod, setSelectedPeriod] = useState('1-2节')
+  const [selectedPeriods, setSelectedPeriods] = useState<string[]>([])
   const [selectedVenueId, setSelectedVenueId] = useState('')
 
   const courseOptions = useMemo(
@@ -703,7 +715,7 @@ function EditTaskDialog({
       setSelectedClassId(task.classId)
       setSelectedFacultyId(task.facultyId)
       setSelectedDay(String(task.dayOfWeek))
-      setSelectedPeriod(task.period)
+      setSelectedPeriods(task.periods)
       setSelectedVenueId(task.venueId)
     }
   }, [task])
@@ -713,7 +725,7 @@ function EditTaskDialog({
         task,
         tasks,
         Number(selectedDay),
-        selectedPeriod,
+        selectedPeriods,
         selectedVenueId,
         selectedFacultyId
       )
@@ -794,37 +806,45 @@ function EditTaskDialog({
             />
 
             {/* 节次 - 二级联动 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>星期</Label>
-                <Select value={selectedDay} onValueChange={setSelectedDay}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">周一</SelectItem>
-                    <SelectItem value="2">周二</SelectItem>
-                    <SelectItem value="3">周三</SelectItem>
-                    <SelectItem value="4">周四</SelectItem>
-                    <SelectItem value="5">周五</SelectItem>
-                    <SelectItem value="6">周六</SelectItem>
-                    <SelectItem value="7">周日</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>节次</Label>
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1-2节">1-2节</SelectItem>
-                    <SelectItem value="3-4节">3-4节</SelectItem>
-                    <SelectItem value="5-6节">5-6节</SelectItem>
-                    <SelectItem value="7-8节">7-8节</SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="space-y-2">
+              <Label>星期</Label>
+              <Select value={selectedDay} onValueChange={setSelectedDay}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">周一</SelectItem>
+                  <SelectItem value="2">周二</SelectItem>
+                  <SelectItem value="3">周三</SelectItem>
+                  <SelectItem value="4">周四</SelectItem>
+                  <SelectItem value="5">周五</SelectItem>
+                  <SelectItem value="6">周六</SelectItem>
+                  <SelectItem value="7">周日</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>节次（可多选）</Label>
+              <div className="flex flex-wrap gap-2">
+                {allPeriods.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPeriods((prev) =>
+                        prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
+                      )
+                    }}
+                    className={cn(
+                      'px-3 py-1.5 text-xs rounded-md border transition-colors',
+                      selectedPeriods.includes(p)
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-muted-foreground border-border hover:border-primary/50'
+                    )}
+                  >
+                    {p}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -930,7 +950,7 @@ function SidebarNav({
 
 // ==================== Main Component ====================
 export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade: string }) {
-  const [subTab, setSubTab] = useState('timetable')
+  // subTab removed, only timetable view remains
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('class')
   const [selectedClassId, setSelectedClassId] = useState('')
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
@@ -1063,12 +1083,18 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
   }, [viewMode, classItems, facultyItems, venueItems, selectedClassId, selectedFacultyId, selectedVenueId])
 
   return (
-    <Tabs value={subTab} onValueChange={setSubTab} className="space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <TabsList>
-          <TabsTrigger value="timetable">课表视图</TabsTrigger>
-          <TabsTrigger value="list">任务列表</TabsTrigger>
-        </TabsList>
+        <Tabs
+          value={viewMode}
+          onValueChange={(v) => setViewMode(v as 'class' | 'teacher' | 'venue')}
+        >
+          <TabsList>
+            <TabsTrigger value="class">按班级查看</TabsTrigger>
+            <TabsTrigger value="teacher">按教师查看</TabsTrigger>
+            <TabsTrigger value="venue">按场地查看</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-1" onClick={() => toast('导入排课Excel功能开发中')}>
             <FileSpreadsheet className="h-4 w-4" />
@@ -1081,128 +1107,22 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
         </div>
       </div>
 
-      {/* 课表视图 */}
-      <TabsContent value="timetable" className="mt-0">
-        <div className="space-y-4">
-          <Tabs
-            value={viewMode}
-            onValueChange={(v) => setViewMode(v as 'class' | 'teacher' | 'venue')}
-          >
-            <TabsList>
-              <TabsTrigger value="class">按班级查看</TabsTrigger>
-              <TabsTrigger value="teacher">按教师查看</TabsTrigger>
-              <TabsTrigger value="venue">按场地查看</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="flex gap-4">
-            <SidebarNav {...sidebarProps} />
-            <div className="flex-1 min-w-0 space-y-4">
-              {currentTitle && (
-                <div className="font-medium text-sm text-muted-foreground">
-                  {currentTitle}
-                </div>
-              )}
-              <ScheduleGrid
-                taskList={currentTasks}
-                allTasks={filteredTasks}
-                onEditTask={handleEditTask}
-                onCreateTask={() => setNewTaskDialogOpen(true)}
-              />
+      <div className="flex gap-4">
+        <SidebarNav {...sidebarProps} />
+        <div className="flex-1 min-w-0 space-y-4">
+          {currentTitle && (
+            <div className="font-medium text-sm text-muted-foreground">
+              {currentTitle}
             </div>
-          </div>
+          )}
+          <ScheduleGrid
+            taskList={currentTasks}
+            allTasks={filteredTasks}
+            onEditTask={handleEditTask}
+            onCreateTask={() => setNewTaskDialogOpen(true)}
+          />
         </div>
-      </TabsContent>
-
-      {/* 任务列表 */}
-      <TabsContent value="list" className="mt-0">
-        <div className="space-y-4">
-          <Tabs
-            value={viewMode}
-            onValueChange={(v) => setViewMode(v as 'class' | 'teacher' | 'venue')}
-          >
-            <TabsList>
-              <TabsTrigger value="class">按班级查看</TabsTrigger>
-              <TabsTrigger value="teacher">按教师查看</TabsTrigger>
-              <TabsTrigger value="venue">按场地查看</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <div className="flex gap-4">
-            <SidebarNav {...sidebarProps} />
-            <div className="flex-1 min-w-0 space-y-4">
-              {currentTitle && (
-                <div className="font-medium text-sm text-muted-foreground">
-                  {currentTitle}
-                </div>
-              )}
-              <Card>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>任务编码</TableHead>
-                        <TableHead>类型</TableHead>
-                        <TableHead>课程/实践场景</TableHead>
-                        <TableHead>版本号</TableHead>
-                        <TableHead>班级</TableHead>
-                        <TableHead>教师</TableHead>
-                        <TableHead>时间</TableHead>
-                        <TableHead className="text-right">操作</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentTasks.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                            暂无任务数据
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        currentTasks.map((task) => (
-                          <TableRow key={task.id}>
-                            <TableCell className="font-mono text-xs">{task.code}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={isSceneTask(task) ? 'outline' : 'secondary'}
-                                className={
-                                  isSceneTask(task)
-                                    ? 'border-orange-300 text-orange-600'
-                                    : 'border-blue-300 text-blue-600'
-                                }
-                              >
-                                {isSceneTask(task) ? '实践场景' : '课程'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="font-medium">{task.courseName}</TableCell>
-                            <TableCell>{task.courseVersion || '—'}</TableCell>
-                            <TableCell>{task.className}</TableCell>
-                            <TableCell>{task.facultyName}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              周{task.dayOfWeek} {task.period}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7"
-                                onClick={() => handleEditTask(task)}
-                              >
-                                <Pencil className="h-3.5 w-3.5 mr-1" />
-                                编辑
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </TabsContent>
+      </div>
 
       {/* 新建任务弹窗 */}
       <NewTaskDialog open={newTaskDialogOpen} onClose={() => setNewTaskDialogOpen(false)} />
@@ -1213,6 +1133,6 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
         onClose={() => setEditDialogOpen(false)}
         task={selectedTask}
       />
-    </Tabs>
+    </div>
   )
 }

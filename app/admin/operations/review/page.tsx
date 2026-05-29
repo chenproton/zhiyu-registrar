@@ -26,8 +26,97 @@ const statusFilters = [
   { id: 'archived', label: '已归档', icon: Archive },
 ]
 
+const MOCK_REFLECTIONS = [
+  '本次课程采用了项目驱动教学法，学生参与度明显提升。大部分学生能够独立完成基础编程任务，但在算法优化方面仍有不足。',
+  '通过翻转课堂模式，课前预习效果较好。课堂讨论环节学生表现活跃，但部分基础薄弱的学生跟不上节奏。',
+  '实验课安排较为紧凑，学生动手实践时间充足。建议在下次增加小组协作环节，提升团队合作能力。',
+  '理论讲解与案例结合的方式效果良好，学生对知识点的理解更加深入。课后作业完成质量有所提高。',
+  '引入企业真实项目案例后，学生学习动力增强。但在代码规范方面还需要加强引导和检查。',
+  '采用分层教学策略，针对不同基础的学生设置差异化任务。整体教学效果达到预期目标。',
+  '增加了课堂互动环节，通过即时测验了解学生掌握情况。发现部分学生在面向对象概念理解上存在偏差。',
+  '本次课程尝试了线上线下混合教学模式，线上资源利用率较高。线下讨论需要进一步优化时间安排。',
+  '通过 peer review 机制，学生互评能力提升明显。建议在评分标准上进一步细化，减少主观偏差。',
+  '课程节奏把控较好，重难点讲解清晰。学生反馈显示对实践环节满意度较高，理论部分需要增加更多可视化辅助。',
+]
+
+const MOCK_PROBLEMS = [
+  ['部分学生基础差异大，统一进度难以兼顾', '实验设备偶有故障影响教学'],
+  ['课前预习完成率仅65%', '课堂时间分配不够合理'],
+  ['小组协作时个别学生搭便车', '实验报告提交不及时'],
+  ['理论内容偏多，实践时间被压缩', '个别学生迟到早退现象'],
+  ['代码规范意识薄弱', '调试能力有待提升'],
+  ['差异化任务设计耗时较多', '评价体系不够完善'],
+  ['面向对象概念抽象，学生理解困难', '课堂互动时间不足'],
+  ['线上平台偶尔卡顿', '线下讨论深度不够'],
+  ['互评标准不统一', '部分学生评价过于宽松'],
+  ['可视化素材准备不足', '个别章节节奏偏快'],
+]
+
+const MOCK_MEASURES = [
+  ['增加课前基础摸底测试', '建立实验设备巡检机制'],
+  ['优化预习任务设计，增加趣味性', '重新规划课堂各环节时长'],
+  ['细化小组分工，引入个人贡献度评分', '设置实验报告提交提醒'],
+  ['精简理论内容，增加案例教学', '加强课堂考勤管理'],
+  ['增加代码审查环节', '增设调试技巧专题'],
+  ['建立任务模板库', '完善多维评价体系'],
+  ['增加类比和可视化讲解', '压缩讲授时间，增加练习'],
+  ['准备备用平台方案', '提前发布讨论提纲'],
+  ['制定详细互评量规', '开展评价培训'],
+  ['补充动画和视频素材', '调整章节顺序和节奏'],
+]
+
+function enrichTasks(tasks: Task[]): Task[] {
+  return tasks.slice(0, 12).map((t, i) => {
+    if (i < 10) {
+      const hasReview = i < 5
+      return {
+        ...t,
+        status: 'completed' as const,
+        review: {
+          taskId: t.id,
+          facultyReview: hasReview
+            ? {
+                teachingReflection: MOCK_REFLECTIONS[i],
+                problemsFound: MOCK_PROBLEMS[i],
+                improvementMeasures: MOCK_MEASURES[i],
+                studentFeedbackSummary: `学生整体反馈积极，${i % 2 === 0 ? '建议增加更多实践机会' : '希望理论讲解更细致'}`,
+                createdAt: `2026-10-${15 + i}`,
+              }
+            : undefined,
+          evaluationSnapshot: hasReview
+            ? {
+                avgScore: 82 + i * 1.5,
+                participantCount: 35 + i,
+                dimensionScores: { 教学内容: 85, 教学方法: 80, 师生互动: 78 },
+              }
+            : undefined,
+        } as Task['review'],
+      }
+    }
+    return {
+      ...t,
+      status: 'archived' as const,
+      review: {
+        taskId: t.id,
+        facultyReview: {
+          teachingReflection: MOCK_REFLECTIONS[i - 2],
+          problemsFound: MOCK_PROBLEMS[i - 2],
+          improvementMeasures: MOCK_MEASURES[i - 2],
+          studentFeedbackSummary: '已归档复盘数据',
+          createdAt: `2026-10-${10 + i}`,
+        },
+        evaluationSnapshot: {
+          avgScore: 80 + i,
+          participantCount: 40,
+          dimensionScores: { 教学内容: 82, 教学方法: 81, 师生互动: 79 },
+        },
+      } as Task['review'],
+    }
+  })
+}
+
 export default function TaskReviewPage() {
-  const [taskList, setTaskList] = useState<Task[]>(initialTasks)
+  const [taskList, setTaskList] = useState<Task[]>(() => enrichTasks(initialTasks))
   const [selectedStatus, setSelectedStatus] = useState<string>('pending')
 
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)

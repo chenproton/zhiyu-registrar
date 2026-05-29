@@ -19,6 +19,11 @@ export const departments: Department[] = [
   { id: 'd3', code: 'BM', name: '商学院', type: '商科', leader: '王教授', status: 'active' },
   { id: 'd4', code: 'DES', name: '艺术设计学院', type: '艺术', leader: '赵教授', status: 'active' },
   { id: 'd5', code: 'AUTO', name: '汽车工程学院', type: '工科', leader: '刘教授', status: 'active' },
+  { id: 'd6', code: 'FL', name: '外国语学院', type: '文科', leader: '陈教授', status: 'active' },
+  { id: 'd7', code: 'CE', name: '土木工程学院', type: '工科', leader: '周教授', status: 'active' },
+  { id: 'd8', code: 'MED', name: '医学院', type: '医科', leader: '吴教授', status: 'active' },
+  { id: 'd9', code: 'MUS', name: '音乐学院', type: '艺术', leader: '郑教授', status: 'active' },
+  { id: 'd10', code: 'PE', name: '体育学院', type: '体育', leader: '孙教授', status: 'active' },
 ]
 
 export interface Major {
@@ -45,6 +50,14 @@ export const majors: Major[] = [
   { id: 'm11', code: 'IS', name: '信息安全', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
   { id: 'm12', code: 'IOT', name: '物联网工程', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
   { id: 'm13', code: 'CE', name: '云计算技术应用', departmentId: 'd1', level: '大专', duration: 3, status: 'active' },
+  { id: 'm14', code: 'EN', name: '英语', departmentId: 'd6', level: '本科', duration: 4, status: 'active' },
+  { id: 'm15', code: 'JP', name: '日语', departmentId: 'd6', level: '本科', duration: 4, status: 'active' },
+  { id: 'm16', code: 'CIV', name: '土木工程', departmentId: 'd7', level: '本科', duration: 4, status: 'active' },
+  { id: 'm17', code: 'BIM', name: '建筑信息模型技术', departmentId: 'd7', level: '大专', duration: 3, status: 'active' },
+  { id: 'm18', code: 'NUR', name: '护理学', departmentId: 'd8', level: '本科', duration: 4, status: 'active' },
+  { id: 'm19', code: 'PHA', name: '药学', departmentId: 'd8', level: '大专', duration: 3, status: 'active' },
+  { id: 'm20', code: 'MU-P', name: '音乐表演', departmentId: 'd9', level: '本科', duration: 4, status: 'active' },
+  { id: 'm21', code: 'PE-E', name: '体育教育', departmentId: 'd10', level: '本科', duration: 4, status: 'active' },
 ]
 
 export interface Class {
@@ -83,6 +96,9 @@ export interface Grade {
 }
 
 export const grades: Grade[] = [
+  { id: 'g2029', name: '2029级', entryYear: 2029, status: '在校' },
+  { id: 'g2028', name: '2028级', entryYear: 2028, status: '在校' },
+  { id: 'g2027', name: '2027级', entryYear: 2027, status: '在校' },
   { id: 'g2026', name: '2026级', entryYear: 2026, status: '在校' },
   { id: 'g2025', name: '2025级', entryYear: 2025, status: '在校' },
   { id: 'g2024', name: '2024级', entryYear: 2024, status: '在校' },
@@ -152,6 +168,7 @@ export interface Student {
     certifiedSkills: number
     competencyLevel: '初级' | '中级' | '高级'
     lastAssessment: string
+    status: '待审核' | '已认定' | '已驳回'
   }
 }
 
@@ -164,7 +181,7 @@ export const students: Student[] = [
       activities: [{ name: 'ACM程序设计社团', type: '社团活动', date: '2026-09' }],
       skillBadges: [{ name: 'Python编程', level: '中级', issuer: '能力测评平台', date: '2026-05' }],
     },
-    abilityRecognition: { totalSkills: 8, certifiedSkills: 3, competencyLevel: '中级', lastAssessment: '2026-06-15' },
+    abilityRecognition: { totalSkills: 8, certifiedSkills: 3, competencyLevel: '中级', lastAssessment: '2026-06-15', status: '已认定' },
   },
   { id: 's2', studentId: '2026010102', name: '王芳', gender: '女', idCard: '110101200802021234', departmentId: 'd1', majorId: 'm1', classId: 'c1', entryYear: 2026, status: '在籍', gpa: 3.8, creditsEarned: 30, educationLevel: '本科',
     abilityPortfolio: {
@@ -174,7 +191,7 @@ export const students: Student[] = [
       activities: [{ name: '学生会科技部', type: '学生工作', date: '2026-09' }],
       skillBadges: [{ name: '数据分析', level: '初级', issuer: '能力测评平台', date: '2026-05' }],
     },
-    abilityRecognition: { totalSkills: 6, certifiedSkills: 2, competencyLevel: '初级', lastAssessment: '2026-06-15' },
+    abilityRecognition: { totalSkills: 6, certifiedSkills: 2, competencyLevel: '初级', lastAssessment: '2026-06-15', status: '待审核' },
   },
   { id: 's3', studentId: '2026010103', name: '张伟', gender: '男', idCard: '110101200803031234', departmentId: 'd1', majorId: 'm1', classId: 'c1', entryYear: 2026, status: '在籍', gpa: 3.2, creditsEarned: 26, educationLevel: '本科' },
   { id: 's4', studentId: '2026010201', name: '刘洋', gender: '男', idCard: '110101200801041234', departmentId: 'd1', majorId: 'm2', classId: 'c3', entryYear: 2026, status: '在籍', gpa: 3.5, creditsEarned: 29, educationLevel: '本科' },
@@ -188,7 +205,7 @@ export const students: Student[] = [
       activities: [],
       skillBadges: [{ name: '会计信息化', level: '中级', issuer: '能力测评平台', date: '2026-05' }],
     },
-    abilityRecognition: { totalSkills: 10, certifiedSkills: 4, competencyLevel: '中级', lastAssessment: '2026-06-15' },
+    abilityRecognition: { totalSkills: 10, certifiedSkills: 4, competencyLevel: '中级', lastAssessment: '2026-06-15', status: '已认定' },
   },
   { id: 's8', studentId: '2026010502', name: '赵军', gender: '男', idCard: '110101200806081234', departmentId: 'd3', majorId: 'm6', classId: 'c6', entryYear: 2026, status: '在籍', gpa: 3.3, creditsEarned: 27, educationLevel: '大专' },
   { id: 's9', studentId: '2025010701', name: '周敏', gender: '女', idCard: '110101200704091234', departmentId: 'd4', majorId: 'm7', classId: 'c7', entryYear: 2025, status: '在籍', gpa: 3.4, creditsEarned: 75, educationLevel: '本科' },
@@ -207,7 +224,7 @@ export const students: Student[] = [
         { name: '微服务架构', level: '中级', issuer: '能力测评平台', date: '2025-12' },
       ],
     },
-    abilityRecognition: { totalSkills: 15, certifiedSkills: 8, competencyLevel: '高级', lastAssessment: '2026-06-01' },
+    abilityRecognition: { totalSkills: 15, certifiedSkills: 8, competencyLevel: '高级', lastAssessment: '2026-06-01', status: '已认定' },
   },
   { id: 's12', studentId: '2024010101', name: '孙雪', gender: '女', idCard: '110101200702121234', departmentId: 'd1', majorId: 'm1', classId: 'c2', entryYear: 2024, status: '在籍', gpa: 3.6, creditsEarned: 98, educationLevel: '本科' },
   { id: 's13', studentId: '2026010104', name: '钱多多', gender: '男', idCard: '110101200808131234', departmentId: 'd1', majorId: 'm1', classId: 'c2', entryYear: 2026, status: '在籍', gpa: 2.9, creditsEarned: 24, educationLevel: '本科' },
@@ -1438,6 +1455,175 @@ export const trainingPrograms: TrainingProgram[] = [
     collaborators: ['张教授', '李副教授'],
     createdAt: '2025-07-17',
   },
+  // 新增学院培养方案（空壳）
+  {
+    id: 'tp-fl-2026',
+    name: '2026级英语专业人才培养方案',
+    code: 'TP-EN-2026',
+    majorId: 'm14',
+    entryYear: 2026,
+    level: '本科',
+    duration: 4,
+    totalCredits: 160,
+    requiredCredits: 115,
+    electiveCredits: 28,
+    practiceCredits: 17,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2026-09-01',
+    endDate: '2030-07-01',
+    creator: '陈教授',
+    collaborators: [],
+    createdAt: '2025-08-01',
+  },
+  {
+    id: 'tp-civ-2026',
+    name: '2026级土木工程专业人才培养方案',
+    code: 'TP-CIV-2026',
+    majorId: 'm16',
+    entryYear: 2026,
+    level: '本科',
+    duration: 4,
+    totalCredits: 165,
+    requiredCredits: 120,
+    electiveCredits: 25,
+    practiceCredits: 20,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2026-09-01',
+    endDate: '2030-07-01',
+    creator: '周教授',
+    collaborators: [],
+    createdAt: '2025-08-01',
+  },
+  {
+    id: 'tp-nur-2026',
+    name: '2026级护理学专业人才培养方案',
+    code: 'TP-NUR-2026',
+    majorId: 'm18',
+    entryYear: 2026,
+    level: '本科',
+    duration: 4,
+    totalCredits: 168,
+    requiredCredits: 125,
+    electiveCredits: 22,
+    practiceCredits: 21,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2026-09-01',
+    endDate: '2030-07-01',
+    creator: '吴教授',
+    collaborators: [],
+    createdAt: '2025-08-01',
+  },
+  {
+    id: 'tp-mus-2026',
+    name: '2026级音乐表演专业人才培养方案',
+    code: 'TP-MU-2026',
+    majorId: 'm20',
+    entryYear: 2026,
+    level: '本科',
+    duration: 4,
+    totalCredits: 155,
+    requiredCredits: 110,
+    electiveCredits: 30,
+    practiceCredits: 15,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2026-09-01',
+    endDate: '2030-07-01',
+    creator: '郑教授',
+    collaborators: [],
+    createdAt: '2025-08-01',
+  },
+  {
+    id: 'tp-pe-2026',
+    name: '2026级体育教育专业人才培养方案',
+    code: 'TP-PE-2026',
+    majorId: 'm21',
+    entryYear: 2026,
+    level: '本科',
+    duration: 4,
+    totalCredits: 158,
+    requiredCredits: 112,
+    electiveCredits: 26,
+    practiceCredits: 20,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2026-09-01',
+    endDate: '2030-07-01',
+    creator: '孙教授',
+    collaborators: [],
+    createdAt: '2025-08-01',
+  },
+  {
+    id: 'tp-fl-2025',
+    name: '2025级日语专业人才培养方案',
+    code: 'TP-JP-2025',
+    majorId: 'm15',
+    entryYear: 2025,
+    level: '本科',
+    duration: 4,
+    totalCredits: 160,
+    requiredCredits: 115,
+    electiveCredits: 28,
+    practiceCredits: 17,
+    courses: [],
+    practiceScenes: [],
+    status: 'published',
+    startDate: '2025-09-01',
+    endDate: '2029-07-01',
+    creator: '陈教授',
+    collaborators: [],
+    createdAt: '2024-08-01',
+  },
+  {
+    id: 'tp-bim-2027',
+    name: '2027级建筑信息模型技术专业人才培养方案',
+    code: 'TP-BIM-2027',
+    majorId: 'm17',
+    entryYear: 2027,
+    level: '大专',
+    duration: 3,
+    totalCredits: 130,
+    requiredCredits: 95,
+    electiveCredits: 18,
+    practiceCredits: 17,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2027-09-01',
+    endDate: '2030-07-01',
+    creator: '周教授',
+    collaborators: [],
+    createdAt: '2026-08-01',
+  },
+  {
+    id: 'tp-pha-2028',
+    name: '2028级药学专业人才培养方案',
+    code: 'TP-PHA-2028',
+    majorId: 'm19',
+    entryYear: 2028,
+    level: '大专',
+    duration: 3,
+    totalCredits: 125,
+    requiredCredits: 90,
+    electiveCredits: 20,
+    practiceCredits: 15,
+    courses: [],
+    practiceScenes: [],
+    status: 'draft',
+    startDate: '2028-09-01',
+    endDate: '2031-07-01',
+    creator: '吴教授',
+    collaborators: [],
+    createdAt: '2027-08-01',
+  },
 ]
 
 // ----- 6. 教学日历 -----
@@ -1496,7 +1682,7 @@ export interface TimetableEntry {
   facultyId: string
   venueId: string
   dayOfWeek: number
-  period: string
+  periods: string[]
   weeks: string
   nature: '理论' | '实践' | '场景教学' | '考试'
   externalPlatformId?: string
@@ -1504,17 +1690,31 @@ export interface TimetableEntry {
 }
 
 export const timetableEntries: TimetableEntry[] = [
-  { id: 'te1', classId: 'c1', courseName: '程序设计基础', facultyId: 'f1', venueId: 'v3', dayOfWeek: 1, period: '1-2节', weeks: '1-16周', nature: '理论' },
-  { id: 'te2', classId: 'c1', courseName: '高等数学', facultyId: 'f1', venueId: 'v1', dayOfWeek: 1, period: '3-4节', weeks: '1-16周', nature: '理论' },
-  { id: 'te3', classId: 'c1', courseName: '数据结构', facultyId: 'f2', venueId: 'v3', dayOfWeek: 2, period: '1-2节', weeks: '1-16周', nature: '理论' },
-  { id: 'te4', classId: 'c1', courseName: '软件工程实践', facultyId: 'f3', venueId: 'v4', dayOfWeek: 3, period: '5-8节', weeks: '5-16周', nature: '实践' },
-  { id: 'te5', classId: 'c3', courseName: 'Python程序设计', facultyId: 'f2', venueId: 'v3', dayOfWeek: 2, period: '3-4节', weeks: '1-16周', nature: '理论' },
-  { id: 'te6', classId: 'c3', courseName: '机器学习', facultyId: 'f2', venueId: 'v3', dayOfWeek: 4, period: '1-2节', weeks: '1-16周', nature: '理论' },
-  { id: 'te7', classId: 'c5', courseName: '机械设计基础', facultyId: 'f4', venueId: 'v5', dayOfWeek: 1, period: '5-8节', weeks: '1-14周', nature: '实践' },
-  { id: 'te8', classId: 'c6', courseName: '会计学基础', facultyId: 'f5', venueId: 'v1', dayOfWeek: 3, period: '1-2节', weeks: '1-16周', nature: '理论' },
-  { id: 'te9', classId: 'c7', courseName: '设计基础', facultyId: 'f6', venueId: 'v7', dayOfWeek: 2, period: '5-8节', weeks: '1-16周', nature: '实践' },
-  { id: 'te10', classId: 'c8', courseName: '汽车构造', facultyId: 'f7', venueId: 'v6', dayOfWeek: 4, period: '5-8节', weeks: '1-14周', nature: '实践' },
+  { id: 'te1', classId: 'c1', courseName: '程序设计基础', facultyId: 'f1', venueId: 'v3', dayOfWeek: 1, periods: ['上午 1', '上午 2'], weeks: '1-16周', nature: '理论' },
+  { id: 'te2', classId: 'c1', courseName: '高等数学', facultyId: 'f1', venueId: 'v1', dayOfWeek: 1, periods: ['上午 3', '上午 4'], weeks: '1-16周', nature: '理论' },
+  { id: 'te3', classId: 'c1', courseName: '数据结构', facultyId: 'f2', venueId: 'v3', dayOfWeek: 2, periods: ['上午 1', '上午 2'], weeks: '1-16周', nature: '理论' },
+  { id: 'te4', classId: 'c1', courseName: '软件工程实践', facultyId: 'f3', venueId: 'v4', dayOfWeek: 3, periods: ['下午 1', '下午 2', '下午 3', '下午 4'], weeks: '5-16周', nature: '实践' },
+  { id: 'te5', classId: 'c3', courseName: 'Python程序设计', facultyId: 'f2', venueId: 'v3', dayOfWeek: 2, periods: ['上午 3', '上午 4'], weeks: '1-16周', nature: '理论' },
+  { id: 'te6', classId: 'c3', courseName: '机器学习', facultyId: 'f2', venueId: 'v3', dayOfWeek: 4, periods: ['上午 1', '上午 2'], weeks: '1-16周', nature: '理论' },
+  { id: 'te7', classId: 'c5', courseName: '机械设计基础', facultyId: 'f4', venueId: 'v5', dayOfWeek: 1, periods: ['下午 1', '下午 2', '下午 3', '下午 4'], weeks: '1-14周', nature: '实践' },
+  { id: 'te8', classId: 'c6', courseName: '会计学基础', facultyId: 'f5', venueId: 'v1', dayOfWeek: 3, periods: ['上午 1', '上午 2'], weeks: '1-16周', nature: '理论' },
+  { id: 'te9', classId: 'c7', courseName: '设计基础', facultyId: 'f6', venueId: 'v7', dayOfWeek: 2, periods: ['下午 1', '下午 2', '下午 3', '下午 4'], weeks: '1-16周', nature: '实践' },
+  { id: 'te10', classId: 'c8', courseName: '汽车构造', facultyId: 'f7', venueId: 'v6', dayOfWeek: 4, periods: ['下午 1', '下午 2', '下午 3', '下午 4'], weeks: '1-14周', nature: '实践' },
 ]
+
+// 排课节次定义（与排课节次配置对应）
+export const allPeriods = [
+  '早自习 1',
+  '上午 1',
+  '上午 2',
+  '上午 3',
+  '上午 4',
+  '下午 1',
+  '下午 2',
+  '下午 3',
+  '下午 4',
+  '晚自习 1',
+] as const
 
 // ----- 8. 调课 -----
 
@@ -1562,90 +1762,132 @@ export const teachingProgress: TeachingProgress[] = [
   { id: 'tp8', courseName: '汽车构造', classId: 'c8', facultyName: '刘建国', plannedHours: 56, completedHours: 35, studentAvgCompletion: 75 },
 ]
 
-// ----- 10. 教学质量评价 -----
-
-export interface EvaluationTemplate {
-  id: string
-  name: string
-  subject: '学生评教' | '内部评价' | '专家评价' | '企业评价'
-  dimensions: string[]
-  method: '打分制' | '等级制' | '问卷打分'
-  status: 'draft' | 'published' | 'disabled'
-}
-
-export const evaluationTemplates: EvaluationTemplate[] = [
-  { id: 'et1', name: '期末学生评教模板', subject: '学生评教', dimensions: ['教学态度', '教学内容', '教学方法', '教学效果'], method: '打分制', status: 'published' },
-  { id: 'et2', name: '教师互评模板', subject: '内部评价', dimensions: ['教学态度', '教学内容', '教学方法', '教学效果'], method: '打分制', status: 'published' },
-  { id: 'et3', name: '专家听课评价表', subject: '专家评价', dimensions: ['教学态度', '教学内容', '教学方法', '教学效果', '能力达成'], method: '等级制', status: 'published' },
-  { id: 'et4', name: '企业实践指导评价', subject: '企业评价', dimensions: ['企业实践指导', '能力达成'], method: '打分制', status: 'published' },
-]
-
-export interface EvaluationActivity {
-  id: string
-  name: string
-  termId: string
-  templateId: string
-  scope: string
-  startTime: string
-  endTime: string
-  status: 'not_started' | 'active' | 'ended'
-  trainingProgramId?: string
-}
-
-export const evaluationActivities: EvaluationActivity[] = [
-  { id: 'ea1', name: '2026-2027第一学期期末学生评教', termId: 't1', templateId: 'et1', trainingProgramId: 'tp1', scope: '全校', startTime: '2026-12-15', endTime: '2026-12-25', status: 'active' },
-  { id: 'ea2', name: '2026-2027第一学期教师互评', termId: 't1', templateId: 'et2', trainingProgramId: 'tp1', scope: '全校', startTime: '2026-11-01', endTime: '2026-11-15', status: 'ended' },
-]
-
-export interface EvaluationRecord {
-  id: string
-  activityId: string
-  evaluatorName: string
-  evaluatorRole: string
-  evaluateeName: string
-  evaluateeType: string
-  scores: Record<string, number>
-  totalScore: number
-  comment?: string
-  courseVersion?: string
-  submittedAt: string
-}
-
-export const evaluationRecords: EvaluationRecord[] = [
-  { id: 'er1', activityId: 'ea1', evaluatorName: '李明', evaluatorRole: '学生', evaluateeName: '周建国', evaluateeType: '教师', scores: { '教学态度': 5, '教学内容': 4, '教学方法': 5, '教学效果': 4 }, totalScore: 4.5, comment: '讲解清晰，案例丰富', courseVersion: 'v2.1', submittedAt: '2026-12-16' },
-  { id: 'er2', activityId: 'ea1', evaluatorName: '王芳', evaluatorRole: '学生', evaluateeName: '周建国', evaluateeType: '教师', scores: { '教学态度': 5, '教学内容': 5, '教学方法': 4, '教学效果': 5 }, totalScore: 4.75, courseVersion: 'v2.1', submittedAt: '2026-12-17' },
-  { id: 'er3', activityId: 'ea2', evaluatorName: '吴晓敏', evaluatorRole: '教师', evaluateeName: '周建国', evaluateeType: '教师', scores: { '教学态度': 5, '教学内容': 5, '教学方法': 5, '教学效果': 4 }, totalScore: 4.75, comment: '课堂组织能力强', courseVersion: 'v2.1', submittedAt: '2026-11-05' },
-]
-
 // ----- 11. 成绩认定 -----
 
 export type GradeType = '平时' | '期中' | '期末' | '实践' | '总评' | '补考' | '重修'
 export type GradeStatus = '待确认' | '待审核' | '待认定' | '已认定' | '已发布'
+export type ApplyType = '课程替代' | '校外成绩认定' | '补考' | '重修' | '学分兑换' | '缓考'
+
+export interface AuditRecord {
+  step: number
+  role: string
+  action: '提交' | '确认' | '送审' | '审核通过' | '审核不通过' | '退回' | '认定' | '发布'
+  operator: string
+  date: string
+  comment?: string
+}
 
 export interface GradeRecord {
   id: string
   studentId: string
   courseName: string
   gradeType: GradeType
+  applyType: ApplyType
   rawScore: number
   recognizedScore: number
   credits: number
   gpa: number
   status: GradeStatus
   termId: string
+  originalCourse?: string
+  targetCourse?: string
+  applyDate: string
+  auditHistory: AuditRecord[]
 }
 
 export const gradeRecords: GradeRecord[] = [
-  { id: 'g1', studentId: 's1', courseName: '程序设计基础', gradeType: '平时', rawScore: 85, recognizedScore: 85, credits: 4, gpa: 3.5, status: '已发布', termId: 't2' },
-  { id: 'g2', studentId: 's1', courseName: '程序设计基础', gradeType: '期末', rawScore: 88, recognizedScore: 88, credits: 4, gpa: 3.7, status: '已发布', termId: 't2' },
-  { id: 'g3', studentId: 's1', courseName: '程序设计基础', gradeType: '总评', rawScore: 87, recognizedScore: 87, credits: 4, gpa: 3.7, status: '已发布', termId: 't2' },
-  { id: 'g4', studentId: 's2', courseName: '数据结构', gradeType: '平时', rawScore: 92, recognizedScore: 92, credits: 4, gpa: 4.0, status: '已发布', termId: 't2' },
-  { id: 'g5', studentId: 's5', courseName: '计算机网络', gradeType: '平时', rawScore: 78, recognizedScore: 78, credits: 3, gpa: 3.0, status: '已认定', termId: 't2' },
-  { id: 'g6', studentId: 's5', courseName: '计算机网络', gradeType: '期末', rawScore: 82, recognizedScore: 82, credits: 3, gpa: 3.3, status: '待审核', termId: 't2' },
-  { id: 'g7', studentId: 's6', courseName: '机械设计基础', gradeType: '总评', rawScore: 75, recognizedScore: 75, credits: 4, gpa: 2.7, status: '待确认', termId: 't2' },
-  { id: 'g8', studentId: 's7', courseName: '会计学基础', gradeType: '平时', rawScore: 95, recognizedScore: 95, credits: 4, gpa: 4.0, status: '已发布', termId: 't1' },
-  { id: 'g9', studentId: 's10', courseName: '汽车构造', gradeType: '总评', rawScore: 68, recognizedScore: 68, credits: 4, gpa: 2.0, status: '待确认', termId: 't1' },
-  { id: 'g10', studentId: 's12', courseName: '数据结构', gradeType: '期末', rawScore: 90, recognizedScore: 90, credits: 4, gpa: 4.0, status: '已发布', termId: 't2' },
+  { id: 'g1', studentId: 's1', courseName: '程序设计基础', gradeType: '平时', applyType: '课程替代', rawScore: 85, recognizedScore: 85, credits: 4, gpa: 3.5, status: '已发布', termId: 't2', originalCourse: 'C语言程序设计', targetCourse: '程序设计基础', applyDate: '2026-05-10', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '李明', date: '2026-05-10', comment: '申请课程替代认定' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '周秘书', date: '2026-05-12', comment: '信息核对无误' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '周秘书', date: '2026-05-12' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '张院长', date: '2026-05-15', comment: '同意认定' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-05-18', comment: '予以认定' },
+    { step: 6, role: '教务处', action: '发布', operator: '李处长', date: '2026-05-20' },
+  ]},
+  { id: 'g2', studentId: 's1', courseName: '程序设计基础', gradeType: '期末', applyType: '课程替代', rawScore: 88, recognizedScore: 88, credits: 4, gpa: 3.7, status: '已发布', termId: 't2', originalCourse: 'C语言程序设计', targetCourse: '程序设计基础', applyDate: '2026-05-10', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '李明', date: '2026-05-10' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '周秘书', date: '2026-05-12' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '周秘书', date: '2026-05-12' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '张院长', date: '2026-05-15' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-05-18' },
+    { step: 6, role: '教务处', action: '发布', operator: '李处长', date: '2026-05-20' },
+  ]},
+  { id: 'g3', studentId: 's1', courseName: '程序设计基础', gradeType: '总评', applyType: '课程替代', rawScore: 87, recognizedScore: 87, credits: 4, gpa: 3.7, status: '已发布', termId: 't2', originalCourse: 'C语言程序设计', targetCourse: '程序设计基础', applyDate: '2026-05-10', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '李明', date: '2026-05-10' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '周秘书', date: '2026-05-12' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '周秘书', date: '2026-05-12' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '张院长', date: '2026-05-15' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-05-18' },
+    { step: 6, role: '教务处', action: '发布', operator: '李处长', date: '2026-05-20' },
+  ]},
+  { id: 'g4', studentId: 's2', courseName: '数据结构', gradeType: '平时', applyType: '校外成绩认定', rawScore: 92, recognizedScore: 92, credits: 4, gpa: 4.0, status: '已发布', termId: 't2', originalCourse: '海外交换-数据结构', targetCourse: '数据结构', applyDate: '2026-04-20', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '王芳', date: '2026-04-20', comment: '海外交换成绩转换' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '吴秘书', date: '2026-04-22' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '吴秘书', date: '2026-04-22' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '张院长', date: '2026-04-25' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-04-28' },
+    { step: 6, role: '教务处', action: '发布', operator: '李处长', date: '2026-05-01' },
+  ]},
+  { id: 'g5', studentId: 's5', courseName: '计算机网络', gradeType: '平时', applyType: '补考', rawScore: 78, recognizedScore: 78, credits: 3, gpa: 3.0, status: '已认定', termId: 't2', applyDate: '2026-06-05', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '陈静', date: '2026-06-05' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '王秘书', date: '2026-06-06' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '王秘书', date: '2026-06-06' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '李院长', date: '2026-06-08' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-06-10' },
+  ]},
+  { id: 'g6', studentId: 's5', courseName: '计算机网络', gradeType: '期末', applyType: '补考', rawScore: 82, recognizedScore: 82, credits: 3, gpa: 3.3, status: '待审核', termId: 't2', applyDate: '2026-06-05', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '陈静', date: '2026-06-05' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '王秘书', date: '2026-06-06' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '王秘书', date: '2026-06-06' },
+  ]},
+  { id: 'g7', studentId: 's6', courseName: '机械设计基础', gradeType: '总评', applyType: '重修', rawScore: 75, recognizedScore: 75, credits: 4, gpa: 2.7, status: '待确认', termId: 't2', applyDate: '2026-06-12', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '杨强', date: '2026-06-12', comment: '重修成绩认定申请' },
+  ]},
+  { id: 'g8', studentId: 's7', courseName: '会计学基础', gradeType: '平时', applyType: '课程替代', rawScore: 95, recognizedScore: 95, credits: 4, gpa: 4.0, status: '已发布', termId: 't1', originalCourse: '基础会计', targetCourse: '会计学基础', applyDate: '2026-03-15', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '黄丽', date: '2026-03-15' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '张秘书', date: '2026-03-16' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '张秘书', date: '2026-03-16' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '王院长', date: '2026-03-18' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-03-20' },
+    { step: 6, role: '教务处', action: '发布', operator: '李处长', date: '2026-03-22' },
+  ]},
+  { id: 'g9', studentId: 's10', courseName: '汽车构造', gradeType: '总评', applyType: '缓考', rawScore: 68, recognizedScore: 68, credits: 4, gpa: 2.0, status: '待确认', termId: 't1', applyDate: '2026-06-01', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '吴磊', date: '2026-06-01', comment: '因病缓考成绩认定' },
+  ]},
+  { id: 'g10', studentId: 's12', courseName: '数据结构', gradeType: '期末', applyType: '学分兑换', rawScore: 90, recognizedScore: 90, credits: 4, gpa: 4.0, status: '已发布', termId: 't2', originalCourse: '慕课-数据结构', targetCourse: '数据结构', applyDate: '2026-05-01', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '孙雪', date: '2026-05-01', comment: '学分银行兑换' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '吴秘书', date: '2026-05-03' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '吴秘书', date: '2026-05-03' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '张院长', date: '2026-05-05' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-05-08' },
+    { step: 6, role: '教务处', action: '发布', operator: '李处长', date: '2026-05-10' },
+  ]},
+  { id: 'g11', studentId: 's3', courseName: '高等数学', gradeType: '总评', applyType: '补考', rawScore: 72, recognizedScore: 72, credits: 5, gpa: 2.7, status: '待审核', termId: 't2', applyDate: '2026-06-08', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '张伟', date: '2026-06-08' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '周秘书', date: '2026-06-09' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '周秘书', date: '2026-06-09' },
+  ]},
+  { id: 'g12', studentId: 's4', courseName: '人工智能导论', gradeType: '平时', applyType: '校外成绩认定', rawScore: 88, recognizedScore: 88, credits: 3, gpa: 3.7, status: '待认定', termId: 't2', originalCourse: '企业实训-AI基础', targetCourse: '人工智能导论', applyDate: '2026-05-20', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '刘洋', date: '2026-05-20', comment: '企业实训成绩转换' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '郑秘书', date: '2026-05-21' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '郑秘书', date: '2026-05-21' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '张院长', date: '2026-05-23' },
+  ]},
+  { id: 'g13', studentId: 's13', courseName: '软件工程', gradeType: '期末', applyType: '重修', rawScore: 80, recognizedScore: 80, credits: 4, gpa: 3.3, status: '待确认', termId: 't2', applyDate: '2026-06-10', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '钱多多', date: '2026-06-10' },
+  ]},
+  { id: 'g14', studentId: 's9', courseName: '视觉设计', gradeType: '总评', applyType: '课程替代', rawScore: 86, recognizedScore: 86, credits: 3, gpa: 3.5, status: '已认定', termId: 't1', originalCourse: '平面设计基础', targetCourse: '视觉设计', applyDate: '2026-04-10', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '周敏', date: '2026-04-10' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '赵秘书', date: '2026-04-11' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '赵秘书', date: '2026-04-11' },
+    { step: 4, role: '学院审核', action: '审核通过', operator: '赵院长', date: '2026-04-13' },
+    { step: 5, role: '教务处', action: '认定', operator: '李处长', date: '2026-04-15' },
+  ]},
+  { id: 'g15', studentId: 's15', courseName: '市场营销', gradeType: '平时', applyType: '缓考', rawScore: 78, recognizedScore: 78, credits: 3, gpa: 3.0, status: '待审核', termId: 't2', applyDate: '2026-06-05', auditHistory: [
+    { step: 1, role: '学生', action: '提交', operator: '徐凯', date: '2026-06-05' },
+    { step: 2, role: '教学秘书', action: '确认', operator: '吴秘书', date: '2026-06-06' },
+    { step: 3, role: '教学秘书', action: '送审', operator: '吴秘书', date: '2026-06-06' },
+  ]},
 ]
 
 // ----- 12. 学历认定 -----
@@ -1664,14 +1906,46 @@ export interface DegreeRecognition {
   requiredTotal: number
   graduationDesignStatus: '合格' | '不合格'
   attendanceRate: number
+  scenePassed: number
+  sceneTotal: number
   degreeStatus: DegreeStatus
   badgeSynced: boolean
+  auditHistory: AuditRecord[]
 }
 
 export const degreeRecognitions: DegreeRecognition[] = [
-  { id: 'dr1', studentId: 's11', programId: 'tp1', totalCredits: 164, requiredCredits: 120, electiveCredits: 24, practiceCredits: 20, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 96, degreeStatus: '符合毕业条件', badgeSynced: true },
-  { id: 'dr2', studentId: 's5', programId: 'tp3', totalCredits: 78, requiredCredits: 95, electiveCredits: 12, practiceCredits: 8, requiredPassed: 22, requiredTotal: 28, graduationDesignStatus: '不合格', attendanceRate: 85, degreeStatus: '不符合毕业条件', badgeSynced: false },
-  { id: 'dr3', studentId: 's6', programId: 'tp1', totalCredits: 72, requiredCredits: 120, electiveCredits: 10, practiceCredits: 6, requiredPassed: 20, requiredTotal: 32, graduationDesignStatus: '不合格', attendanceRate: 78, degreeStatus: '不符合毕业条件', badgeSynced: false },
+  { id: 'dr1', studentId: 's11', programId: 'tp1', totalCredits: 164, requiredCredits: 120, electiveCredits: 24, practiceCredits: 20, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 96, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核通过，学分、必修课、毕设、出勤率、场景任务均达标' },
+    { step: 2, role: '院系初审', action: '审核通过', operator: '张院长', date: '2026-05-05', comment: '学生成绩合格，同意毕业' },
+    { step: 3, role: '教务处复审', action: '审核通过', operator: '李处长', date: '2026-05-10', comment: '复核通过，符合毕业条件' },
+  ]},
+  { id: 'dr2', studentId: 's5', programId: 'tp3', totalCredits: 78, requiredCredits: 95, electiveCredits: 12, practiceCredits: 8, requiredPassed: 22, requiredTotal: 28, graduationDesignStatus: '不合格', attendanceRate: 85, scenePassed: 6, sceneTotal: 10, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核未通过，学分未达标、毕设未通过、场景任务未达标' },
+  ]},
+  { id: 'dr3', studentId: 's6', programId: 'tp1', totalCredits: 72, requiredCredits: 120, electiveCredits: 10, practiceCredits: 6, requiredPassed: 20, requiredTotal: 32, graduationDesignStatus: '不合格', attendanceRate: 78, scenePassed: 5, sceneTotal: 10, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核未通过，学分严重不足、必修课未达标、毕设未通过、出勤率不足' },
+  ]},
+  { id: 'dr4', studentId: 's1', programId: 'tp1', totalCredits: 160, requiredCredits: 120, electiveCredits: 22, practiceCredits: 18, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 92, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核通过' },
+    { step: 2, role: '院系初审', action: '审核通过', operator: '张院长', date: '2026-05-05' },
+    { step: 3, role: '教务处复审', action: '审核通过', operator: '李处长', date: '2026-05-10' },
+  ]},
+  { id: 'dr5', studentId: 's2', programId: 'tp1', totalCredits: 158, requiredCredits: 120, electiveCredits: 20, practiceCredits: 18, requiredPassed: 44, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 90, scenePassed: 11, sceneTotal: 12, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核未通过，必修课差1门未合格，场景任务差1项未达标' },
+  ]},
+  { id: 'dr6', studentId: 's7', programId: 'tp4', totalCredits: 165, requiredCredits: 120, electiveCredits: 25, practiceCredits: 20, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 98, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核通过' },
+    { step: 2, role: '院系初审', action: '审核通过', operator: '王院长', date: '2026-05-05' },
+    { step: 3, role: '教务处复审', action: '审核通过', operator: '李处长', date: '2026-05-10' },
+  ]},
+  { id: 'dr7', studentId: 's8', programId: 'tp4', totalCredits: 70, requiredCredits: 120, electiveCredits: 15, practiceCredits: 10, requiredPassed: 25, requiredTotal: 40, graduationDesignStatus: '不合格', attendanceRate: 72, scenePassed: 4, sceneTotal: 10, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核未通过，学分严重不足、必修课未达标、毕设未通过、出勤率不足、场景任务未达标' },
+  ]},
+  { id: 'dr8', studentId: 's9', programId: 'tp2', totalCredits: 162, requiredCredits: 120, electiveCredits: 24, practiceCredits: 18, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 94, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
+    { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核通过' },
+    { step: 2, role: '院系初审', action: '审核通过', operator: '赵院长', date: '2026-05-05' },
+    { step: 3, role: '教务处复审', action: '审核通过', operator: '李处长', date: '2026-05-10' },
+  ]},
 ]
 
 // ----- 13. 教学成果 -----
@@ -1832,7 +2106,7 @@ export interface Task {
   enterpriseMentorId?: string
   enterpriseMentorName?: string
   dayOfWeek: number
-  period: string
+  periods: string[]
   weeks: string
   venueId: string
   venueName: string
@@ -1848,11 +2122,150 @@ export interface Task {
   progressSummary?: TaskProgressSummary
   gradeSummary?: TaskGradeSummary
   review?: TaskReview
+  classSessions?: TaskClassSession[]
+  studentGrades?: TaskStudentGrade[]
   createdAt: string
   updatedAt: string
   publishedAt?: string
   completedAt?: string
   archivedAt?: string
+  prepContent?: TaskPrepContent
+  evaluationConfig?: TaskEvaluationConfig
+}
+
+// ----- 备课内容（课前/课中/课后）-----
+
+export interface TaskPrepContent {
+  pre: {
+    objectives?: string
+    guidePlan?: string
+    previewQuestions?: string[]
+  }
+  in: {
+    coursewareResources?: TaskResource[]
+    quizQuestions?: string[]
+    discussionTopics?: string[]
+  }
+  post: {
+    homework?: string
+    quizQuestions?: string[]
+    extensionResources?: string[]
+  }
+}
+
+// ----- 测评配置 -----
+
+export interface TaskEvalPoint {
+  id: string
+  name: string
+  desc: string
+  weight: number
+  maxScore: number
+  scoringMethod?: 'score' | 'level' | 'rubric'
+  subType?: string
+  types?: string[]
+}
+
+export interface TaskReviewStep {
+  id: string
+  label: string
+  desc: string
+  enabled: boolean
+  subjectType: string | null
+  weight: number
+}
+
+export interface TaskPaperConfig {
+  paperId?: string
+  duration?: number
+  allowRetake?: boolean
+  maxRetakeCount?: number
+  shuffleQuestions?: boolean
+  showScoreAfterSubmit?: boolean
+  activationType?: 'manual' | 'scheduled' | 'immediate'
+  activationTime?: string
+}
+
+export interface TaskMaterialConfig {
+  requiresMaterial: boolean
+  estimatedDays?: number
+  formatRequirements?: string
+  venueResources?: string
+  allowResubmit?: boolean
+}
+
+export interface TaskQuestionBankConfig {
+  questionIds: string[]
+  randomCount?: number
+  difficultyDistribution?: string
+  timeLimit?: number
+  allowRepeat?: boolean
+  shuffleQuestions?: boolean
+  showScoreAfterSubmit?: boolean
+}
+
+export interface TaskQuizConfig {
+  questionIds: string[]
+  randomCount?: number
+  difficultyDistribution?: string
+  timeLimit?: number
+  allowRepeat?: boolean
+  shuffleQuestions?: boolean
+  showScoreAfterSubmit?: boolean
+}
+
+export interface TaskEvaluationConfig {
+  enabledMethods: string[]
+  evalPoints?: {
+    randomDraw?: TaskEvalPoint[]
+    review?: TaskEvalPoint[]
+    paper?: TaskEvalPoint[]
+    questionBank?: TaskEvalPoint[]
+    outcome?: TaskEvalPoint[]
+    homework?: TaskEvalPoint[]
+    quiz?: TaskEvalPoint[]
+  }
+  reviewSteps?: TaskReviewStep[]
+  paperConfig?: TaskPaperConfig
+  questionBankConfig?: TaskQuestionBankConfig
+  quizConfig?: TaskQuizConfig
+  outcomeMaterial?: TaskMaterialConfig
+  homeworkMaterial?: TaskMaterialConfig
+}
+
+// ----- 课堂记录（单次课堂教学的元数据）-----
+
+export interface TaskClassSession {
+  id: string
+  taskId: string
+  sessionNumber: number        // 第几次课
+  scheduledDate: string        // 计划上课日期
+  actualDate?: string          // 实际上课日期
+  status: 'scheduled' | 'held' | 'cancelled' | 'makeup'
+  attendanceCount: number      // 签到人数
+  absentStudentIds: string[]   // 缺勤学生ID
+  topic?: string               // 本节课主题
+  notes?: string               // 课堂小结/异常记录
+  resourcesUsed: string[]      // 使用的资源ID
+  createdAt: string
+}
+
+// ----- 学生成绩明细（挂载在 Task 上，从外部平台回流）-----
+
+export interface TaskStudentGrade {
+  studentId: string
+  studentName: string
+  components: {
+    type: 'usual' | 'midterm' | 'final' | 'practice' | 'total' | 'makeup' | 'retake'
+    typeLabel: string
+    score: number
+    maxScore: number
+    status: 'pending' | 'published'
+    source: 'course_platform' | 'scene_platform' | 'manual'
+    syncedAt?: string
+  }[]
+  totalScore?: number
+  totalStatus: 'pending' | 'published'
 }
 
 // ----- 学生端任务视角 -----
@@ -1864,7 +2277,7 @@ export interface StudentTaskView {
   type: TaskType
   status: 'published' | 'in_progress' | 'evaluating' | 'completed'
   dayOfWeek: number
-  period: string
+  periods: string[]
   weeks: string
   venueName: string
   facultyName: string
@@ -2008,18 +2421,18 @@ export const classSchedules: ClassSchedule[] = [
     weekPattern: 'all',
     supportsSingleDouble: false,
     periods: [
-      { id: 'cp-001', sequence: 0, timeSlot: 'morning', startTime: '07:30', endTime: '08:00', type: 'morning_self', name: '早自习' },
-      { id: 'cp-002', sequence: 1, timeSlot: 'morning', startTime: '08:00', endTime: '08:45', type: 'class', name: '第1节' },
-      { id: 'cp-003', sequence: 2, timeSlot: 'morning', startTime: '08:55', endTime: '09:40', type: 'class', name: '第2节' },
+      { id: 'cp-001', sequence: 0, timeSlot: 'morning', startTime: '07:30', endTime: '08:00', type: 'morning_self', name: '早自习 1' },
+      { id: 'cp-002', sequence: 1, timeSlot: 'morning', startTime: '08:00', endTime: '08:45', type: 'class', name: '上午 1' },
+      { id: 'cp-003', sequence: 2, timeSlot: 'morning', startTime: '08:55', endTime: '09:40', type: 'class', name: '上午 2' },
       { id: 'cp-004', sequence: 3, timeSlot: 'morning', startTime: '09:40', endTime: '10:10', type: 'break_big', name: '大课间' },
-      { id: 'cp-005', sequence: 4, timeSlot: 'morning', startTime: '10:10', endTime: '10:55', type: 'class', name: '第3节' },
-      { id: 'cp-006', sequence: 5, timeSlot: 'morning', startTime: '11:05', endTime: '11:50', type: 'class', name: '第4节' },
+      { id: 'cp-005', sequence: 4, timeSlot: 'morning', startTime: '10:10', endTime: '10:55', type: 'class', name: '上午 3' },
+      { id: 'cp-006', sequence: 5, timeSlot: 'morning', startTime: '11:05', endTime: '11:50', type: 'class', name: '上午 4' },
       { id: 'cp-007', sequence: 6, timeSlot: 'afternoon', startTime: '11:50', endTime: '14:00', type: 'lunch', name: '午休' },
-      { id: 'cp-008', sequence: 7, timeSlot: 'afternoon', startTime: '14:00', endTime: '14:45', type: 'class', name: '第5节' },
-      { id: 'cp-009', sequence: 8, timeSlot: 'afternoon', startTime: '14:55', endTime: '15:40', type: 'class', name: '第6节' },
-      { id: 'cp-010', sequence: 9, timeSlot: 'afternoon', startTime: '15:50', endTime: '16:35', type: 'class', name: '第7节' },
-      { id: 'cp-011', sequence: 10, timeSlot: 'afternoon', startTime: '16:45', endTime: '17:30', type: 'class', name: '第8节' },
-      { id: 'cp-012', sequence: 11, timeSlot: 'evening', startTime: '18:30', endTime: '20:00', type: 'evening', name: '晚自习' },
+      { id: 'cp-008', sequence: 7, timeSlot: 'afternoon', startTime: '14:00', endTime: '14:45', type: 'class', name: '下午 1' },
+      { id: 'cp-009', sequence: 8, timeSlot: 'afternoon', startTime: '14:55', endTime: '15:40', type: 'class', name: '下午 2' },
+      { id: 'cp-010', sequence: 9, timeSlot: 'afternoon', startTime: '15:50', endTime: '16:35', type: 'class', name: '下午 3' },
+      { id: 'cp-011', sequence: 10, timeSlot: 'afternoon', startTime: '16:45', endTime: '17:30', type: 'class', name: '下午 4' },
+      { id: 'cp-012', sequence: 11, timeSlot: 'evening', startTime: '18:30', endTime: '20:00', type: 'evening', name: '晚自习 1' },
     ],
   },
   {
@@ -2027,18 +2440,18 @@ export const classSchedules: ClassSchedule[] = [
     weekPattern: 'all',
     supportsSingleDouble: false,
     periods: [
-      { id: 'cp-c2-001', sequence: 0, timeSlot: 'morning', startTime: '07:30', endTime: '08:00', type: 'morning_self', name: '早自习' },
-      { id: 'cp-c2-002', sequence: 1, timeSlot: 'morning', startTime: '08:00', endTime: '08:45', type: 'class', name: '第1节' },
-      { id: 'cp-c2-003', sequence: 2, timeSlot: 'morning', startTime: '08:55', endTime: '09:40', type: 'class', name: '第2节' },
+      { id: 'cp-c2-001', sequence: 0, timeSlot: 'morning', startTime: '07:30', endTime: '08:00', type: 'morning_self', name: '早自习 1' },
+      { id: 'cp-c2-002', sequence: 1, timeSlot: 'morning', startTime: '08:00', endTime: '08:45', type: 'class', name: '上午 1' },
+      { id: 'cp-c2-003', sequence: 2, timeSlot: 'morning', startTime: '08:55', endTime: '09:40', type: 'class', name: '上午 2' },
       { id: 'cp-c2-004', sequence: 3, timeSlot: 'morning', startTime: '09:40', endTime: '10:10', type: 'break_big', name: '大课间' },
-      { id: 'cp-c2-005', sequence: 4, timeSlot: 'morning', startTime: '10:10', endTime: '10:55', type: 'class', name: '第3节' },
-      { id: 'cp-c2-006', sequence: 5, timeSlot: 'morning', startTime: '11:05', endTime: '11:50', type: 'class', name: '第4节' },
+      { id: 'cp-c2-005', sequence: 4, timeSlot: 'morning', startTime: '10:10', endTime: '10:55', type: 'class', name: '上午 3' },
+      { id: 'cp-c2-006', sequence: 5, timeSlot: 'morning', startTime: '11:05', endTime: '11:50', type: 'class', name: '上午 4' },
       { id: 'cp-c2-007', sequence: 6, timeSlot: 'afternoon', startTime: '11:50', endTime: '14:00', type: 'lunch', name: '午休' },
-      { id: 'cp-c2-008', sequence: 7, timeSlot: 'afternoon', startTime: '14:00', endTime: '14:45', type: 'class', name: '第5节' },
-      { id: 'cp-c2-009', sequence: 8, timeSlot: 'afternoon', startTime: '14:55', endTime: '15:40', type: 'class', name: '第6节' },
-      { id: 'cp-c2-010', sequence: 9, timeSlot: 'afternoon', startTime: '15:50', endTime: '16:35', type: 'class', name: '第7节' },
-      { id: 'cp-c2-011', sequence: 10, timeSlot: 'afternoon', startTime: '16:45', endTime: '17:30', type: 'class', name: '第8节' },
-      { id: 'cp-c2-012', sequence: 11, timeSlot: 'evening', startTime: '18:30', endTime: '20:00', type: 'evening', name: '晚自习' },
+      { id: 'cp-c2-008', sequence: 7, timeSlot: 'afternoon', startTime: '14:00', endTime: '14:45', type: 'class', name: '下午 1' },
+      { id: 'cp-c2-009', sequence: 8, timeSlot: 'afternoon', startTime: '14:55', endTime: '15:40', type: 'class', name: '下午 2' },
+      { id: 'cp-c2-010', sequence: 9, timeSlot: 'afternoon', startTime: '15:50', endTime: '16:35', type: 'class', name: '下午 3' },
+      { id: 'cp-c2-011', sequence: 10, timeSlot: 'afternoon', startTime: '16:45', endTime: '17:30', type: 'class', name: '下午 4' },
+      { id: 'cp-c2-012', sequence: 11, timeSlot: 'evening', startTime: '18:30', endTime: '20:00', type: 'evening', name: '晚自习 1' },
     ],
   },
   {
@@ -2046,18 +2459,18 @@ export const classSchedules: ClassSchedule[] = [
     weekPattern: 'all',
     supportsSingleDouble: false,
     periods: [
-      { id: 'cp-c3-001', sequence: 0, timeSlot: 'morning', startTime: '07:30', endTime: '08:00', type: 'morning_self', name: '早自习' },
-      { id: 'cp-c3-002', sequence: 1, timeSlot: 'morning', startTime: '08:00', endTime: '08:45', type: 'class', name: '第1节' },
-      { id: 'cp-c3-003', sequence: 2, timeSlot: 'morning', startTime: '08:55', endTime: '09:40', type: 'class', name: '第2节' },
+      { id: 'cp-c3-001', sequence: 0, timeSlot: 'morning', startTime: '07:30', endTime: '08:00', type: 'morning_self', name: '早自习 1' },
+      { id: 'cp-c3-002', sequence: 1, timeSlot: 'morning', startTime: '08:00', endTime: '08:45', type: 'class', name: '上午 1' },
+      { id: 'cp-c3-003', sequence: 2, timeSlot: 'morning', startTime: '08:55', endTime: '09:40', type: 'class', name: '上午 2' },
       { id: 'cp-c3-004', sequence: 3, timeSlot: 'morning', startTime: '09:40', endTime: '10:10', type: 'break_big', name: '大课间' },
-      { id: 'cp-c3-005', sequence: 4, timeSlot: 'morning', startTime: '10:10', endTime: '10:55', type: 'class', name: '第3节' },
-      { id: 'cp-c3-006', sequence: 5, timeSlot: 'morning', startTime: '11:05', endTime: '11:50', type: 'class', name: '第4节' },
+      { id: 'cp-c3-005', sequence: 4, timeSlot: 'morning', startTime: '10:10', endTime: '10:55', type: 'class', name: '上午 3' },
+      { id: 'cp-c3-006', sequence: 5, timeSlot: 'morning', startTime: '11:05', endTime: '11:50', type: 'class', name: '上午 4' },
       { id: 'cp-c3-007', sequence: 6, timeSlot: 'afternoon', startTime: '11:50', endTime: '14:00', type: 'lunch', name: '午休' },
-      { id: 'cp-c3-008', sequence: 7, timeSlot: 'afternoon', startTime: '14:00', endTime: '14:45', type: 'class', name: '第5节' },
-      { id: 'cp-c3-009', sequence: 8, timeSlot: 'afternoon', startTime: '14:55', endTime: '15:40', type: 'class', name: '第6节' },
-      { id: 'cp-c3-010', sequence: 9, timeSlot: 'afternoon', startTime: '15:50', endTime: '16:35', type: 'class', name: '第7节' },
-      { id: 'cp-c3-011', sequence: 10, timeSlot: 'afternoon', startTime: '16:45', endTime: '17:30', type: 'class', name: '第8节' },
-      { id: 'cp-c3-012', sequence: 11, timeSlot: 'evening', startTime: '18:30', endTime: '20:00', type: 'evening', name: '晚自习' },
+      { id: 'cp-c3-008', sequence: 7, timeSlot: 'afternoon', startTime: '14:00', endTime: '14:45', type: 'class', name: '下午 1' },
+      { id: 'cp-c3-009', sequence: 8, timeSlot: 'afternoon', startTime: '14:55', endTime: '15:40', type: 'class', name: '下午 2' },
+      { id: 'cp-c3-010', sequence: 9, timeSlot: 'afternoon', startTime: '15:50', endTime: '16:35', type: 'class', name: '下午 3' },
+      { id: 'cp-c3-011', sequence: 10, timeSlot: 'afternoon', startTime: '16:45', endTime: '17:30', type: 'class', name: '下午 4' },
+      { id: 'cp-c3-012', sequence: 11, timeSlot: 'evening', startTime: '18:30', endTime: '20:00', type: 'evening', name: '晚自习 1' },
     ],
   },
 ]
@@ -2094,7 +2507,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2126,9 +2539,122 @@ export const tasks: Task[] = [
       ],
       overallStatus: 'evaluating',
     },
+    classSessions: [
+      { id: 'cs-001', taskId: 'task-001', sessionNumber: 1, scheduledDate: '2026-09-01', actualDate: '2026-09-01', status: 'held', attendanceCount: 40, absentStudentIds: ['s3'], topic: '课程导论与Java环境搭建', notes: '课堂气氛活跃，学生参与度高', resourcesUsed: ['tr-001'], createdAt: '2026-09-01' },
+      { id: 'cs-002', taskId: 'task-001', sessionNumber: 2, scheduledDate: '2026-09-08', actualDate: '2026-09-08', status: 'held', attendanceCount: 41, absentStudentIds: [], topic: '变量与数据类型', notes: '', resourcesUsed: ['tr-001'], createdAt: '2026-09-08' },
+      { id: 'cs-003', taskId: 'task-001', sessionNumber: 3, scheduledDate: '2026-09-15', actualDate: '2026-09-15', status: 'held', attendanceCount: 39, absentStudentIds: ['s2', 's3'], topic: '控制结构', notes: '随堂测验完成率90%', resourcesUsed: ['tr-001'], createdAt: '2026-09-15' },
+      { id: 'cs-004', taskId: 'task-001', sessionNumber: 4, scheduledDate: '2026-09-22', actualDate: '2026-09-22', status: 'held', attendanceCount: 42, absentStudentIds: [], topic: '数组与字符串', notes: '', resourcesUsed: ['tr-001', 'tr-002'], createdAt: '2026-09-22' },
+      { id: 'cs-005', taskId: 'task-001', sessionNumber: 5, scheduledDate: '2026-09-29', status: 'scheduled', attendanceCount: 0, absentStudentIds: [], resourcesUsed: [], createdAt: '2026-09-29' },
+    ],
+    studentGrades: [
+      { studentId: 's1', studentName: '李明', components: [
+        { type: 'usual', typeLabel: '平时', score: 85, maxScore: 100, status: 'published', source: 'course_platform', syncedAt: '2026-10-15T08:00:00Z' },
+        { type: 'final', typeLabel: '期末', score: 88, maxScore: 100, status: 'pending', source: 'course_platform' },
+      ], totalScore: 87, totalStatus: 'pending' },
+      { studentId: 's2', studentName: '王芳', components: [
+        { type: 'usual', typeLabel: '平时', score: 92, maxScore: 100, status: 'published', source: 'course_platform', syncedAt: '2026-10-15T08:00:00Z' },
+        { type: 'final', typeLabel: '期末', score: 0, maxScore: 100, status: 'pending', source: 'course_platform' },
+      ], totalStatus: 'pending' },
+      { studentId: 's3', studentName: '张伟', components: [
+        { type: 'usual', typeLabel: '平时', score: 78, maxScore: 100, status: 'published', source: 'course_platform', syncedAt: '2026-10-15T08:00:00Z' },
+        { type: 'final', typeLabel: '期末', score: 0, maxScore: 100, status: 'pending', source: 'course_platform' },
+      ], totalStatus: 'pending' },
+    ],
     createdAt: '2026-08-15',
     updatedAt: '2026-10-15',
     publishedAt: '2026-08-25',
+    prepContent: {
+      pre: {
+        objectives: '1. 了解Java语言的发展历史与应用领域\n2. 掌握JDK的安装与环境变量配置\n3. 理解变量、数据类型与运算符的基本概念',
+        guidePlan: '通过导学案引导学生自主预习，阅读教材第1章内容，完成在线预习测验，观看Java环境搭建微课视频。',
+        previewQuestions: ['Java语言的主要特点有哪些？', '什么是JDK、JRE和JVM？', 'Java中的基本数据类型有哪些？'],
+      },
+      in: {
+        coursewareResources: [
+          { id: 'tr-p101', taskId: 'task-001', name: '第1章 Java语言概述.pptx', type: 'ppt', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-20', sortOrder: 1 },
+          { id: 'tr-p102', taskId: 'task-001', name: '第2章 变量与数据类型.pptx', type: 'ppt', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-21', sortOrder: 2 },
+          { id: 'tr-p103', taskId: 'task-001', name: 'Java环境搭建演示视频.mp4', type: 'video', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-22', sortOrder: 3 },
+        ],
+        quizQuestions: ['int和Integer的区别是什么？', '以下代码的输出结果是什么？'],
+        discussionTopics: ['Java与Python在实际开发中的选择', '面向对象编程的核心思想'],
+      },
+      post: {
+        homework: '完成教材P45 编程题 1-5，提交至课程平台代码仓库',
+        quizQuestions: ['课后巩固测验：变量与数据类型综合练习（共5题）'],
+        extensionResources: ['推荐阅读：《Thinking in Java》第一章', '拓展视频：Java内存模型入门'],
+      },
+    },
+    evaluationConfig: {
+      enabledMethods: ['paper', 'quiz', 'homework', 'question_bank', 'random_draw', 'review', 'outcome'],
+      evalPoints: {
+        paper: [
+          { id: 'ep-p101', name: '语法基础', desc: 'Java基本语法与数据类型', weight: 30, maxScore: 100, scoringMethod: 'score' },
+          { id: 'ep-p102', name: '程序设计能力', desc: '独立完成简单程序设计', weight: 40, maxScore: 100, scoringMethod: 'score' },
+          { id: 'ep-p103', name: '调试与排错', desc: '发现并修复程序中的错误', weight: 30, maxScore: 100, scoringMethod: 'score' },
+        ],
+        quiz: [
+          { id: 'ep-q101', name: '课堂反应', desc: '随堂测正确率', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+        homework: [
+          { id: 'ep-h101', name: '作业完成度', desc: '课后作业提交与质量', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+        questionBank: [
+          { id: 'ep-qb101', name: '题库抽测', desc: '从题库随机抽题测评', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+        randomDraw: [
+          { id: 'ep-rd-001', name: '现场反应', desc: '现场问答表现', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+        review: [
+          { id: 'ep-rev-001', name: '评审表现', desc: '现场评审综合表现', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+        outcome: [
+          { id: 'ep-out-001', name: '成果质量', desc: '成果评价综合质量', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+      },
+      paperConfig: {
+        paperId: 'paper-cs-001',
+        duration: 120,
+        allowRetake: true,
+        maxRetakeCount: 2,
+        shuffleQuestions: true,
+        showScoreAfterSubmit: true,
+        activationType: 'scheduled',
+        activationTime: '2026-12-01T14:00:00',
+      },
+      quizConfig: {
+        questionIds: ['q-cs-001', 'q-cs-002', 'q-cs-003'],
+        randomCount: 3,
+        timeLimit: 20,
+        allowRepeat: true,
+        shuffleQuestions: true,
+        showScoreAfterSubmit: true,
+      },
+      questionBankConfig: {
+        questionIds: ['qb-cs-001', 'qb-cs-002', 'qb-cs-003', 'qb-cs-004', 'qb-cs-005'],
+        randomCount: 10,
+        difficultyDistribution: '简单40% / 中等40% / 困难20%',
+        timeLimit: 30,
+        allowRepeat: false,
+        shuffleQuestions: true,
+        showScoreAfterSubmit: true,
+      },
+      homeworkMaterial: {
+        requiresMaterial: true,
+        estimatedDays: 5,
+        formatRequirements: '源代码文件(.java) + 实验报告(.pdf)',
+        allowResubmit: true,
+      },
+      reviewSteps: [
+        { id: 'rs-cs-001', label: '初评', desc: '由指导教师进行第一轮评审', enabled: true, subjectType: 'teacher', weight: 50 },
+        { id: 'rs-cs-002', label: '复评', desc: '由专家组进行第二轮复核', enabled: true, subjectType: 'teacher', weight: 50 },
+      ],
+      outcomeMaterial: {
+        requiresMaterial: true,
+        estimatedDays: 7,
+        formatRequirements: '项目成果报告(.pdf) + 演示视频(.mp4)',
+        allowResubmit: false,
+      },
+    },
   },
   {
     id: 'task-002',
@@ -2146,7 +2672,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 1,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2166,6 +2692,65 @@ export const tasks: Task[] = [
     createdAt: '2026-08-15',
     updatedAt: '2026-10-15',
     publishedAt: '2026-08-25',
+    prepContent: {
+      pre: {
+        objectives: '1. 理解函数极限的定义与性质\n2. 掌握极限的运算法则\n3. 能够运用极限求解基本问题',
+        guidePlan: '通过导学案引导学生自主预习，观看微课视频，完成预习测试题。',
+        previewQuestions: ['函数极限的定义是什么？', '极限的四则运算法则有哪些？', '无穷小量与无穷大量的关系？'],
+      },
+      in: {
+        coursewareResources: [
+          { id: 'tr-p001', taskId: 'task-002', name: '第5章 极限与连续.pptx', type: 'ppt', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-20', sortOrder: 1 },
+          { id: 'tr-p002', taskId: 'task-002', name: '极限计算演示视频.mp4', type: 'video', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-21', sortOrder: 2 },
+        ],
+        quizQuestions: ['lim(x→0) sinx/x = ?', '判断下列极限是否存在'],
+        discussionTopics: ['生活中的极限现象举例', '无穷小量在实际问题中的应用'],
+      },
+      post: {
+        homework: '完成教材P128 习题 1-10，提交至课程平台',
+        quizQuestions: ['课后巩固测验：极限综合练习（共5题）'],
+        extensionResources: ['推荐阅读：《数学分析》第三章', '拓展视频：洛必达法则进阶'],
+      },
+    },
+    evaluationConfig: {
+      enabledMethods: ['paper', 'quiz', 'homework'],
+      evalPoints: {
+        paper: [
+          { id: 'ep-p001', name: '基础知识掌握', desc: '考察函数极限基本概念', weight: 40, maxScore: 100, scoringMethod: 'score' },
+          { id: 'ep-p002', name: '计算能力', desc: '极限计算准确性', weight: 35, maxScore: 100, scoringMethod: 'score' },
+          { id: 'ep-p003', name: '综合应用', desc: '运用极限解决实际问题', weight: 25, maxScore: 100, scoringMethod: 'score' },
+        ],
+        quiz: [
+          { id: 'ep-q001', name: '课堂反应', desc: '随堂测正确率', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+        homework: [
+          { id: 'ep-h001', name: '作业完成度', desc: '课后作业提交与质量', weight: 100, maxScore: 100, scoringMethod: 'score' },
+        ],
+      },
+      paperConfig: {
+        paperId: 'paper-math-001',
+        duration: 90,
+        allowRetake: false,
+        shuffleQuestions: true,
+        showScoreAfterSubmit: true,
+        activationType: 'scheduled',
+        activationTime: '2026-11-01T09:00:00',
+      },
+      quizConfig: {
+        questionIds: ['q-001', 'q-002'],
+        randomCount: 2,
+        timeLimit: 15,
+        allowRepeat: false,
+        shuffleQuestions: true,
+        showScoreAfterSubmit: true,
+      },
+      homeworkMaterial: {
+        requiresMaterial: true,
+        estimatedDays: 3,
+        formatRequirements: 'PDF格式，手写扫描或电子文档均可',
+        allowResubmit: true,
+      },
+    },
   },
   {
     id: 'task-003',
@@ -2183,7 +2768,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 2,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2223,7 +2808,7 @@ export const tasks: Task[] = [
     enterpriseMentorId: 'f3',
     enterpriseMentorName: '王志强',
     dayOfWeek: 3,
-    period: '5-8节',
+    periods: ['下午 1', '下午 2', '下午 3', '下午 4'],
     weeks: '5-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -2298,6 +2883,11 @@ export const tasks: Task[] = [
       dataSource: 'scene_platform',
       lastSyncAt: '2026-10-15T08:00:00Z',
     },
+    classSessions: [
+      { id: 'cs-101', taskId: 'task-004', sessionNumber: 1, scheduledDate: '2026-10-08', actualDate: '2026-10-08', status: 'held', attendanceCount: 40, absentStudentIds: ['s3'], topic: '场景一：需求分析与原型设计', notes: '企业导师现场指导，学生分组完成需求文档', resourcesUsed: ['tr-005'], createdAt: '2026-10-08' },
+      { id: 'cs-102', taskId: 'task-004', sessionNumber: 2, scheduledDate: '2026-10-15', actualDate: '2026-10-15', status: 'held', attendanceCount: 41, absentStudentIds: ['s2'], topic: '场景二：系统架构设计', notes: '使用架构设计工具进行实战演练', resourcesUsed: ['tr-006'], createdAt: '2026-10-15' },
+      { id: 'cs-103', taskId: 'task-004', sessionNumber: 3, scheduledDate: '2026-10-22', status: 'scheduled', attendanceCount: 0, absentStudentIds: [], topic: '场景三：编码实现与测试', resourcesUsed: [], createdAt: '2026-10-22' },
+    ],
     createdAt: '2026-08-15',
     updatedAt: '2026-10-15',
     publishedAt: '2026-08-25',
@@ -2319,7 +2909,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 1,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -2344,7 +2934,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 1,
-    period: '7-8节',
+    periods: ['下午 3', '下午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2371,7 +2961,7 @@ export const tasks: Task[] = [
     facultyId: 'f8',
     facultyName: '陈秀英',
     dayOfWeek: 2,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2396,7 +2986,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 2,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2423,7 +3013,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 2,
-    period: '7-8节',
+    periods: ['下午 3', '下午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2450,7 +3040,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 3,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2475,7 +3065,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 3,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2500,7 +3090,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 3,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2527,7 +3117,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 3,
-    period: '7-8节',
+    periods: ['下午 3', '下午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2554,7 +3144,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 4,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2579,7 +3169,7 @@ export const tasks: Task[] = [
     facultyId: 'f10',
     facultyName: '郑雅琴',
     dayOfWeek: 4,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2604,7 +3194,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 4,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2631,7 +3221,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 4,
-    period: '7-8节',
+    periods: ['下午 3', '下午 4'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -2658,7 +3248,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 5,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2683,7 +3273,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 5,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2708,7 +3298,7 @@ export const tasks: Task[] = [
     facultyId: 'f10',
     facultyName: '郑雅琴',
     dayOfWeek: 5,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v8',
     venueName: 'A201 大阶梯教室',
@@ -2733,7 +3323,7 @@ export const tasks: Task[] = [
     facultyId: 'f8',
     facultyName: '陈秀英',
     dayOfWeek: 5,
-    period: '7-8节',
+    periods: ['下午 3', '下午 4'],
     weeks: '1-16周',
     venueId: 'v2',
     venueName: 'A102 普通教室',
@@ -2759,7 +3349,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2784,7 +3374,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 1,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2809,7 +3399,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 2,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2834,7 +3424,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 3,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -2861,7 +3451,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 5,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2887,7 +3477,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -2912,7 +3502,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 3,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2937,7 +3527,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 5,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -2965,7 +3555,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -2990,7 +3580,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 2,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3015,7 +3605,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 3,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -3041,7 +3631,7 @@ export const tasks: Task[] = [
     facultyId: 'f4',
     facultyName: '李红梅',
     dayOfWeek: 2,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v5',
     venueName: 'C101 机械实训基地',
@@ -3066,7 +3656,7 @@ export const tasks: Task[] = [
     facultyId: 'f4',
     facultyName: '李红梅',
     dayOfWeek: 3,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v5',
     venueName: 'C101 机械实训基地',
@@ -3091,7 +3681,7 @@ export const tasks: Task[] = [
     facultyId: 'f9',
     facultyName: '孙伟',
     dayOfWeek: 4,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v5',
     venueName: 'C101 机械实训基地',
@@ -3117,7 +3707,7 @@ export const tasks: Task[] = [
     facultyId: 'f5',
     facultyName: '张大伟',
     dayOfWeek: 1,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3142,7 +3732,7 @@ export const tasks: Task[] = [
     facultyId: 'f5',
     facultyName: '张大伟',
     dayOfWeek: 2,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3167,7 +3757,7 @@ export const tasks: Task[] = [
     facultyId: 'f8',
     facultyName: '陈秀英',
     dayOfWeek: 4,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3193,7 +3783,7 @@ export const tasks: Task[] = [
     facultyId: 'f6',
     facultyName: '赵丽华',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v7',
     venueName: 'D101 设计工作室',
@@ -3218,7 +3808,7 @@ export const tasks: Task[] = [
     facultyId: 'f6',
     facultyName: '赵丽华',
     dayOfWeek: 3,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v7',
     venueName: 'D101 设计工作室',
@@ -3243,7 +3833,7 @@ export const tasks: Task[] = [
     facultyId: 'f6',
     facultyName: '赵丽华',
     dayOfWeek: 5,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v7',
     venueName: 'D101 设计工作室',
@@ -3271,7 +3861,7 @@ export const tasks: Task[] = [
     facultyId: 'f7',
     facultyName: '刘建国',
     dayOfWeek: 1,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v6',
     venueName: 'C201 汽车实训车间',
@@ -3296,7 +3886,7 @@ export const tasks: Task[] = [
     facultyId: 'f7',
     facultyName: '刘建国',
     dayOfWeek: 2,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v6',
     venueName: 'C201 汽车实训车间',
@@ -3321,7 +3911,7 @@ export const tasks: Task[] = [
     facultyId: 'f7',
     facultyName: '刘建国',
     dayOfWeek: 3,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v6',
     venueName: 'C201 汽车实训车间',
@@ -3349,7 +3939,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3374,7 +3964,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 2,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -3399,7 +3989,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 4,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3424,7 +4014,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 5,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -3452,7 +4042,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 1,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3477,7 +4067,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 2,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3502,7 +4092,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 4,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3527,7 +4117,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 5,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3553,7 +4143,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 1,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3578,7 +4168,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 2,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3603,7 +4193,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 3,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3628,7 +4218,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 4,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3654,7 +4244,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 1,
-    period: '5-6节',
+    periods: ['下午 1', '下午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3679,7 +4269,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 2,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3704,7 +4294,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 3,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -3729,7 +4319,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 5,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -3757,7 +4347,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 2,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3792,7 +4382,7 @@ export const tasks: Task[] = [
     facultyId: 'f2',
     facultyName: '吴晓敏',
     dayOfWeek: 4,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -3818,7 +4408,7 @@ export const tasks: Task[] = [
     facultyId: 'f4',
     facultyName: '李红梅',
     dayOfWeek: 1,
-    period: '5-8节',
+    periods: ['下午 1', '下午 2', '下午 3', '下午 4'],
     weeks: '1-14周',
     venueId: 'v5',
     venueName: 'C101 机械实训基地',
@@ -3896,7 +4486,7 @@ export const tasks: Task[] = [
     facultyId: 'f5',
     facultyName: '张大伟',
     dayOfWeek: 3,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
@@ -3934,7 +4524,7 @@ export const tasks: Task[] = [
     facultyId: 'f6',
     facultyName: '赵丽华',
     dayOfWeek: 2,
-    period: '5-8节',
+    periods: ['下午 1', '下午 2', '下午 3', '下午 4'],
     weeks: '1-16周',
     venueId: 'v7',
     venueName: 'D101 设计工作室',
@@ -3996,7 +4586,7 @@ export const tasks: Task[] = [
     facultyId: 'f7',
     facultyName: '刘建国',
     dayOfWeek: 4,
-    period: '5-8节',
+    periods: ['下午 1', '下午 2', '下午 3', '下午 4'],
     weeks: '1-14周',
     venueId: 'v6',
     venueName: 'C201 汽车实训车间',
@@ -4058,7 +4648,7 @@ export const tasks: Task[] = [
     facultyId: 'f1',
     facultyName: '周建国',
     dayOfWeek: 3,
-    period: '1-2节',
+    periods: ['上午 1', '上午 2'],
     weeks: '1-16周',
     venueId: 'v3',
     venueName: 'B201 计算机机房',
@@ -4083,7 +4673,7 @@ export const tasks: Task[] = [
     facultyId: 'f3',
     facultyName: '王志强',
     dayOfWeek: 4,
-    period: '3-4节',
+    periods: ['上午 3', '上午 4'],
     weeks: '1-16周',
     venueId: 'v4',
     venueName: 'B301 网络实验室',
@@ -4227,3 +4817,145 @@ export const curriculumPracticePool: CurriculumItem[] = [
 
 // 已绑定的实践场景（初始为空）
 export const boundPractices: CurriculumItem[] = []
+
+
+// ==================== 学生能力档案管理模拟数据 ====================
+
+export const MOCK_STUDENTS = [
+  { name: '张三', id: '2021001', className: '2021级全栈开发1班' },
+  { name: '李四', id: '2021002', className: '2021级全栈开发1班' },
+  { name: '王五', id: '2021003', className: '2021级后端开发1班' },
+  { name: '赵六', id: '2021004', className: '2021级前端开发1班' },
+  { name: '孙七', id: '2021005', className: '2021级全栈开发1班' },
+  { name: '周八', id: '2021006', className: '2021级后端开发1班' },
+  { name: '吴九', id: '2021007', className: '2021级前端开发1班' },
+  { name: '郑十', id: '2021008', className: '2021级全栈开发1班' },
+  { name: '钱十一', id: '2021009', className: '2021级后端开发1班' },
+  { name: '冯十二', id: '2021010', className: '2021级前端开发1班' },
+  { name: '陈十三', id: '2021011', className: '2021级全栈开发1班' },
+  { name: '褚十四', id: '2021012', className: '2021级后端开发1班' },
+  { name: '卫十五', id: '2021013', className: '2021级前端开发1班' },
+  { name: '蒋十六', id: '2021014', className: '2021级全栈开发1班' },
+  { name: '沈十七', id: '2021015', className: '2021级后端开发1班' },
+  { name: '韩十八', id: '2021016', className: '2021级前端开发1班' },
+  { name: '杨十九', id: '2021017', className: '2021级全栈开发1班' },
+  { name: '朱二十', id: '2021018', className: '2021级后端开发1班' },
+  { name: '秦二十一', id: '2021019', className: '2021级前端开发1班' },
+  { name: '尤二十二', id: '2021020', className: '2021级全栈开发1班' },
+]
+
+export const mockStudentAbilityArchives: import('@/lib/types').StudentAbilityArchive[] = [
+  {
+    id: 'sp-arch-1',
+    studentName: '张三',
+    studentId: '2021001',
+    className: '2021级全栈开发1班',
+    materialType: 'certificate',
+    materialName: 'AWS云从业者认证',
+    issuingOrg: 'Amazon Web Services',
+    obtainDate: new Date('2024-01-15'),
+    auditStatus: 'approved',
+    convertedCredit: 1.5,
+    direction: 'positive',
+    isVisible: true,
+    createdAt: new Date('2024-01-20'),
+    level: '国际认证',
+  },
+  {
+    id: 'sp-arch-2',
+    studentName: '张三',
+    studentId: '2021001',
+    className: '2021级全栈开发1班',
+    materialType: 'competition',
+    materialName: '全国大学生程序设计竞赛金奖',
+    issuingOrg: '中国计算机学会',
+    obtainDate: new Date('2023-11-10'),
+    auditStatus: 'approved',
+    convertedCredit: 2.0,
+    direction: 'positive',
+    isVisible: true,
+    createdAt: new Date('2023-11-15'),
+    level: '国家级一等奖',
+  },
+  {
+    id: 'sp-arch-3',
+    studentName: '李四',
+    studentId: '2021002',
+    className: '2021级全栈开发1班',
+    materialType: 'internship',
+    materialName: '字节跳动前端开发实习证明',
+    issuingOrg: '字节跳动',
+    obtainDate: new Date('2024-02-01'),
+    auditStatus: 'pending',
+    convertedCredit: 0,
+    direction: 'positive',
+    isVisible: true,
+    createdAt: new Date('2024-02-05'),
+    level: '知名企业3个月以上',
+  },
+  {
+    id: 'sp-arch-4',
+    studentName: '王五',
+    studentId: '2021003',
+    className: '2021级后端开发1班',
+    materialType: 'skill',
+    materialName: 'Redis高级应用培训证书',
+    issuingOrg: '某培训机构',
+    obtainDate: new Date('2024-03-10'),
+    auditStatus: 'rejected',
+    auditRemark: '培训机构不在认证白名单中',
+    convertedCredit: 0,
+    direction: 'positive',
+    isVisible: true,
+    createdAt: new Date('2024-03-12'),
+    level: '培训合格',
+  },
+  {
+    id: 'sp-arch-5',
+    studentName: '赵六',
+    studentId: '2021004',
+    className: '2021级前端开发1班',
+    materialType: 'activity',
+    materialName: '校级优秀志愿者',
+    issuingOrg: '校团委',
+    obtainDate: new Date('2023-09-01'),
+    auditStatus: 'approved',
+    convertedCredit: 0.5,
+    direction: 'positive',
+    isVisible: true,
+    createdAt: new Date('2023-09-05'),
+    level: '校级优秀志愿者',
+  },
+  {
+    id: 'sp-arch-6',
+    studentName: '赵六',
+    studentId: '2021004',
+    className: '2021级前端开发1班',
+    materialType: 'certificate',
+    materialName: '考试违纪记录',
+    issuingOrg: '教务处',
+    obtainDate: new Date('2023-12-15'),
+    auditStatus: 'approved',
+    convertedCredit: -1.0,
+    direction: 'negative',
+    isVisible: false,
+    createdAt: new Date('2023-12-16'),
+  },
+]
+
+export const mockCreditConversionRules: import('@/lib/types').CreditConversionRule[] = [
+  { id: 'ccr-1', materialType: 'certificate', level: '国家级', credit: 2.0 },
+  { id: 'ccr-2', materialType: 'certificate', level: '省级', credit: 1.5 },
+  { id: 'ccr-3', materialType: 'certificate', level: '校级', credit: 0.5 },
+  { id: 'ccr-4', materialType: 'competition', level: '国家级一等奖', credit: 2.0 },
+  { id: 'ccr-5', materialType: 'competition', level: '国家级二等奖', credit: 1.5 },
+  { id: 'ccr-6', materialType: 'competition', level: '省级一等奖', credit: 1.0 },
+  { id: 'ccr-7', materialType: 'internship', level: '知名企业3个月以上', credit: 1.5 },
+  { id: 'ccr-8', materialType: 'activity', level: '校级优秀志愿者', credit: 0.5 },
+]
+
+export const mockArchiveVersions: import('@/lib/types').ArchiveVersion[] = [
+  { id: 'ver-1', archiveId: 'sp-arch-1', version: 1, changedBy: '张三', changeSummary: '上传开题报告v1', createdAt: new Date('2024-03-10') },
+  { id: 'ver-2', archiveId: 'sp-arch-1', version: 2, changedBy: '张教授', changeSummary: '批注修改意见', createdAt: new Date('2024-03-12') },
+  { id: 'ver-3', archiveId: 'sp-arch-1', version: 3, changedBy: '张三', changeSummary: '上传开题报告v2', createdAt: new Date('2024-03-15') },
+]

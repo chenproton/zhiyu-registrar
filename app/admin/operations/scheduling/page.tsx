@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,6 +66,7 @@ import {
   Download,
   Search,
   X,
+  Save,
 } from 'lucide-react'
 import {
   classSchedules,
@@ -79,6 +80,7 @@ import {
   teachingPlans,
   trainingPrograms,
   tasks,
+  allPeriods,
   type Task,
   type ClassSchedule,
   type ClassPeriod,
@@ -90,11 +92,11 @@ import {
 // 步骤导航组件
 // ============================================
 const steps = [
-  { id: 'schedule', label: '班级作息', icon: Clock },
-  { id: 'courses', label: '课程管理', icon: BookOpen },
-  { id: 'plan', label: '教学计划', icon: Layers },
-  { id: 'orchestration', label: '任务编排', icon: Settings2 },
-  { id: 'export', label: '课表导出', icon: Download },
+  { id: 'schedule', label: '排课节次配置', icon: Clock },
+  { id: 'courses', label: '关联课程/实践场景', icon: BookOpen },
+  { id: 'plan', label: '教学计划调整', icon: Layers },
+  { id: 'orchestration', label: '学习任务编排', icon: Settings2 },
+  { id: 'export', label: '排课课表导出', icon: Download },
 ]
 
 function StepNav({
@@ -157,26 +159,29 @@ function StepNav({
 // Step 4: 任务编排
 // ============================================
 const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-const periods = ['1-2节', '3-4节', '5-6节', '7-8节']
+
+function periodsOverlap(a: string[], b: string[]) {
+  return a.some((p) => b.includes(p))
+}
 
 function detectConflicts(
   task: Task,
   allTasks: Task[],
   newDayOfWeek?: number,
-  newPeriod?: string,
+  newPeriods?: string[],
   newVenueId?: string,
   newFacultyId?: string
 ) {
   const conflicts: { type: 'teacher' | 'venue' | 'class'; with: string; taskName: string }[] = []
   const targetDay = newDayOfWeek ?? task.dayOfWeek
-  const targetPeriod = newPeriod ?? task.period
+  const targetPeriods = newPeriods ?? task.periods
   const targetVenue = newVenueId ?? task.venueId
   const targetFaculty = newFacultyId ?? task.facultyId
   const targetClass = task.classId
 
   for (const t of allTasks) {
     if (t.id === task.id) continue
-    if (t.dayOfWeek !== targetDay || t.period !== targetPeriod) continue
+    if (t.dayOfWeek !== targetDay || !periodsOverlap(t.periods, targetPeriods)) continue
 
     if (t.facultyId === targetFaculty) {
       conflicts.push({ type: 'teacher', with: t.facultyName, taskName: t.courseName })
@@ -210,11 +215,11 @@ function ScheduleGrid({
           </div>
         ))}
       </div>
-      {periods.map((p) => (
+      {allPeriods.map((p) => (
         <div key={p} className="grid grid-cols-6 border-t">
           <div className="p-3 text-sm text-muted-foreground border-r bg-muted/30">{p}</div>
           {[1, 2, 3, 4, 5].map((d) => {
-            const task = taskList.find((e) => e.dayOfWeek === d && e.period === p)
+            const task = taskList.find((e) => e.dayOfWeek === d && e.periods.includes(p))
             const conflicts = task ? detectConflicts(task, allTasks) : []
             const hasConflict = conflicts.length > 0
             return (
@@ -594,7 +599,7 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
 
   const dayOptions = ['all', '1', '2', '3', '4', '5', '6', '7']
   const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-  const periods = ['1-2节', '3-4节', '5-6节', '7-8节']
+  const periods = allPeriods
 
   const days = selectedDay === 'all' ? [1, 2, 3, 4, 5, 6, 7] : [Number(selectedDay)]
 
@@ -641,7 +646,7 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
                       >
                         <div className="font-medium">{t.courseName}</div>
                         <div className="text-muted-foreground text-[10px]">
-                          {t.period} · {t.facultyName} · {t.venueName}
+                          {t.periods.join('、')} · {t.facultyName} · {t.venueName}
                         </div>
                       </div>
                     ))}
@@ -692,7 +697,7 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
                 </td>
                 {days.map((day) => {
                   const task = itemTasks.find(
-                    (t) => t.dayOfWeek === day && t.period === period
+                    (t) => t.dayOfWeek === day && t.periods.includes(period)
                   )
                   return (
                     <td key={day} className="border p-2 min-w-[120px] align-top">
@@ -826,11 +831,34 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
 // ============================================
 // 主页面
 // ============================================
+function getProgramIdFromUrl(): string | null {
+  if (typeof window === 'undefined') return null
+  const params = new URLSearchParams(window.location.search)
+  return params.get('programId')
+}
+
 export default function SchedulingCenterPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [selectedDept, setSelectedDept] = useState<string>('')
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
   const [selectedProgramId, setSelectedProgramId] = useState<string>('')
+
+  // 从 URL 参数自动选中培养方案
+  useEffect(() => {
+    const programId = getProgramIdFromUrl()
+    if (programId && !selectedProgramId) {
+      const program = trainingPrograms.find((tp) => tp.id === programId)
+      if (program) {
+        const major = majors.find((m) => m.id === program.majorId)
+        const grade = grades.find((g) => g.entryYear === program.entryYear)
+        if (major && grade) {
+          setSelectedDept(major.departmentId)
+          setSelectedGradeId(grade.id)
+          setSelectedProgramId(program.id)
+        }
+      }
+    }
+  }, [])
 
   const selectedProgram = trainingPrograms.find((tp) => tp.id === selectedProgramId)
   const selectedGrade = selectedProgram
@@ -858,18 +886,14 @@ export default function SchedulingCenterPage() {
         </div>
         {selectedProgram && (
           <div className="flex items-center gap-2">
-            {currentStep > 0 && (
-              <Button variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)}>
-                <ChevronLeft className="h-4 w-4 mr-1" />
-                上一步
-              </Button>
-            )}
-            {currentStep < steps.length - 1 && (
-              <Button size="sm" onClick={() => setCurrentStep(currentStep + 1)}>
-                下一步
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            )}
+            <Button variant="outline" size="sm" onClick={() => toast.success('已暂存为草稿')}>
+              <Save className="h-4 w-4 mr-1" />
+              暂存草稿
+            </Button>
+            <Button size="sm" onClick={() => toast.success('培养方案排课已保存')}>
+              <CheckCircle2 className="h-4 w-4 mr-1" />
+              保存培养方案排课
+            </Button>
           </div>
         )}
       </div>
