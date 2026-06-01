@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, MapPin, Wrench, CheckCircle2, Beaker } from 'lucide-react'
 import { venues } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -42,6 +42,54 @@ export default function ResourcesPage() {
         <Button onClick={() => setCreateVenueOpen(true)}><Plus className="h-4 w-4 mr-2" />新建场地</Button>
       </div>
 
+      {/* 统计卡片 */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">场地总数</p>
+              <p className="text-2xl font-bold">{venues.length}</p>
+            </div>
+            <div className="rounded-full p-2 bg-blue-500">
+              <MapPin className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">实训基地</p>
+              <p className="text-2xl font-bold">{venues.filter((v) => v.type === '实训基地').length}</p>
+            </div>
+            <div className="rounded-full p-2 bg-purple-500">
+              <Beaker className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">可用场地</p>
+              <p className="text-2xl font-bold">{venues.filter((v) => v.status === 'available').length}</p>
+            </div>
+            <div className="rounded-full p-2 bg-green-500">
+              <CheckCircle2 className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">智能设备</p>
+              <p className="text-2xl font-bold">{venues.reduce((sum, v) => sum + (v.digitalInfo?.smartDeviceCount || 0), 0)}</p>
+            </div>
+            <div className="rounded-full p-2 bg-amber-500">
+              <Wrench className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardContent className="pt-6">
           <Table>
@@ -58,12 +106,28 @@ export default function ResourcesPage() {
             </TableHeader>
             <TableBody>
               {venues.map((v) => (
-                <TableRow key={v.id}>
-                  <TableCell className="font-medium">{v.name}</TableCell>
-                  <TableCell>{v.type}</TableCell>
+                <TableRow key={v.id} className={v.type === '实训基地' ? 'bg-purple-50/30' : undefined}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {v.type === '实训基地' && <Beaker className="h-3.5 w-3.5 text-purple-600" />}
+                      {v.name}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={v.type === '实训基地' ? 'text-[10px] border-purple-300 text-purple-600' : 'text-[10px]'}>
+                      {v.type}
+                    </Badge>
+                  </TableCell>
                   <TableCell>{v.capacity}</TableCell>
                   <TableCell>{v.location}</TableCell>
-                  <TableCell>{v.facilities}</TableCell>
+                  <TableCell>
+                    <div className="text-xs">{v.facilities}</div>
+                    {v.digitalInfo && (
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        智能设备: {v.digitalInfo.smartDeviceCount} · 传感器: {v.digitalInfo.iotSensors.join('、')}
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={v.status === 'available' ? 'default' : v.status === 'maintenance' ? 'secondary' : 'destructive'}>
                       {v.status === 'available' ? '可用' : v.status === 'maintenance' ? '维修中' : '停用'}

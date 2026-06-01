@@ -46,6 +46,11 @@ import {
   ChevronUp,
   Play,
   AlertCircle,
+  Rocket,
+  RotateCcw,
+  Archive,
+  Send,
+  PenTool,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -54,6 +59,7 @@ import {
   students,
   venues,
   taskChangeLogs,
+  preparationTasks,
   type Task,
   type TaskClassSession,
   type TaskStudentGrade,
@@ -68,6 +74,7 @@ import EvaluationConfigContent from './_components/evaluation-config-dialog'
 import RichTextEditor from './_components/rich-text-editor'
 import StudentGradesPanel from './_components/student-grades-panel'
 import ClassroomManagementPanel from './_components/classroom-management-panel'
+import SceneSubTasksPanel from './_components/scene-subtasks-panel'
 
 const statusOrder: TaskStatus[] = ['draft', 'ready', 'published', 'in_progress', 'evaluating', 'completed', 'archived']
 
@@ -162,7 +169,8 @@ export default function TaskDetailPage() {
   const params = useParams()
   const id = params.id as string
 
-  const task = useMemo(() => tasks.find((t) => t.id === id), [id])
+  const originalTask = useMemo(() => tasks.find((t) => t.id === id), [id])
+  const [task, setTask] = useState<Task | undefined>(originalTask)
 
   const [activeTab, setActiveTab] = useState('basic')
   const [prepStage, setPrepStage] = useState<'pre' | 'in' | 'post'>('pre')
@@ -180,8 +188,9 @@ export default function TaskDetailPage() {
   const [evalConfig, setEvalConfig] = useState<TaskEvaluationConfig | undefined>(task?.evaluationConfig)
 
   useEffect(() => {
-    setEvalConfig(task?.evaluationConfig)
-  }, [task])
+    setTask(originalTask)
+    setEvalConfig(originalTask?.evaluationConfig)
+  }, [originalTask])
 
   if (!task) {
     return (
@@ -242,6 +251,77 @@ export default function TaskDetailPage() {
     toast.success('复盘已提交')
   }
 
+  // ============ 任务状态流转 ============
+  const prepTask = useMemo(() => preparationTasks.find((p) => p.taskId === task?.id), [task?.id])
+
+  const checkBasicInfo = () => {
+    if (!task) return false
+    return !!(task.name && task.courseName && task.className && task.facultyName && task.dayOfWeek !== undefined && task.venueName)
+  }
+
+  const checkPrepCompleted = () => {
+    return !!prepTask && prepTask.status === 'completed'
+  }
+
+  const checkAllSessionsHeld = () => {
+    if (!task?.classSessions) return false
+    return task.classSessions.length > 0 && task.classSessions.every((s) => s.status === 'held')
+  }
+
+  const checkGradesPublished = () => {
+    return task?.gradeSummary?.overallStatus === 'published'
+  }
+
+  const checkSceneSubTasksReady = () => {
+    if (task?.type !== 'scene') return true
+    const subs = task.sceneSubTasks || []
+    return subs.length > 0 && subs.every((s) => s.status !== 'planned')
+  }
+
+  const statusChecks: Record<TaskStatus, { label: string; check: () => boolean; hint: string }[]> = {
+    draft: [{ label: '基本信息完整', check: checkBasicInfo, hint: '请完善任务基本信息' }],
+    ready: [
+      { label: '备课已完成', check: checkPrepCompleted, hint: '请先完成备课' },
+      ...(task?.type === 'scene' ? [{ label: '子任务已就绪', check: checkSceneSubTasksReady, hint: '请确认所有子任务已非计划中状态' }] : []),
+    ],
+    published: [],
+    in_progress: [{ label: '全部课堂已上完', check: checkAllSessionsHeld, hint: '请先完成所有课堂记录' }],
+    evaluating: [{ label: '成绩已发布', check: checkGradesPublished, hint: '请先发布学生成绩' }],
+    completed: [],
+    archived: [],
+  }
+
+  const statusTransitions: Record<TaskStatus, { next: TaskStatus; label: string; icon: any }[]> = {
+    draft: [{ next: 'ready', label: '准备就绪', icon: CheckCircle2 }],
+    ready: [{ next: 'published', label: '发布任务', icon: Rocket }],
+    published: [{ next: 'in_progress', label: '开始上课', icon: Play }],
+    in_progress: [{ next: 'evaluating', label: '进入考核', icon: PenTool }],
+    evaluating: [{ next: 'completed', label: '完成任务', icon: CheckCircle2 }],
+    completed: [{ next: 'archived', label: '归档', icon: Archive }],
+    archived: [],
+  }
+
+  const handleStatusTransition = (nextStatus: TaskStatus) => {
+    if (!task) return
+    const checks = statusChecks[task.status]
+    const failed = checks.filter((c) => !c.check())
+    if (failed.length > 0) {
+      toast.error(`状态流转失败：${failed.map((f) => f.hint).join('；')}`)
+      return
+    }
+    setTask({ ...task, status: nextStatus, updatedAt: new Date().toISOString().split('T')[0] })
+    toast.success(`任务状态已更新为「${statusLabelMap[nextStatus]}」`)
+  }
+
+  const handleWithdraw = () => {
+    if (!task) return
+    setTask({ ...task, status: 'draft', updatedAt: new Date().toISOString().split('T')[0] })
+    toast.success('任务已撤回至草稿状态')
+  }
+
+  const currentChecks = task ? statusChecks[task.status] : []
+  const allChecksPassed = currentChecks.every((c) => c.check())
+
   const taskChangeLogsForTask = taskChangeLogs.filter((l) => l.taskId === task.id)
 
   const getScoreCell = (grade: TaskStudentGrade, type: string) => {
@@ -289,9 +369,55 @@ export default function TaskDetailPage() {
             <Badge variant={statusBadgeVariant(task.status)} className="text-sm px-3 py-1">
               {statusLabelMap[task.status]}
             </Badge>
-
+            {/* 状态流转按钮 */}
+            {statusTransitions[task.status]?.map((t) => {
+              const TransitionIcon = t.icon
+              const canTransition = allChecksPassed
+              return (
+                <Button
+                  key={t.next}
+                  size="sm"
+                  onClick={() => handleStatusTransition(t.next)}
+                  className="gap-1"
+                  disabled={!canTransition}
+                  variant={canTransition ? 'default' : 'outline'}
+                >
+                  <TransitionIcon className="h-4 w-4" />
+                  {canTransition ? t.label : `待检查 ${currentChecks.length - currentChecks.filter((c) => c.check()).length} 项`}
+                </Button>
+              )
+            })}
+            {task.status !== 'draft' && task.status !== 'archived' && (
+              <Button variant="outline" size="sm" onClick={handleWithdraw} className="gap-1 text-amber-600 border-amber-300 hover:bg-amber-50">
+                <RotateCcw className="h-4 w-4" />
+                撤回
+              </Button>
+            )}
           </div>
         </div>
+
+        {/* 状态流转条件检查 */}
+        {currentChecks.length > 0 && (
+          <div className={cn(
+            'flex items-center gap-3 rounded-lg border p-2.5 text-xs',
+            allChecksPassed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-amber-50 border-amber-200 text-amber-700'
+          )}>
+            {allChecksPassed ? (
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-amber-600 shrink-0" />
+            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-medium">{allChecksPassed ? '全部前置条件已满足，可以进行状态流转' : '前置条件检查：'}</span>
+              {!allChecksPassed && currentChecks.map((c, i) => (
+                <span key={i} className={cn('flex items-center gap-1', c.check() ? 'text-emerald-600' : 'text-amber-600')}>
+                  {c.check() ? <CheckCircle2 className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
+                  {c.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 任务信息网格卡片 */}
         <div className="grid gap-4 md:grid-cols-5">
@@ -479,42 +605,10 @@ export default function TaskDetailPage() {
           </Card>
 
           {task.sceneSubTasks && task.sceneSubTasks.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">场景子任务</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {task.sceneSubTasks.map((sub) => (
-                  <div key={sub.id} className="border rounded-lg p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{sub.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {sub.status === 'completed' ? '已完成' : sub.status === 'in_progress' ? '进行中' : '计划中'}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground grid grid-cols-2 md:grid-cols-4 gap-2">
-                      <div>负责教师: {sub.facultyName || '—'}</div>
-                      <div>企业导师: {sub.enterpriseMentorName || '—'}</div>
-                      <div>工位: {sub.workStationName || '—'}</div>
-                      <div>
-                        参与方式:{' '}
-                        {sub.mentorParticipationType === 'full'
-                          ? '全程'
-                          : sub.mentorParticipationType === 'partial'
-                            ? '部分'
-                            : '远程'}
-                      </div>
-                    </div>
-                    {sub.progress && (
-                      <div className="flex items-center gap-2">
-                        <Progress value={sub.progress.completionRate} className="h-1.5 flex-1" />
-                        <span className="text-xs text-muted-foreground w-10">{sub.progress.completionRate}%</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <SceneSubTasksPanel
+              subTasks={task.sceneSubTasks}
+              onUpdate={(updated) => setTask((prev) => prev ? { ...prev, sceneSubTasks: updated } : prev)}
+            />
           )}
 
           {taskChangeLogsForTask.length > 0 && (

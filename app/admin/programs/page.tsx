@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,7 +33,8 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, Eye, FileText, Building2, Users, UserPlus, ArrowRight, Copy } from 'lucide-react'
-import { trainingPrograms as initialPrograms, majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues, allPeriods } from '@/lib/mock-data'
+import { usePrograms } from './_components/program-context'
+import { majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues, allPeriods } from '@/lib/mock-data'
 import type { TrainingProgram, CoursePlan } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -70,14 +72,11 @@ function getDefaultCoursesForMajor(majorId: string): CoursePlan[] {
 }
 
 export default function ProgramsPage() {
-  const [programs, setPrograms] = useState<TrainingProgram[]>(initialPrograms)
+  const router = useRouter()
+  const { programs, deleteProgram, addProgram, updateProgram } = usePrograms()
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
   const [selectedYear, setSelectedYear] = useState<string>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
-
-  const [createOpen, setCreateOpen] = useState(false)
-  const [editOpen, setEditOpen] = useState(false)
-  const [editingProgram, setEditingProgram] = useState<TrainingProgram>({ ...emptyProgram })
 
   // 邀请共建弹窗
   const [inviteOpen, setInviteOpen] = useState(false)
@@ -111,38 +110,15 @@ export default function ProgramsPage() {
   }, [programs, selectedDeptId, selectedYear])
 
   const openCreate = () => {
-    const defaultMajor = deptMajors[0]
-    const defaultYear = selectedYear !== 'all' ? Number(selectedYear) : (allYears[0] || 2026)
-
-    // Build version map from pools
-    const versionMap: Record<string, string> = {}
-    curriculumCoursePool.forEach(c => versionMap[c.code] = c.version)
-    curriculumPracticePool.forEach(c => versionMap[c.code] = c.version)
-
-    const defaultCourses = (defaultMajor ? getDefaultCoursesForMajor(defaultMajor.id) : []).map(c => ({
-      ...c,
-      version: versionMap[c.code] || 'v1.0'
-    }))
-
-    setEditingProgram({
-      ...emptyProgram,
-      id: `tp${Date.now()}`,
-      majorId: defaultMajor?.id || '',
-      entryYear: defaultYear,
-      creator: '当前用户',
-      createdAt: new Date().toISOString().split('T')[0],
-      courses: defaultCourses,
-    })
-    setCreateOpen(true)
+    router.push('/admin/programs/new')
   }
 
   const openEdit = (program: TrainingProgram) => {
-    setEditingProgram({ ...program })
-    setEditOpen(true)
+    router.push(`/admin/programs/${program.id}/edit`)
   }
 
   const handleDelete = (programId: string) => {
-    setPrograms((prev) => prev.filter((p) => p.id !== programId))
+    deleteProgram(programId)
     toast.success('删除成功')
   }
 
@@ -157,133 +133,8 @@ export default function ProgramsPage() {
       creator: '当前用户',
       collaborators: [],
     }
-    setPrograms((prev) => [cloned, ...prev])
+    addProgram(cloned)
     toast.success('克隆成功')
-  }
-
-  const handleSaveCreate = () => {
-    if (!editingProgram.name || !editingProgram.code) {
-      toast.error('请填写完整信息')
-      return
-    }
-    setPrograms((prev) => [...prev, editingProgram])
-    toast.success('新建方案成功')
-    setCreateOpen(false)
-  }
-
-  const handleSaveEdit = () => {
-    if (!editingProgram.name || !editingProgram.code) {
-      toast.error('请填写完整信息')
-      return
-    }
-    setPrograms((prev) => prev.map((p) => (p.id === editingProgram.id ? editingProgram : p)))
-    toast.success('保存成功')
-    setEditOpen(false)
-  }
-
-  const renderProgramForm = (isEdit: boolean) => {
-    const gradeName = grades.find((g) => g.entryYear === editingProgram.entryYear)?.name || `${editingProgram.entryYear}级`
-
-    return (
-      <div className="space-y-4 py-2">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>方案名称</Label>
-            <Input
-              value={editingProgram.name}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, name: e.target.value }))}
-              placeholder="如 2026级软件工程专业人才培养方案"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>方案编码</Label>
-            <Input
-              value={editingProgram.code}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, code: e.target.value }))}
-              placeholder="如 TP-SE-2026"
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>所属院系</Label>
-            <Input value={selectedDeptName} readOnly className="bg-muted" />
-          </div>
-          <div className="space-y-2">
-            <Label>适用年级</Label>
-            <Input value={gradeName} readOnly className="bg-muted" />
-          </div>
-          <div className="space-y-2">
-            <Label>面向专业</Label>
-            <Select
-              value={editingProgram.majorId}
-              onValueChange={(v) => setEditingProgram((p) => ({ ...p, majorId: v }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择专业" />
-              </SelectTrigger>
-              <SelectContent>
-                {deptMajors.map((m) => (
-                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label>总学分</Label>
-            <Input
-              type="number"
-              value={editingProgram.totalCredits}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, totalCredits: Number(e.target.value) }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>必修学分</Label>
-            <Input
-              type="number"
-              value={editingProgram.requiredCredits}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, requiredCredits: Number(e.target.value) }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>选修学分</Label>
-            <Input
-              type="number"
-              value={editingProgram.electiveCredits}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, electiveCredits: Number(e.target.value) }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>实践学分</Label>
-            <Input
-              type="number"
-              value={editingProgram.practiceCredits}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, practiceCredits: Number(e.target.value) }))}
-            />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>方案开始时间</Label>
-            <Input
-              type="date"
-              value={editingProgram.startDate || ''}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, startDate: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>方案结束时间</Label>
-            <Input
-              type="date"
-              value={editingProgram.endDate || ''}
-              onChange={(e) => setEditingProgram((p) => ({ ...p, endDate: e.target.value }))}
-            />
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -576,34 +427,6 @@ export default function ProgramsPage() {
         </div>
       </div>
 
-      {/* 新建方案弹窗 */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>新建培养方案</DialogTitle>
-          </DialogHeader>
-          {renderProgramForm(false)}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={handleSaveCreate}>保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 编辑方案弹窗 */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>编辑培养方案</DialogTitle>
-          </DialogHeader>
-          {renderProgramForm(true)}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
-            <Button onClick={handleSaveEdit}>保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* 邀请共建弹窗 */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent className="max-w-md">
@@ -628,11 +451,10 @@ export default function ProgramsPage() {
                 return
               }
               if (inviteProgram) {
-                setPrograms((prev) => prev.map((p) =>
-                  p.id === inviteProgram.id
-                    ? { ...p, collaborators: [...(p.collaborators || []), inviteName.trim()] }
-                    : p
-                ))
+                updateProgram({
+                  ...inviteProgram,
+                  collaborators: [...(inviteProgram.collaborators || []), inviteName.trim()],
+                })
               }
               toast.success(`已成功邀请 ${inviteName.trim()} 共建该方案`)
               setInviteOpen(false)

@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus, Pencil, Users, GraduationCap, HardHat, Building2 } from 'lucide-react'
 import { faculty, departments } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -60,6 +60,54 @@ export default function FacultyPage() {
           <p className="text-muted-foreground">维护教师档案、授课资格与企业导师信息</p>
         </div>
         <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
+      </div>
+
+      {/* 统计卡片 */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">教师总数</p>
+              <p className="text-2xl font-bold">{faculty.length}</p>
+            </div>
+            <div className="rounded-full p-2 bg-blue-500">
+              <Users className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">企业导师</p>
+              <p className="text-2xl font-bold">{faculty.filter((f) => f.isEnterpriseMentor).length}</p>
+            </div>
+            <div className="rounded-full p-2 bg-purple-500">
+              <HardHat className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">在职教师</p>
+              <p className="text-2xl font-bold">{faculty.filter((f) => f.status === '在职').length}</p>
+            </div>
+            <div className="rounded-full p-2 bg-green-500">
+              <GraduationCap className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">涉及企业</p>
+              <p className="text-2xl font-bold">{new Set(faculty.filter((f) => f.isEnterpriseMentor).map((f) => f.enterpriseInfo?.company).filter(Boolean)).size}</p>
+            </div>
+            <div className="rounded-full p-2 bg-amber-500">
+              <Building2 className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
@@ -118,7 +166,14 @@ export default function FacultyPage() {
                   <TableCell>{f.education}</TableCell>
                   <TableCell>
                     {f.isEnterpriseMentor ? (
-                      <Badge variant="default" className="text-xs">是</Badge>
+                      <div className="space-y-0.5">
+                        <Badge variant="default" className="text-xs">是</Badge>
+                        {f.enterpriseInfo && (
+                          <div className="text-[10px] text-muted-foreground">
+                            {f.enterpriseInfo.company} · {f.enterpriseInfo.field}
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}

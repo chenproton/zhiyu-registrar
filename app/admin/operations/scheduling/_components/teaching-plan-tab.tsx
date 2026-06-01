@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ArrowRightLeft, ArrowLeftRight } from 'lucide-react'
+import { ArrowRightLeft, ArrowLeftRight, Upload, FileSpreadsheet, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   classes,
@@ -23,6 +23,9 @@ import {
   curriculumPracticePool,
   type CurriculumItem,
 } from '@/lib/mock-data'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 type TabType = 'course' | 'practice'
 
@@ -40,6 +43,8 @@ export default function TeachingPlanTab({
   selectedGrade: string
 }) {
   const [activeTab, setActiveTab] = useState<TabType>('course')
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [importText, setImportText] = useState('')
   const [coursePlanData, setCoursePlanData] = useState<PlanData>({})
   const [practicePlanData, setPracticePlanData] = useState<PlanData>({})
   const [unifiedValues, setUnifiedValues] = useState<Record<string, number>>(() => {
@@ -113,7 +118,8 @@ export default function TeachingPlanTab({
             <TabsTrigger value="practice">实践场景</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" className="gap-1" onClick={() => toast('导入功能开发中')}>
+            <Button variant="outline" className="gap-1" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="h-4 w-4" />
               导入
             </Button>
             <Button variant="outline" className="gap-1" onClick={() => toast('导出成功')}>
@@ -148,7 +154,110 @@ export default function TeachingPlanTab({
           />
         </TabsContent>
       </Tabs>
+
+      {/* 导入弹窗 */}
+      <ImportPlanDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        filteredClasses={filteredClasses}
+        onImport={(data) => {
+          if (activeTab === 'course') {
+            setCoursePlanData((prev) => ({ ...prev, ...data }))
+          } else {
+            setPracticePlanData((prev) => ({ ...prev, ...data }))
+          }
+          toast.success('教学计划导入成功')
+        }}
+      />
     </div>
+  )
+}
+
+function ImportPlanDialog({
+  open,
+  onOpenChange,
+  filteredClasses,
+  onImport,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  filteredClasses: typeof classes
+  onImport: (data: PlanData) => void
+}) {
+  const [text, setText] = useState('')
+  const [preview, setPreview] = useState<PlanData>({})
+
+  const handleParse = () => {
+    if (!text.trim()) {
+      toast.error('请输入数据')
+      return
+    }
+    const result: PlanData = {}
+    const lines = text.trim().split('\n').filter((l) => l.trim())
+    lines.forEach((line) => {
+      const parts = line.split(/[,，\t]/).map((s) => s.trim())
+      if (parts.length >= 3) {
+        const itemName = parts[0]
+        const itemId = `import-${itemName}`
+        const classData: Record<string, number> = {}
+        filteredClasses.forEach((c, i) => {
+          const val = Number(parts[i + 1])
+          if (!isNaN(val)) classData[c.id] = val
+        })
+        result[itemId] = classData
+      }
+    })
+    setPreview(result)
+    toast.success(`解析成功，共 ${Object.keys(result).length} 条记录`)
+  }
+
+  const handleConfirm = () => {
+    if (Object.keys(preview).length === 0) {
+      toast.error('请先解析数据')
+      return
+    }
+    onImport(preview)
+    onOpenChange(false)
+    setText('')
+    setPreview({})
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-green-600" />
+            导入课时分配
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">数据格式</p>
+            <p>每行：课程名称, 班级1课时, 班级2课时, ...</p>
+            <p className="font-mono bg-white border rounded px-2 py-1">程序设计基础, 4, 4, 4</p>
+            <p>班级顺序：{filteredClasses.map((c) => c.name).join('、')}</p>
+          </div>
+          <div className="space-y-2">
+            <Label>粘贴数据</Label>
+            <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="在此粘贴数据..." rows={6} />
+            <Button variant="outline" size="sm" onClick={handleParse}>
+              <Upload className="h-3.5 w-3.5 mr-1" />
+              解析
+            </Button>
+          </div>
+          {Object.keys(preview).length > 0 && (
+            <div className="rounded-lg border bg-green-50 p-2 text-xs text-green-700">
+              已解析 {Object.keys(preview).length} 条记录，点击确认导入
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onOpenChange(false); setText(''); setPreview({}) }}>取消</Button>
+          <Button onClick={handleConfirm} disabled={Object.keys(preview).length === 0}>确认导入</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

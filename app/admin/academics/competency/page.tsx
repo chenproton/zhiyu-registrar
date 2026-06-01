@@ -114,12 +114,17 @@ export default function CompetencyPage() {
     const pending = withRecognition.filter((s) => s.abilityRecognition?.status === '待审核').length
     const certified = withRecognition.filter((s) => s.abilityRecognition?.status === '已认定').length
     const rejected = withRecognition.filter((s) => s.abilityRecognition?.status === '已驳回').length
+    const scenePassedCount = studentList.filter((s) => {
+      const dr = degreeRecognitions.find((d) => d.studentId === s.id)
+      return dr ? dr.scenePassed >= dr.sceneTotal : false
+    }).length
     return {
       total: studentList.length,
       pending,
       certified,
       rejected,
       advancedCount: withRecognition.filter((s) => s.abilityRecognition?.competencyLevel === '高级').length,
+      scenePassedCount,
     }
   }, [studentList])
 
@@ -229,7 +234,7 @@ export default function CompetencyPage() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-6">
         <Card>
           <CardContent className="flex items-center justify-between p-4">
             <div className="space-y-1">
@@ -282,6 +287,17 @@ export default function CompetencyPage() {
             </div>
             <div className="rounded-full p-2 bg-purple-500">
               <Star className="h-4 w-4 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center justify-between p-4">
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">场景达标</p>
+              <p className="text-2xl font-bold">{stats.scenePassedCount}</p>
+            </div>
+            <div className="rounded-full p-2 bg-fuchsia-500">
+              <Briefcase className="h-4 w-4 text-white" />
             </div>
           </CardContent>
         </Card>

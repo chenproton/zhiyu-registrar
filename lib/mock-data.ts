@@ -317,13 +317,32 @@ export interface CoursePlan {
   code: string
   credits: number
   hours: number
+  /** 新增：理论学时 */
+  theoryHours?: number
+  /** 新增：实践学时 */
+  practiceHours?: number
   semester: number
   nature: '必修' | '选修' | '实践' | '场景'
   assessment: '考试' | '考查' | '论文' | '作品' | '场景测评'
   version: string
+  /** 新增：课程类别，如「公共基础必修」「专业核心」 */
+  category?: string
+  /** 新增：课程目标 */
+  objectives?: string
+  /** 新增：主要教学内容 */
+  mainContent?: string
+  /** 新增：教学要求 */
+  teachingRequirements?: string
+  /** 新增：教学方法 */
+  teachingMethods?: string
+  /** 新增：典型工作任务描述 */
+  typicalTasks?: string
+  /** 新增：教学内容与要求 */
+  contentRequirements?: string
 }
 
 export interface TrainingProgram {
+  // ===== 基本信息（保留旧字段兼容）=====
   id: string
   name: string
   code: string
@@ -344,6 +363,107 @@ export interface TrainingProgram {
   creator?: string
   collaborators?: string[]
   createdAt?: string
+  importSource?: 'manual' | 'ai-excel' | 'ai-word'
+  aiExtractStatus?: 'none' | 'processing' | 'completed' | 'failed'
+  aiExtractLog?: string
+
+  // ===== 新增：完整人培方案字段（全部可选，兼容旧数据）=====
+
+  /** 专业名称（冗余，便于展示） */
+  majorName?: string
+  /** 专业代码 */
+  majorCode?: string
+  /** 方案版本号 */
+  version?: string
+
+  // -- 2. 入学基本要求 --
+  entryRequirements?: string
+
+  // -- 4. 职业面向 --
+  careerOrientation?: {
+    professionalCategory: { name: string; code: string }
+    professionalSubcategory: { name: string; code: string }
+    correspondingIndustries: { name: string; code: string }[]
+    mainOccupations: { name: string; code: string }[]
+    mainPositions: string[]
+    vocationalCertificates: string[]
+  }
+
+  // -- 5. 培养目标 --
+  trainingObjectives?: string
+
+  // -- 6. 培养规格 --
+  trainingSpecifications?: { id: number; content: string }[]
+
+  // -- 7. 课程设置（更细化的结构，与 courses/practiceScenes 并存） --
+  curriculum?: {
+    publicBasic: {
+      required: CoursePlan[]
+      limitedElective: CoursePlan[]
+      freeElective: CoursePlan[]
+    }
+    professional: {
+      basic: CoursePlan[]
+      core: CoursePlan[]
+      extended: CoursePlan[]
+      practice: CoursePlan[]
+    }
+  }
+
+  // -- 7.2 学时安排统计 --
+  creditHours?: {
+    totalCredits: number
+    totalHours: number
+    theoryHours: number
+    practiceHours: number
+    publicBasicCredits: number
+    publicBasicHours: number
+    professionalBasicCredits: number
+    professionalBasicHours: number
+    professionalCoreCredits: number
+    professionalCoreHours: number
+    professionalExtendedCredits: number
+    professionalExtendedHours: number
+    practiceCredits: number
+    practiceHours: number
+  }
+
+  // -- 8. 师资队伍 --
+  facultyTeam?: {
+    structure: string
+    leaderRequirements: string
+    fullTimeRequirements: string
+    partTimeRequirements: string
+  }
+
+  // -- 9. 教学条件 --
+  teachingConditions?: {
+    classroomRequirements: string
+    trainingVenueRequirements: string
+    internshipVenueRequirements: string
+    textbookRequirements: string
+    libraryRequirements: string
+    digitalResourceRequirements: string
+  }
+
+  // -- 10. 质量保障和毕业要求 --
+  qualityAssurance?: {
+    systemDescription: string
+    graduationRequirements: {
+      ideological: string[]
+      academic: {
+        courseAssessment: string
+        gradeCredit: string
+        creditSubstitution: string
+      }
+      requirements: {
+        courseCompletion: string
+        credits: { total: number; required: number; elective: number; minTotal: number; note: string }
+        physicalEducation: string
+        certificates: string[]
+      }
+    }
+  }
 }
 
 export const trainingPrograms: TrainingProgram[] = [
@@ -1624,6 +1744,272 @@ export const trainingPrograms: TrainingProgram[] = [
     collaborators: [],
     createdAt: '2027-08-01',
   },
+  {
+    id: 'tp-cn-2025',
+    name: '2025级计算机网络技术专业人才培养方案',
+    code: 'TP-CN-2025',
+    majorId: 'm3',
+    majorName: '计算机网络技术',
+    majorCode: '510202',
+    version: '2025-v1.0',
+    entryYear: 2025,
+    level: '大专',
+    duration: 3,
+    totalCredits: 142,
+    requiredCredits: 108,
+    electiveCredits: 14,
+    practiceCredits: 20,
+    courses: [],
+    practiceScenes: [],
+    status: 'published',
+    startDate: '2025-09-01',
+    endDate: '2028-07-01',
+    creator: '王志强',
+    collaborators: ['张讲师', '李工程师', '赵副教授'],
+    createdAt: '2025-06-20',
+    entryRequirements: '具有高中阶段教育毕业证书或同等学力，身体健康，无色盲色弱，具备一定的逻辑思维能力和动手操作能力。',
+    careerOrientation: {
+      professionalCategory: { name: '电子信息大类', code: '51' },
+      professionalSubcategory: { name: '计算机类', code: '5102' },
+      correspondingIndustries: [
+        { name: '互联网和相关服务', code: '64' },
+        { name: '软件和信息技术服务业', code: '65' },
+        { name: '电信、广播电视和卫星传输服务', code: '63' },
+      ],
+      mainOccupations: [
+        { name: '信息通信网络运行管理员', code: '4-04-04-01' },
+        { name: '信息通信网络机务员', code: '4-04-02-01' },
+        { name: '计算机网络工程技术人员', code: '2-02-10-04' },
+        { name: '信息安全管理员', code: '4-04-04-02' },
+      ],
+      mainPositions: [
+        '网络运维工程师',
+        '网络系统集成工程师',
+        '网络安全运维工程师',
+        '云计算运维工程师',
+        '网络技术支持工程师',
+        '网络管理员',
+        '系统管理员',
+        'IT运维工程师',
+      ],
+      vocationalCertificates: [
+        '华为认证网络工程师（HCIA/HCIP）',
+        '思科认证网络助理（CCNA）',
+        '红帽认证系统管理员（RHCSA）',
+        '全国计算机等级考试三级网络技术',
+        '1+X网络系统建设与运维职业技能等级证书',
+        '1+X云计算平台运维与开发职业技能等级证书',
+        '注册信息安全专业人员（CISP）',
+      ],
+    },
+    trainingObjectives: '本专业培养理想信念坚定，德、智、体、美、劳全面发展，具有一定的科学文化水平，良好的人文素养、职业道德和创新意识，精益求精的工匠精神，较强的就业能力和可持续发展的能力；掌握本专业知识和技术技能，面向互联网和相关服务、软件和信息技术服务业等行业的信息和通信工程技术人员、信息通信网络维护人员、信息通信网络运行管理人员等职业群，能够从事网络售前技术支持、网络应用开发、网络系统运维、网络系统集成等工作的高素质技术技能人才。',
+    trainingSpecifications: [
+      { id: 1, content: '坚定拥护中国共产党领导和中国特色社会主义制度，' },
+      { id: 2, content: '具有良好的职业道德和工匠精神，爱岗敬业，具有高度的责任心和团队协作精神。' },
+      { id: 3, content: '具有良好的身心素质和人文素养，掌握一定的学习方法，具有终身学习的意识和能力。' },
+      { id: 4, content: '具有质量意识、环保意识、安全意识、信息素养、创新思维。' },
+      { id: 5, content: '掌握必备的思想政治理论、科学文化基础知识和中华优秀传统文化知识。' },
+      { id: 6, content: '熟悉与本专业相关的法律法规以及环境保护、安全消防、文明生产等知识。' },
+      { id: 7, content: '掌握计算机网络基础、网络操作系统、程序设计基础、数据库技术等专业知识。' },
+      { id: 8, content: '掌握网络工程设计与实施、网络设备配置与管理、网络安全防护、云计算平台运维等专业技能。' },
+      { id: 9, content: '具备网络系统规划、设计、实施、运维和管理的能力。' },
+      { id: 10, content: '具备网络故障诊断与排除、网络性能优化、网络安全事件应急处理的能力。' },
+      { id: 11, content: '具备初步的网络应用开发能力和网络自动化运维能力。' },
+      { id: 12, content: '具有探究学习、终身学习和可持续发展的能力，能够跟踪网络技术发展趋势。' },
+      { id: 13, content: '具有良好的语言表达能力、文字表达能力、沟通合作能力。' },
+      { id: 14, content: '具备基本的英语阅读和专业技术文档查阅能力。' },
+    ],
+    curriculum: {
+      publicBasic: {
+        required: [
+          { id: 'pb1', name: '思想道德与法治', code: 'GB101', credits: 3, hours: 48, theoryHours: 40, practiceHours: 8, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb2', name: '毛泽东思想和中国特色社会主义理论体系概论', code: 'GB102', credits: 4, hours: 64, theoryHours: 56, practiceHours: 8, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb3', name: '形势与政策', code: 'GB103', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb4', name: '军事理论', code: 'GB104', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb5', name: '军事技能', code: 'GB105', credits: 2, hours: 56, theoryHours: 0, practiceHours: 56, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb6', name: '心理健康教育', code: 'GB106', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb7', name: '体育与健康', code: 'GB107', credits: 4, hours: 64, theoryHours: 8, practiceHours: 56, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb8', name: '大学语文', code: 'GB108', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb9', name: '实用英语', code: 'GB109', credits: 4, hours: 64, theoryHours: 48, practiceHours: 16, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb10', name: '高等数学', code: 'GB110', credits: 3, hours: 48, theoryHours: 48, practiceHours: 0, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb11', name: '大学生职业发展与就业指导', code: 'GB111', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb12', name: '创新创业教育', code: 'GB112', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb13', name: '劳动教育', code: 'GB113', credits: 1, hours: 16, theoryHours: 4, practiceHours: 12, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb14', name: '国家安全教育', code: 'GB114', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb15', name: '信息技术', code: 'GB115', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+          { id: 'pb16', name: '艺术鉴赏', code: 'GB116', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
+        ],
+        limitedElective: [
+          { id: 'le1', name: '实用数学提高', code: 'LE101', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 2, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础限选' },
+          { id: 'le2', name: '实用英语提高', code: 'LE102', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 2, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础限选' },
+        ],
+        freeElective: [
+          { id: 'fe1', name: '信息技术拓展', code: 'FE101', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' },
+          { id: 'fe2', name: '社交礼仪', code: 'FE102', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' },
+          { id: 'fe3', name: '演讲与口才', code: 'FE103', credits: 1, hours: 16, theoryHours: 8, practiceHours: 8, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' },
+        ],
+      },
+      professional: {
+        basic: [
+          { id: 'pro-b1', name: 'Python程序设计基础', code: 'PB201', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
+          { id: 'pro-b2', name: '计算机网络基础', code: 'PB202', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
+          { id: 'pro-b3', name: '网络操作系统（Windows Server）', code: 'PB203', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
+          { id: 'pro-b4', name: '数据库技术与应用', code: 'PB204', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
+          { id: 'pro-b5', name: '网络安全技术基础', code: 'PB205', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
+          { id: 'pro-b6', name: '计算机组装与维护', code: 'PB206', credits: 3, hours: 48, theoryHours: 16, practiceHours: 32, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业基础课' },
+        ],
+        core: [
+          { id: 'pro-c1', name: 'Linux网络操作系统', code: 'PC301', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c2', name: '虚拟化技术与应用', code: 'PC302', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c3', name: '网络自动化运维', code: 'PC303', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 3, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c4', name: '路由交换技术', code: 'PC304', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c5', name: '网络安全设备配置与管理', code: 'PC305', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c6', name: '无线网络技术', code: 'PC306', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c7', name: '综合布线设计与实施', code: 'PC307', credits: 3, hours: 48, theoryHours: 16, practiceHours: 32, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' },
+          { id: 'pro-c8', name: '网络工程设计与实施', code: 'PC308', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
+        ],
+        extended: [
+          { id: 'pro-e1', name: '云计算技术与应用', code: 'PE401', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
+          { id: 'pro-e2', name: 'Web前端设计与开发', code: 'PE402', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
+          { id: 'pro-e3', name: '高级路由与交换技术', code: 'PE403', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
+          { id: 'pro-e4', name: 'SDN技术与应用', code: 'PE404', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
+          { id: 'pro-e5', name: '物联网技术基础', code: 'PE405', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
+        ],
+        practice: [
+          { id: 'pro-p1', name: '网络技术综合实训', code: 'PP501', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0', category: '专业实践课' },
+          { id: 'pro-p2', name: '毕业设计', code: 'PP502', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '论文', version: 'v1.0', category: '专业实践课' },
+          { id: 'pro-p3', name: '岗位实习', code: 'PP503', credits: 12, hours: 480, theoryHours: 0, practiceHours: 480, semester: 6, nature: '实践', assessment: '考查', version: 'v1.0', category: '专业实践课' },
+        ],
+      },
+    },
+    creditHours: {
+      totalCredits: 142,
+      totalHours: 2688,
+      theoryHours: 1096,
+      practiceHours: 1592,
+      publicBasicCredits: 42,
+      publicBasicHours: 672,
+      professionalBasicCredits: 22,
+      professionalBasicHours: 352,
+      professionalCoreCredits: 29,
+      professionalCoreHours: 464,
+      professionalExtendedCredits: 11,
+      professionalExtendedHours: 176,
+      practiceCredits: 20,
+      practiceHours: 672,
+    },
+    facultyTeam: {
+      structure: '本专业教学团队由专任教师和企业兼职教师组成，其中专任教师不少于8人，企业兼职教师不少于4人。团队应具有合理的年龄结构、职称结构和双师结构。',
+      leaderRequirements: '专业带头人应具有高级职称或高级职业资格，具有5年以上企业工作经历或连续3年以上承担企业技术项目经历，在本领域具有较高的影响力。',
+      fullTimeRequirements: '专任教师应具有硕士以上学位或中级以上职称，其中双师型教师比例不低于80%。每位专任教师每5年企业实践时间累计不少于6个月。',
+      partTimeRequirements: '兼职教师应从企业一线聘请具有3年以上工作经历的工程技术人员或管理人员，承担专业课程教学或实习指导任务，每年承担教学任务不少于30学时。',
+    },
+    teachingConditions: {
+      classroomRequirements: '应配备多媒体教室、计算机机房、网络实训室等专业教学场所。多媒体教室应配备投影仪、计算机、音响设备；计算机机房每人一机，网络互通。',
+      trainingVenueRequirements: '应建有网络综合布线实训室、路由交换实训室、网络安全实训室、云计算实训室、虚拟化实训室等。实训设备应满足每人一台（套）或每组一台（套）的要求。',
+      internshipVenueRequirements: '应建立稳定的校外实习基地，与网络集成企业、数据中心、运营商等建立合作关系，能提供网络运维、系统集成、技术支持等岗位实习机会。',
+      textbookRequirements: '优先选用高职国家规划教材、精品教材和活页式、工作手册式新型教材。鼓励与行业企业合作开发校本教材和数字化教学资源。',
+      libraryRequirements: '应配备充足的纸质图书和电子图书资源，计算机类、网络技术类专业图书生均不少于30册。应订阅相关专业期刊和数据库。',
+      digitalResourceRequirements: '应建设专业教学资源库，包含课程标准、教学设计、教学课件、实训指导书、案例库、试题库等。应配备网络教学平台，支持线上线下混合式教学。',
+    },
+    qualityAssurance: {
+      systemDescription: '建立学校、二级学院、专业教研室三级教学质量监控体系，通过教学检查、听课评课、学生评教、毕业生跟踪调查等方式，对人才培养全过程进行质量监控。定期开展专业调研和人才培养方案修订，确保培养质量持续改进。',
+      graduationRequirements: {
+        ideological: [
+          '坚定拥护中国共产党领导，树立中国特色社会主义共同理想',
+          '践行社会主义核心价值观，具有良好道德品质',
+          '具有健康的体魄、良好的心理素质和行为习惯',
+        ],
+        academic: {
+          courseAssessment: '学生必须修完人才培养方案规定的全部课程，课程考核分为考试和考查两种形式，成绩采用百分制或等级制记载。',
+          gradeCredit: '实行学分制管理，课程成绩合格方可获得相应学分。课程总评成绩由平时成绩和期末成绩组成，平时成绩占比不低于40%。',
+          creditSubstitution: '鼓励学生取得职业技能等级证书、参加技能大赛获奖、参与创新创业活动等，可按规定置换相应课程学分，最高不超过6学分。',
+        },
+        requirements: {
+          courseCompletion: '修完人才培养方案规定的全部必修课程和规定学分的选修课程，完成毕业设计和岗位实习。',
+          credits: { total: 142, required: 108, elective: 14, minTotal: 135, note: '总学分不低于135学分方可毕业，其中必修学分108学分，选修学分至少14学分（含公共选修和专业选修）。' },
+          physicalEducation: '学生体质健康测试成绩达到《国家学生体质健康标准》要求，体育课程成绩合格。',
+          certificates: [
+            '鼓励取得1+X网络系统建设与运维职业技能等级证书',
+            '鼓励取得华为认证网络工程师（HCIA）或同等水平职业资格证书',
+            '全国计算机等级考试二级以上证书',
+          ],
+        },
+      },
+    },
+  },
+  {
+    id: 'tp-cn-2025',
+    name: '2025级计算机网络技术专业人才培养方案',
+    code: 'TP-CN-510202-2025',
+    majorId: 'm3',
+    majorName: '计算机网络技术',
+    majorCode: '510202',
+    entryYear: 2025,
+    level: '大专',
+    duration: 3,
+    version: '2025版',
+    totalCredits: 147,
+    requiredCredits: 120,
+    electiveCredits: 15,
+    practiceCredits: 32,
+    courses: [],
+    practiceScenes: [],
+    status: 'published',
+    startDate: '2025-09-01',
+    endDate: '2028-07-01',
+    creator: '网络工程系',
+    collaborators: ['王志强', '李红梅'],
+    createdAt: '2025-06-01',
+    importSource: 'manual',
+    aiExtractStatus: 'none',
+
+    entryRequirements: '中等职业学校毕业､普通高级中学毕业或具备同等学力',
+
+    careerOrientation: {
+      professionalCategory: { name: '电子与信息大类', code: '51' },
+      professionalSubcategory: { name: '计算机类', code: '5102' },
+      correspondingIndustries: [
+        { name: '互联网和相关服务', code: '64' },
+        { name: '软件和信息技术服务', code: '65' },
+      ],
+      mainOccupations: [
+        { name: '信息和通信工程技术人员', code: '2-02-10' },
+        { name: '信息通信网络维护人员', code: '4-04-02' },
+        { name: '信息通信网络运行管理人员', code: '4-04-04' },
+      ],
+      mainPositions: ['网络技术支持', '网络系统运维', '网络系统集成', '网络应用开发'],
+      vocationalCertificates: [
+        '计算机技术与软件专业技术资格',
+        '网络系统建设与运维',
+        'Web前端开发',
+        '云计算平台运维与开发',
+        '网络安全运维',
+        'WPS办公应用',
+        '无线网络规划与实施',
+        '网络系统规划与部署',
+      ],
+    },
+
+    trainingObjectives: '本专业培养能够践行社会主义核心价值观，传承技能文明，德智体美劳全面发展，具有一定的科学文化水平，良好的人文素养､科学素养､数字素养､职业道德､创新意识，敬佑生命､救死扶伤､甘于奉献､大爱无疆的职业精神，较强的就业创业能力和可持续发展的能力，掌握本专业知识和技术技能，具备职业综合素质和行动能力，面向互联网和相关服务､软件和信息技术服务等行业的信息和通信工程技术人员､信息通信网络维护人员､信息通信网络运行管理人员等职业，能够从事网络技术支持､网络系统运维､网络系统集成､网络应用开发等工作的高技能人才｡',
+
+    trainingSpecifications: [
+      { id: 1, content: '坚定拥护中国共产党领导和中国特色社会主义制度，以习近平新时代中国特色社会主义思想为指导，践行社会主义核心价值观，具有坚定的理想信念､深厚的爱国情感和中华民族自豪感；' },
+      { id: 2, content: '掌握与本专业对应职业活动相关的国家法律､行业规定，掌握绿色生产､环境保护､安全防护､质量管理等相关知识与技能，了解相关行业文化，具有爱岗敬业的职业精神，遵守职业道德准则和行为规范，具备社会责任感和创新精神；' },
+      { id: 3, content: '掌握支撑本专业学习和可持续发展必备的语文､数学､外语 \(英语等\)､信息技术等文化基础知识，具有良好的人文素养与科学素养，具备职业生涯规划能力；' },
+      { id: 4, content: '具有良好的语言表达能力､文字表达能力､沟通合作能力，具有较强的集体意识和团队合作意识，学习 1 门外语并结合本专业加以运用；' },
+      { id: 5, content: '掌握计算机网络､程序设计､网络操作系统､路由交换技术､数据库技术､网络安全技术､云计算和虚拟化等方面的专业基础理论知识；' },
+      { id: 6, content: '掌握中小型网络和无线局域网的规划设计､设备选型，以及网络设备的安装､配置､调试和排错等技术技能，具有网络搭建､日常巡检和技术文档撰写能力；' },
+      { id: 7, content: '掌握服务器､云平台的安装､配置､调试和管理等技术技能，具有网络服务器､云平台､虚拟化等的部署和管理能力；' },
+      { id: 8, content: '掌握网络安全软硬件的安装配置和调试､网络攻击防御､网站管理维护､数据库管理､备份与恢复等技术技能，具有初步的网络安全检测､网络安全防护､网络安全运维管理和保障能力；' },
+      { id: 9, content: '掌握网络自动化运维工具的使用等技术技能，具有初步的网络自动化运维软件开发能力；' },
+      { id: 10, content: '掌握信息技术基础知识，具有适应本行业数字化和智能化发展需求的数字技能；' },
+      { id: 11, content: '具有探究学习､终身学习和可持续发展的能力，具有整合知识和综合运用知识分析问题和解决问题的能力；' },
+      { id: 12, content: '掌握身体运动的基本知识和至少 1 项体育运动技能，达到国家大学生体质健康测试合格标准，养成良好的运动习惯､卫生习惯和行为习惯，具备一定的心理调适能力；' },
+      { id: 13, content: '掌握必备的美育知识，具有一定的文化修养､审美能力，形成至少 1 项艺术特长或爱好；' },
+      { id: 14, content: '树立正确的劳动观，尊重劳动，热爱劳动，具备与本专业职业发展相适应的劳动素养，弘扬劳模精神､劳动精神､工匠精神，弘扬劳动光荣､技能宝贵､创造伟大的时代风尚｡' }
+    ],
+  },
 ]
 
 // ----- 6. 教学日历 -----
@@ -1933,12 +2319,12 @@ export const degreeRecognitions: DegreeRecognition[] = [
   { id: 'dr5', studentId: 's2', programId: 'tp1', totalCredits: 158, requiredCredits: 120, electiveCredits: 20, practiceCredits: 18, requiredPassed: 44, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 90, scenePassed: 11, sceneTotal: 12, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
     { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核未通过，必修课差1门未合格，场景任务差1项未达标' },
   ]},
-  { id: 'dr6', studentId: 's7', programId: 'tp4', totalCredits: 165, requiredCredits: 120, electiveCredits: 25, practiceCredits: 20, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 98, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
+  { id: 'dr6', studentId: 's7', programId: 'tp3', totalCredits: 165, requiredCredits: 120, electiveCredits: 25, practiceCredits: 20, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 98, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
     { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核通过' },
     { step: 2, role: '院系初审', action: '审核通过', operator: '王院长', date: '2026-05-05' },
     { step: 3, role: '教务处复审', action: '审核通过', operator: '李处长', date: '2026-05-10' },
   ]},
-  { id: 'dr7', studentId: 's8', programId: 'tp4', totalCredits: 70, requiredCredits: 120, electiveCredits: 15, practiceCredits: 10, requiredPassed: 25, requiredTotal: 40, graduationDesignStatus: '不合格', attendanceRate: 72, scenePassed: 4, sceneTotal: 10, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
+  { id: 'dr7', studentId: 's8', programId: 'tp3', totalCredits: 70, requiredCredits: 120, electiveCredits: 15, practiceCredits: 10, requiredPassed: 25, requiredTotal: 40, graduationDesignStatus: '不合格', attendanceRate: 72, scenePassed: 4, sceneTotal: 10, degreeStatus: '不符合毕业条件', badgeSynced: false, auditHistory: [
     { step: 1, role: '系统', action: '提交', operator: '系统自动', date: '2026-05-01', comment: '预审核未通过，学分严重不足、必修课未达标、毕设未通过、出勤率不足、场景任务未达标' },
   ]},
   { id: 'dr8', studentId: 's9', programId: 'tp2', totalCredits: 162, requiredCredits: 120, electiveCredits: 24, practiceCredits: 18, requiredPassed: 45, requiredTotal: 45, graduationDesignStatus: '合格', attendanceRate: 94, scenePassed: 12, sceneTotal: 12, degreeStatus: '符合毕业条件', badgeSynced: true, auditHistory: [
@@ -4958,4 +5344,644 @@ export const mockArchiveVersions: import('@/lib/types').ArchiveVersion[] = [
   { id: 'ver-1', archiveId: 'sp-arch-1', version: 1, changedBy: '张三', changeSummary: '上传开题报告v1', createdAt: new Date('2024-03-10') },
   { id: 'ver-2', archiveId: 'sp-arch-1', version: 2, changedBy: '张教授', changeSummary: '批注修改意见', createdAt: new Date('2024-03-12') },
   { id: 'ver-3', archiveId: 'sp-arch-1', version: 3, changedBy: '张三', changeSummary: '上传开题报告v2', createdAt: new Date('2024-03-15') },
+]
+
+
+// ============================================
+// 阶段一新增：教学大纲 / 教学计划 / 备课 / 开课 数据模型
+// ============================================
+
+// ----- 教学大纲 -----
+
+export interface SyllabusObjective {
+  id: string
+  dimension: '知识' | '能力' | '素养'
+  content: string
+  level: '了解' | '理解' | '掌握' | '熟练' | '精通'
+}
+
+export interface SyllabusChapter {
+  id: string
+  name: string
+  hours: number
+  theoryHours: number
+  practiceHours: number
+  content: string
+  teachingMethod: string
+  keyPoints: string
+  difficultPoints: string
+}
+
+export type SyllabusStatus = 'draft' | 'generated' | 'editing' | 'finalized'
+export type SyllabusType = 'theory' | 'practice' | 'scene'
+
+export interface Syllabus {
+  id: string
+  programId: string
+  courseId: string
+  courseName: string
+  courseCode: string
+  type: SyllabusType
+  credits: number
+  totalHours: number
+  theoryHours: number
+  practiceHours: number
+  applicableMajorIds: string[]
+  objectives: SyllabusObjective[]
+  chapters: SyllabusChapter[]
+  teachingMethods: string
+  assessmentMethod: string
+  assessmentWeight: {
+    usual: number
+    midterm: number
+    final: number
+    practice: number
+  }
+  textbooks: string[]
+  references: string[]
+  status: SyllabusStatus
+  version: string
+  createdAt: string
+  updatedAt: string
+  generatorLog?: string
+}
+
+// 场景大纲扩展
+export interface SceneSyllabus extends Syllabus {
+  type: 'scene'
+  mappedPositionId: string
+  mappedPositionName: string
+  taskChain: {
+    id: string
+    name: string
+    order: number
+    mappedAbilityIds: string[]
+    hours: number
+    evaluationRuleId?: string
+  }[]
+  evaluationRubric: string
+  workstationType: string
+  equipmentList: string[]
+  enterpriseMentorRequired: boolean
+}
+
+// ----- 教学计划 -----
+
+export type WeekPattern = 'all' | 'odd' | 'even' | 'intensive'
+
+export interface PlanCourseEntry {
+  id: string
+  courseId: string
+  courseName: string
+  courseCode: string
+  type: 'theory' | 'practice' | 'scene'
+  nature: '必修' | '选修' | '实践' | '场景'
+  credits: number
+  totalHours: number
+  semester: number
+  weekHours: number
+  startWeek: number
+  endWeek: number
+  weekPattern: WeekPattern
+  assignedClassIds: string[]
+  preferredFacultyIds: string[]
+  venueTypeRequired: '教室' | '机房' | '实训室' | '实验室' | '校外基地'
+  syllabusId: string
+  status: 'planned' | 'confirmed' | 'scheduled'
+}
+
+export interface TeachingPlan {
+  id: string
+  programId: string
+  programName: string
+  majorId: string
+  entryYear: number
+  totalSemesters: number
+  entries: PlanCourseEntry[]
+  status: 'draft' | 'generated' | 'adjusting' | 'confirmed'
+  generatedAt: string
+  confirmedAt?: string
+  generatorLog?: string
+}
+
+// ----- 备课 -----
+
+export type PreparationStage = 'pre' | 'in' | 'post'
+export type PreparationStatus = 'pending' | 'in_progress' | 'completed' | 'submitted'
+
+export interface PreparationResource {
+  id: string
+  name: string
+  type: 'document' | 'video' | 'ppt' | 'link' | 'quiz' | 'scene_link' | 'equipment'
+  url?: string
+  description?: string
+  stage: PreparationStage
+}
+
+export interface PreparationActivity {
+  id: string
+  name: string
+  type: 'discussion' | 'quiz' | 'task' | 'group_work' | 'demo' | 'practice'
+  description: string
+  duration: number
+  stage: PreparationStage
+}
+
+export interface PreparationTask {
+  id: string
+  taskId: string
+  taskName: string
+  taskType: 'traditional' | 'scene'
+  courseName: string
+  classId: string
+  className: string
+  facultyId: string
+  facultyName: string
+  status: PreparationStatus
+  progress: number
+  stages: {
+    pre: {
+      objectives: string[]
+      resources: PreparationResource[]
+      activities: PreparationActivity[]
+      guidePlan: string
+      previewQuestions: string[]
+    }
+    in: {
+      resources: PreparationResource[]
+      activities: PreparationActivity[]
+      coursewareResources: PreparationResource[]
+      quizQuestions: string[]
+      discussionTopics: string[]
+    }
+    post: {
+      resources: PreparationResource[]
+      activities: PreparationActivity[]
+      homework: string
+      quizQuestions: string[]
+      extensionResources: PreparationResource[]
+    }
+  }
+  // 场景备课特有
+  scenePrep?: {
+    externalPlatformId?: string
+    subTaskPreparations: {
+      subTaskId: string
+      subTaskName: string
+      description?: string
+      abilityPointIds: string[]
+      evaluationRubricId: string
+      workstationId?: string
+      equipmentChecklist: string[]
+      safetyRequirements: string
+      enterpriseMentorNotes: string
+      mentorSchedule?: {
+        participationType: 'onsite' | 'remote' | 'async'
+        timeSlot: string
+      }
+    }[]
+  }
+  // 课程备课特有
+  coursePrep?: {
+    externalPlatformId?: string
+    knowledgePointIds: string[]
+    syllabusChapterMapping: { chapterId: string; sessionIndex: number }[]
+  }
+  submittedAt?: string
+  reviewedAt?: string
+  reviewNotes?: string
+}
+
+// ----- 开课 -----
+
+export type LaunchStatus = 'ready' | 'launching' | 'launched' | 'withdrawn' | 'ended'
+
+export interface CourseLaunchRecord {
+  id: string
+  taskId: string
+  taskName: string
+  taskType: 'traditional' | 'scene'
+  courseName: string
+  classId: string
+  className: string
+  facultyId: string
+  facultyName: string
+  venueId: string
+  venueName: string
+  dayOfWeek: number
+  periods: number[]
+  weeks: string
+  launchStatus: LaunchStatus
+  prepStatus: PreparationStatus
+  checklist: {
+    prepCompleted: boolean
+    venueConfirmed: boolean
+    studentsNotified: boolean
+    materialsReady: boolean
+    equipmentChecked?: boolean
+  }
+  launchedAt?: string
+  endedAt?: string
+  studentVisibility: boolean
+  notes: string
+}
+
+// ============================================
+// Mock 数据：教学大纲
+// ============================================
+
+export const syllabuses: Syllabus[] = [
+  {
+    id: 'syl-001',
+    programId: 'tp1',
+    courseId: 'c-1717000000000-1',
+    courseName: '程序设计基础',
+    courseCode: 'CS101',
+    type: 'theory',
+    credits: 4,
+    totalHours: 64,
+    theoryHours: 48,
+    practiceHours: 16,
+    applicableMajorIds: ['m1'],
+    objectives: [
+      { id: 'obj-1', dimension: '知识', content: '掌握程序设计的基本概念和语法', level: '掌握' },
+      { id: 'obj-2', dimension: '能力', content: '能够独立编写和调试简单程序', level: '熟练' },
+      { id: 'obj-3', dimension: '素养', content: '培养逻辑思维和问题分析能力', level: '掌握' },
+    ],
+    chapters: [
+      { id: 'ch-1', name: '程序设计概述', hours: 4, theoryHours: 4, practiceHours: 0, content: '程序设计语言的发展、特点和应用', teachingMethod: '讲授+讨论', keyPoints: '程序设计的基本概念', difficultPoints: '编译与解释的区别' },
+      { id: 'ch-2', name: '数据类型与运算符', hours: 8, theoryHours: 6, practiceHours: 2, content: '基本数据类型、变量、常量、运算符', teachingMethod: '讲授+实验', keyPoints: '数据类型的选择', difficultPoints: '类型转换' },
+      { id: 'ch-3', name: '控制结构', hours: 12, theoryHours: 8, practiceHours: 4, content: '顺序、选择、循环结构', teachingMethod: '讲授+案例', keyPoints: '循环结构的应用', difficultPoints: '嵌套循环' },
+      { id: 'ch-4', name: '数组与字符串', hours: 10, theoryHours: 6, practiceHours: 4, content: '一维数组、二维数组、字符串处理', teachingMethod: '讲授+实验', keyPoints: '数组的存储与访问', difficultPoints: '字符串操作' },
+      { id: 'ch-5', name: '函数与模块化', hours: 12, theoryHours: 8, practiceHours: 4, content: '函数定义、调用、参数传递、递归', teachingMethod: '案例教学', keyPoints: '函数的声明与调用', difficultPoints: '递归算法' },
+      { id: 'ch-6', name: '指针与引用', hours: 10, theoryHours: 8, practiceHours: 2, content: '指针概念、指针运算、动态内存', teachingMethod: '讲授+实验', keyPoints: '指针与数组的关系', difficultPoints: '多级指针' },
+      { id: 'ch-7', name: '文件操作', hours: 8, theoryHours: 4, practiceHours: 4, content: '文件的打开、读写、关闭', teachingMethod: '项目驱动', keyPoints: '文件读写模式', difficultPoints: '二进制文件操作' },
+    ],
+    teachingMethods: '讲授法、案例教学法、项目驱动法、翻转课堂',
+    assessmentMethod: '平时成绩30% + 期中考试20% + 期末上机考试50%',
+    assessmentWeight: { usual: 30, midterm: 20, final: 50, practice: 0 },
+    textbooks: ['《C程序设计（第五版）》，谭浩强，清华大学出版社'],
+    references: ['《C Primer Plus（第6版）》，Stephen Prata'],
+    status: 'finalized',
+    version: 'v1.0',
+    createdAt: '2025-01-15',
+    updatedAt: '2025-02-20',
+  },
+  {
+    id: 'syl-002',
+    programId: 'tp1',
+    courseId: 'c-1717000000000-2',
+    courseName: '高等数学',
+    courseCode: 'MATH101',
+    type: 'theory',
+    credits: 4,
+    totalHours: 64,
+    theoryHours: 64,
+    practiceHours: 0,
+    applicableMajorIds: ['m1'],
+    objectives: [
+      { id: 'obj-1', dimension: '知识', content: '掌握微积分、级数等基本理论', level: '掌握' },
+      { id: 'obj-2', dimension: '能力', content: '能够运用数学工具解决工程问题', level: '熟练' },
+    ],
+    chapters: [
+      { id: 'ch-1', name: '函数与极限', hours: 12, theoryHours: 12, practiceHours: 0, content: '函数概念、极限定义、无穷小与无穷大', teachingMethod: '讲授+练习', keyPoints: '极限的计算方法', difficultPoints: 'ε-δ定义' },
+      { id: 'ch-2', name: '导数与微分', hours: 14, theoryHours: 14, practiceHours: 0, content: '导数概念、求导法则、微分应用', teachingMethod: '讲授+练习', keyPoints: '复合函数求导', difficultPoints: '隐函数求导' },
+      { id: 'ch-3', name: '中值定理与导数应用', hours: 10, theoryHours: 10, practiceHours: 0, content: '罗尔定理、拉格朗日定理、泰勒公式', teachingMethod: '讲授+讨论', keyPoints: '洛必达法则', difficultPoints: '泰勒展开' },
+      { id: 'ch-4', name: '不定积分', hours: 10, theoryHours: 10, practiceHours: 0, content: '积分概念、换元法、分部积分', teachingMethod: '讲授+练习', keyPoints: '基本积分公式', difficultPoints: '三角换元' },
+      { id: 'ch-5', name: '定积分', hours: 12, theoryHours: 12, practiceHours: 0, content: '定积分概念、应用、广义积分', teachingMethod: '讲授+应用案例', keyPoints: '牛顿-莱布尼茨公式', difficultPoints: '广义积分收敛性' },
+      { id: 'ch-6', name: '级数', hours: 6, theoryHours: 6, practiceHours: 0, content: '数项级数、幂级数、傅里叶级数', teachingMethod: '讲授', keyPoints: '收敛判别法', difficultPoints: '一致收敛' },
+    ],
+    teachingMethods: '讲授法、习题课、翻转课堂',
+    assessmentMethod: '平时成绩20% + 期中考试30% + 期末考试50%',
+    assessmentWeight: { usual: 20, midterm: 30, final: 50, practice: 0 },
+    textbooks: ['《高等数学（第七版）》，同济大学数学系，高等教育出版社'],
+    references: ['《数学分析》，华东师范大学数学系'],
+    status: 'finalized',
+    version: 'v1.0',
+    createdAt: '2025-01-15',
+    updatedAt: '2025-02-20',
+  },
+]
+
+export const sceneSyllabuses: SceneSyllabus[] = [
+  {
+    id: 'syl-scene-001',
+    programId: 'tp1',
+    courseId: 'prac-001',
+    courseName: '企业认知实习',
+    courseCode: 'PRAC001',
+    type: 'scene',
+    credits: 2,
+    totalHours: 32,
+    theoryHours: 8,
+    practiceHours: 24,
+    applicableMajorIds: ['m1'],
+    objectives: [
+      { id: 'obj-1', dimension: '知识', content: '了解企业组织架构和软件开发流程', level: '了解' },
+      { id: 'obj-2', dimension: '能力', content: '能够参与团队协作完成简单任务', level: '掌握' },
+      { id: 'obj-3', dimension: '素养', content: '培养职业素养和沟通协调能力', level: '掌握' },
+    ],
+    chapters: [
+      { id: 'ch-1', name: '企业环境与规章制度', hours: 4, theoryHours: 4, practiceHours: 0, content: '企业文化、组织架构、安全规范', teachingMethod: '参观+讲解', keyPoints: '企业规章制度', difficultPoints: '保密协议理解' },
+      { id: 'ch-2', name: '软件开发流程实践', hours: 12, theoryHours: 4, practiceHours: 8, content: '需求分析、设计、编码、测试全流程', teachingMethod: '项目实践', keyPoints: '敏捷开发流程', difficultPoints: '需求变更处理' },
+      { id: 'ch-3', name: '岗位技能体验', hours: 16, theoryHours: 0, practiceHours: 16, content: '前端/后端/测试岗位轮换体验', teachingMethod: '岗位轮训', keyPoints: '岗位核心技能', difficultPoints: '快速适应新岗位' },
+    ],
+    teachingMethods: '场景化教学、岗位轮训、企业导师制',
+    assessmentMethod: '过程评价40% + 岗位胜任力测评60%',
+    assessmentWeight: { usual: 40, midterm: 0, final: 0, practice: 60 },
+    textbooks: ['企业内训资料'],
+    references: ['《软件工程实践者的研究方法》，Roger Pressman'],
+    status: 'finalized',
+    version: 'v1.0',
+    createdAt: '2025-01-15',
+    updatedAt: '2025-02-20',
+    mappedPositionId: 'pos-001',
+    mappedPositionName: '软件开发工程师',
+    taskChain: [
+      { id: 'st-1', name: '环境熟悉与工具配置', order: 1, mappedAbilityIds: ['ab-1'], hours: 4, evaluationRuleId: 'er-1' },
+      { id: 'st-2', name: '需求理解与任务分解', order: 2, mappedAbilityIds: ['ab-2', 'ab-3'], hours: 8, evaluationRuleId: 'er-2' },
+      { id: 'st-3', name: '功能开发与代码提交', order: 3, mappedAbilityIds: ['ab-4'], hours: 12, evaluationRuleId: 'er-3' },
+      { id: 'st-4', name: '测试与缺陷修复', order: 4, mappedAbilityIds: ['ab-5'], hours: 8, evaluationRuleId: 'er-4' },
+    ],
+    evaluationRubric: 'A:独立完成全部任务且质量优秀 B:在指导下完成，质量良好 C:基本完成核心任务 D:部分完成，需加强',
+    workstationType: '软件开发工位',
+    equipmentList: ['开发电脑', 'IDE环境', 'Git仓库权限', '测试环境'],
+    enterpriseMentorRequired: true,
+  },
+]
+
+// ============================================
+// Mock 数据：教学计划
+// ============================================
+
+export const teachingPlansV2: TeachingPlan[] = [
+  {
+    id: 'plan-001',
+    programId: 'tp1',
+    programName: '2026级软件工程专业人才培养方案',
+    majorId: 'm1',
+    entryYear: 2026,
+    totalSemesters: 8,
+    status: 'confirmed',
+    generatedAt: '2025-03-01',
+    confirmedAt: '2025-03-10',
+    entries: [
+      {
+        id: 'pe-001',
+        courseId: 'c-1717000000000-1',
+        courseName: '程序设计基础',
+        courseCode: 'CS101',
+        type: 'theory',
+        nature: '必修',
+        credits: 4,
+        totalHours: 64,
+        semester: 1,
+        weekHours: 4,
+        startWeek: 1,
+        endWeek: 16,
+        weekPattern: 'all',
+        assignedClassIds: ['c1', 'c2'],
+        preferredFacultyIds: ['f1'],
+        venueTypeRequired: '机房',
+        syllabusId: 'syl-001',
+        status: 'scheduled',
+      },
+      {
+        id: 'pe-002',
+        courseId: 'c-1717000000000-2',
+        courseName: '高等数学',
+        courseCode: 'MATH101',
+        type: 'theory',
+        nature: '必修',
+        credits: 4,
+        totalHours: 64,
+        semester: 1,
+        weekHours: 4,
+        startWeek: 1,
+        endWeek: 16,
+        weekPattern: 'all',
+        assignedClassIds: ['c1', 'c2'],
+        preferredFacultyIds: [],
+        venueTypeRequired: '教室',
+        syllabusId: 'syl-002',
+        status: 'scheduled',
+      },
+      {
+        id: 'pe-003',
+        courseId: 'prac-001',
+        courseName: '企业认知实习',
+        courseCode: 'PRAC001',
+        type: 'scene',
+        nature: '实践',
+        credits: 2,
+        totalHours: 32,
+        semester: 3,
+        weekHours: 8,
+        startWeek: 17,
+        endWeek: 20,
+        weekPattern: 'intensive',
+        assignedClassIds: ['c1', 'c2'],
+        preferredFacultyIds: ['f3'],
+        venueTypeRequired: '校外基地',
+        syllabusId: 'syl-scene-001',
+        status: 'scheduled',
+      },
+    ],
+  },
+]
+
+// ============================================
+// Mock 数据：备课任务
+// ============================================
+
+export const preparationTasks: PreparationTask[] = [
+  {
+    id: 'prep-001',
+    taskId: 'task-001',
+    taskName: '程序设计基础-第1次课',
+    taskType: 'traditional',
+    courseName: '程序设计基础',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f1',
+    facultyName: '周建国',
+    status: 'completed',
+    progress: 100,
+    stages: {
+      pre: {
+        objectives: ['了解程序设计语言的发展历史', '理解编译和解释的区别'],
+        resources: [
+          { id: 'res-1', name: '课程导入PPT', type: 'ppt', stage: 'pre' },
+          { id: 'res-2', name: '编程语言发展史视频', type: 'video', stage: 'pre' },
+        ],
+        activities: [
+          { id: 'act-1', name: '课前讨论：你用过哪些编程语言', type: 'discussion', description: '在班级群发起讨论', duration: 10, stage: 'pre' },
+        ],
+        guidePlan: '通过生活实例引入编程概念，激发学习兴趣',
+        previewQuestions: ['什么是算法？', '编程语言有哪些分类？'],
+      },
+      in: {
+        resources: [
+          { id: 'res-3', name: '课堂演示代码', type: 'document', stage: 'in' },
+        ],
+        activities: [
+          { id: 'act-2', name: 'Hello World 现场编程', type: 'demo', description: '教师演示并让学生跟随', duration: 15, stage: 'in' },
+          { id: 'act-3', name: '小组讨论：IDE选择', type: 'group_work', description: '讨论不同IDE的优缺点', duration: 10, stage: 'in' },
+        ],
+        coursewareResources: [
+          { id: 'res-4', name: '第1章课件', type: 'ppt', stage: 'in' },
+        ],
+        quizQuestions: ['编译型语言和解释型语言的区别是？'],
+        discussionTopics: ['为什么选择C语言作为入门语言？'],
+      },
+      post: {
+        resources: [
+          { id: 'res-5', name: '课后拓展阅读', type: 'link', stage: 'post' },
+        ],
+        activities: [
+          { id: 'act-4', name: '在线编程练习', type: 'practice', description: '完成3道基础编程题', duration: 30, stage: 'post' },
+        ],
+        homework: '安装IDE并编写第一个程序，提交截图',
+        quizQuestions: ['简述程序开发的基本步骤'],
+        extensionResources: [
+          { id: 'res-6', name: '著名程序员访谈录', type: 'video', stage: 'post' },
+        ],
+      },
+    },
+    coursePrep: {
+      externalPlatformId: 'platform-cs101',
+      knowledgePointIds: ['kp-1', 'kp-2'],
+      syllabusChapterMapping: [{ chapterId: 'ch-1', sessionIndex: 1 }],
+    },
+    submittedAt: '2025-09-01',
+  },
+  {
+    id: 'prep-002',
+    taskId: 'task-scene-001',
+    taskName: '企业认知实习-环境熟悉',
+    taskType: 'scene',
+    courseName: '企业认知实习',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f3',
+    facultyName: '王志强',
+    status: 'in_progress',
+    progress: 60,
+    stages: {
+      pre: {
+        objectives: ['了解企业开发环境', '熟悉代码仓库操作'],
+        resources: [
+          { id: 'res-s1', name: '企业安全规范手册', type: 'document', stage: 'pre' },
+          { id: 'res-s2', name: 'Git操作指南', type: 'link', stage: 'pre' },
+        ],
+        activities: [
+          { id: 'act-s1', name: '安全培训签到', type: 'task', description: '完成安全规范学习并签到', duration: 30, stage: 'pre' },
+        ],
+        guidePlan: '企业导师先进行安全培训，再介绍开发环境',
+        previewQuestions: ['什么是代码版本控制？'],
+      },
+      in: {
+        resources: [
+          { id: 'res-s3', name: '开发环境配置文档', type: 'document', stage: 'in' },
+          { id: 'res-s4', name: '项目代码仓库', type: 'scene_link', stage: 'in' },
+        ],
+        activities: [
+          { id: 'act-s2', name: '环境配置实操', type: 'practice', description: '在导师指导下配置开发环境', duration: 120, stage: 'in' },
+        ],
+        coursewareResources: [],
+        quizQuestions: [],
+        discussionTopics: ['遇到环境配置问题如何排查？'],
+      },
+      post: {
+        resources: [],
+        activities: [
+          { id: 'act-s3', name: '提交环境配置报告', type: 'task', description: '记录配置过程和遇到的问题', duration: 20, stage: 'post' },
+        ],
+        homework: '提交开发环境配置报告',
+        quizQuestions: [],
+        extensionResources: [],
+      },
+    },
+    scenePrep: {
+      externalPlatformId: 'platform-scene-001',
+      subTaskPreparations: [
+        {
+          subTaskId: 'st-1',
+          subTaskName: '环境熟悉与工具配置',
+          description: '学生需在导师指导下完成开发环境配置，包括IDE安装、Git配置、代码仓库克隆',
+          abilityPointIds: ['ab-1', 'ab-2'],
+          evaluationRubricId: 'er-1',
+          workstationId: 'ws-001',
+          equipmentChecklist: ['开发电脑', '网络连接', 'Git客户端', 'VPN账号'],
+          safetyRequirements: '遵守企业信息安全规范，不泄露源代码；离开时锁屏',
+          enterpriseMentorNotes: '重点关注学生的Git基础操作能力',
+          mentorSchedule: {
+            participationType: 'onsite',
+            timeSlot: '第1-2节',
+          },
+        },
+      ],
+    },
+  },
+]
+
+// ============================================
+// Mock 数据：开课记录
+// ============================================
+
+export const courseLaunchRecords: CourseLaunchRecord[] = [
+  {
+    id: 'launch-001',
+    taskId: 'task-001',
+    taskName: '程序设计基础-第1次课',
+    taskType: 'traditional',
+    courseName: '程序设计基础',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f1',
+    facultyName: '周建国',
+    venueId: 'v1',
+    venueName: '计算机楼A101',
+    dayOfWeek: 1,
+    periods: [2, 3],
+    weeks: '1-16',
+    launchStatus: 'launched',
+    prepStatus: 'completed',
+    checklist: {
+      prepCompleted: true,
+      venueConfirmed: true,
+      studentsNotified: true,
+      materialsReady: true,
+    },
+    launchedAt: '2025-09-02',
+    studentVisibility: true,
+    notes: '已正常开课',
+  },
+  {
+    id: 'launch-002',
+    taskId: 'task-scene-001',
+    taskName: '企业认知实习-环境熟悉',
+    taskType: 'scene',
+    courseName: '企业认知实习',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f3',
+    facultyName: '王志强',
+    venueId: 'v5',
+    venueName: '校外实训基地',
+    dayOfWeek: 3,
+    periods: [6, 7, 8],
+    weeks: '17-20',
+    launchStatus: 'ready',
+    prepStatus: 'in_progress',
+    checklist: {
+      prepCompleted: false,
+      venueConfirmed: true,
+      studentsNotified: false,
+      materialsReady: false,
+      equipmentChecked: false,
+    },
+    studentVisibility: false,
+    notes: '等待备课完成',
+  },
 ]

@@ -45,8 +45,10 @@ import {
   UserCheck,
   XCircle,
   RotateCcw,
+  Beaker,
+  Layers,
 } from 'lucide-react'
-import { gradeRecords, students, terms } from '@/lib/mock-data'
+import { gradeRecords, students, terms, coursePool, tasks } from '@/lib/mock-data'
 import type { GradeRecord, ApplyType, GradeStatus } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -544,7 +546,16 @@ export default function GradesPage() {
 
               {/* 课程映射与成绩 */}
               <div className="border rounded-lg p-4 space-y-3">
-                <div className="text-sm font-medium">课程与成绩信息</div>
+                <div className="text-sm font-medium flex items-center gap-2">
+                  课程与成绩信息
+                  {(() => {
+                    const course = coursePool.find((c) => c.name === actionDialog.record!.courseName || c.code === actionDialog.record!.courseName)
+                    if (course?.type === '场景') {
+                      return <Badge variant="outline" className="text-[10px] border-purple-300 text-purple-600"><Beaker className="h-3 w-3 mr-0.5" />场景课程</Badge>
+                    }
+                    return null
+                  })()}
+                </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <div className="text-xs text-muted-foreground">目标课程</div>
@@ -566,6 +577,54 @@ export default function GradesPage() {
                   </div>
                 </div>
               </div>
+
+              {/* 场景子任务成绩明细（仅场景课程） */}
+              {(() => {
+                const course = coursePool.find((c) => c.name === actionDialog.record!.courseName || c.code === actionDialog.record!.courseName)
+                if (course?.type !== '场景') return null
+                const task = tasks.find((t) => t.courseName === actionDialog.record!.courseName && t.classId === actionDialog.record!.studentId)
+                const subTasks = task?.sceneSubTasks || []
+                if (subTasks.length === 0) {
+                  return (
+                    <div className="border border-purple-200 rounded-lg p-4 bg-purple-50/30 space-y-2">
+                      <div className="text-sm font-medium flex items-center gap-2 text-purple-700">
+                        <Layers className="h-4 w-4" />
+                        场景子任务成绩
+                      </div>
+                      <p className="text-xs text-muted-foreground">该场景课程暂无子任务成绩记录</p>
+                    </div>
+                  )
+                }
+                return (
+                  <div className="border border-purple-200 rounded-lg p-4 bg-purple-50/30 space-y-3">
+                    <div className="text-sm font-medium flex items-center gap-2 text-purple-700">
+                      <Layers className="h-4 w-4" />
+                      场景子任务成绩明细
+                    </div>
+                    <div className="space-y-2">
+                      {subTasks.map((sub) => (
+                        <div key={sub.id} className="flex items-center justify-between bg-white rounded border p-2.5">
+                          <div>
+                            <div className="text-sm font-medium">{sub.name}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              工位: {sub.workStationName || '—'} · 导师: {sub.enterpriseMentorName || '—'}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <div className="text-sm font-medium">{sub.progress?.completionRate || 0}%</div>
+                              <div className="text-[10px] text-muted-foreground">完成度</div>
+                            </div>
+                            <Badge variant="outline" className="text-[10px]">
+                              {sub.status === 'completed' ? '已完成' : sub.status === 'in_progress' ? '进行中' : '计划中'}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* 审核历史 */}
               <div className="space-y-3">

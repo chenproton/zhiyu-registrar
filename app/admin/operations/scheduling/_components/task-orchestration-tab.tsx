@@ -48,7 +48,9 @@ import {
   Eye,
   Search,
   ChevronDown,
+  Upload,
 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import {
   classes,
@@ -957,6 +959,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
   const [selectedVenueId, setSelectedVenueId] = useState('')
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   const gradeData = grades.find((g) => g.id === selectedGrade)
@@ -1096,7 +1099,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
           </TabsList>
         </Tabs>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-1" onClick={() => toast('导入排课Excel功能开发中')}>
+          <Button variant="outline" className="gap-1" onClick={() => setImportDialogOpen(true)}>
             <FileSpreadsheet className="h-4 w-4" />
             导入排课Excel
           </Button>
@@ -1126,6 +1129,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
 
       {/* 新建任务弹窗 */}
       <NewTaskDialog open={newTaskDialogOpen} onClose={() => setNewTaskDialogOpen(false)} />
+      <ImportTaskDialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)} />
 
       {/* 编辑弹窗 */}
       <EditTaskDialog
@@ -1134,5 +1138,72 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
         task={selectedTask}
       />
     </div>
+  )
+}
+
+
+// ==================== Import Task Dialog ====================
+function ImportTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [text, setText] = useState('')
+  const [previewCount, setPreviewCount] = useState(0)
+
+  const handleParse = () => {
+    if (!text.trim()) {
+      toast.error('请输入数据')
+      return
+    }
+    const lines = text.trim().split('\n').filter((l) => l.trim())
+    setPreviewCount(lines.length)
+    toast.success(`解析成功，共 ${lines.length} 条记录`)
+  }
+
+  const handleConfirm = () => {
+    if (previewCount === 0) {
+      toast.error('请先解析数据')
+      return
+    }
+    toast.success(`成功导入 ${previewCount} 条排课记录`)
+    onClose()
+    setText('')
+    setPreviewCount(0)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-green-600" />
+            导入排课Excel
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2">
+          <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">数据格式</p>
+            <p>每行一条排课记录，字段用逗号分隔：</p>
+            <p className="font-mono bg-white border rounded px-2 py-1">班级名称, 课程名称, 教师姓名, 星期, 节次, 周次, 场地</p>
+            <p>示例：</p>
+            <p className="font-mono bg-white border rounded px-2 py-1">软件工程2026级1班, 程序设计基础, 周建国, 周一, 1-2, 1-16, 计算机楼A101</p>
+          </div>
+          <div className="space-y-2">
+            <Label>粘贴Excel数据</Label>
+            <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="在此粘贴排课数据..." rows={8} />
+            <Button variant="outline" size="sm" onClick={handleParse}>
+              <Upload className="h-3.5 w-3.5 mr-1" />
+              解析数据
+            </Button>
+          </div>
+          {previewCount > 0 && (
+            <div className="rounded-lg border bg-green-50 p-2 text-xs text-green-700">
+              已解析 {previewCount} 条记录，点击确认导入
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onClose(); setText(''); setPreviewCount(0) }}>取消</Button>
+          <Button onClick={handleConfirm} disabled={previewCount === 0}>确认导入</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

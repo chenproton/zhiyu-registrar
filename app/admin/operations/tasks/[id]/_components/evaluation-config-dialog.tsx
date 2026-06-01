@@ -19,6 +19,8 @@ import {
   CheckCircle2,
   FileQuestion,
   Search,
+  Beaker,
+  Settings,
 } from 'lucide-react'
 import type {
   TaskEvaluationConfig,
@@ -80,20 +82,32 @@ export default function EvaluationConfigContent({
       </div>
 
       {config.enabledMethods.length === 0 ? (
-        <div className="text-center py-12 text-muted-foreground border rounded-lg">
-          <p className="text-sm">暂未开通任何测评方式</p>
-        </div>
+        <EvaluationMethodWizard
+          availableMethods={availableMethods}
+          onAdd={(methods) => {
+            onChange({ ...config, enabledMethods: methods })
+            toast.success('测评方式已添加')
+          }}
+        />
       ) : (
         <Tabs defaultValue={config.enabledMethods[0]} className="w-full">
-          <TabsList className="flex w-full h-auto gap-1 overflow-x-auto">
-            {availableMethods
-              .filter((m) => config.enabledMethods.includes(m.key))
-              .map((m) => (
-                <TabsTrigger key={m.key} value={m.key} className="text-[11px] flex-1 whitespace-nowrap px-1.5 py-1 h-8 min-w-0">
-                  {m.label}
-                </TabsTrigger>
-              ))}
-          </TabsList>
+          <div className="flex items-center justify-between mb-2">
+            <TabsList className="flex h-auto gap-1 overflow-x-auto">
+              {availableMethods
+                .filter((m) => config.enabledMethods.includes(m.key))
+                .map((m) => (
+                  <TabsTrigger key={m.key} value={m.key} className="text-[11px] flex-1 whitespace-nowrap px-1.5 py-1 h-8 min-w-0">
+                    {m.label}
+                  </TabsTrigger>
+                ))}
+            </TabsList>
+            <div className="flex items-center gap-1">
+              <AddMethodDropdown
+                availableMethods={availableMethods.filter((m) => !config.enabledMethods.includes(m.key))}
+                onAdd={(key) => onChange({ ...config, enabledMethods: [...config.enabledMethods, key] })}
+              />
+            </div>
+          </div>
 
           {/* 现场问答 */}
           <TabsContent value="random_draw" className="space-y-4 mt-4">
@@ -996,6 +1010,113 @@ function OutcomePanel({
         </div>
       </div>
 
+    </div>
+  )
+}
+
+
+// ============ 测评方式添加向导（空状态）============
+function EvaluationMethodWizard({
+  availableMethods,
+  onAdd,
+}: {
+  availableMethods: { key: string; label: string }[]
+  onAdd: (methods: string[]) => void
+}) {
+  const [selected, setSelected] = useState<string[]>([])
+
+  const methodIcons: Record<string, React.ReactNode> = {
+    random_draw: <FileQuestion className="h-5 w-5 text-blue-500" />,
+    review: <CheckCircle2 className="h-5 w-5 text-emerald-500" />,
+    paper: <FileQuestion className="h-5 w-5 text-purple-500" />,
+    question_bank: <FileQuestion className="h-5 w-5 text-orange-500" />,
+    quiz: <FileQuestion className="h-5 w-5 text-pink-500" />,
+    homework: <FileQuestion className="h-5 w-5 text-cyan-500" />,
+    outcome: <Beaker className="h-5 w-5 text-amber-500" />,
+  }
+
+  const methodDesc: Record<string, string> = {
+    random_draw: '教师从题库抽取题目，课堂现场提问评分',
+    review: '多维度现场评审，支持教师/导师/互评',
+    paper: '传统试卷考试，支持客观题自动评分',
+    question_bank: '从题库随机抽题组卷，防作弊',
+    quiz: '课后随堂小测，快速检验学习效果',
+    homework: '课后作业提交与批改',
+    outcome: '项目/场景成果综合评价，适合实践类任务',
+  }
+
+  const toggle = (key: string) => {
+    setSelected((prev) => prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key])
+  }
+
+  return (
+    <div className="border rounded-lg p-6 space-y-4">
+      <div className="text-center space-y-1">
+        <Settings className="h-8 w-8 text-muted-foreground mx-auto" />
+        <h4 className="text-sm font-medium">配置测评方式</h4>
+        <p className="text-xs text-muted-foreground">请为当前任务选择至少一种测评方式</p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {availableMethods.map((m) => {
+          const isSelected = selected.includes(m.key)
+          return (
+            <button
+              key={m.key}
+              onClick={() => toggle(m.key)}
+              className={`flex flex-col items-start gap-2 rounded-lg border p-3 text-left transition-colors ${
+                isSelected ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted/50'
+              }`}
+            >
+              <div className="flex items-center gap-2 w-full">
+                {methodIcons[m.key]}
+                <span className="text-sm font-medium flex-1">{m.label}</span>
+                {isSelected && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">{methodDesc[m.key]}</p>
+            </button>
+          )
+        })}
+      </div>
+      <div className="flex justify-center">
+        <Button onClick={() => onAdd(selected)} disabled={selected.length === 0}>
+          <Plus className="h-4 w-4 mr-1" />
+          开通 {selected.length} 项测评方式
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// ============ 添加测评方式下拉 ============
+function AddMethodDropdown({
+  availableMethods,
+  onAdd,
+}: {
+  availableMethods: { key: string; label: string }[]
+  onAdd: (key: string) => void
+}) {
+  const [open, setOpen] = useState(false)
+  if (availableMethods.length === 0) return null
+
+  return (
+    <div className="relative">
+      <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => setOpen(!open)}>
+        <Plus className="h-3.5 w-3.5" />
+        添加测评
+      </Button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border bg-white shadow-lg z-50 py-1">
+          {availableMethods.map((m) => (
+            <button
+              key={m.key}
+              className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center gap-2"
+              onClick={() => { onAdd(m.key); setOpen(false) }}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
