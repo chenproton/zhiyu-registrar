@@ -20,10 +20,12 @@ export default function TabBasicInfo({
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4">
+      {/* 第一行：方案名称、方案编码、版本号 */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>方案名称</Label>
           <Input
+            className="w-full"
             value={program.name}
             onChange={(e) => onChange({ ...program, name: e.target.value })}
             placeholder="如 2025级计算机网络技术专业人才培养方案"
@@ -32,13 +34,19 @@ export default function TabBasicInfo({
         <div className="space-y-2">
           <Label>方案编码</Label>
           <Input
+            className="w-full"
             value={program.code}
             onChange={(e) => onChange({ ...program, code: e.target.value })}
             placeholder="如 TP-CN-510202-2025"
           />
         </div>
+        <div className="space-y-2">
+          <Label>版本号</Label>
+          <Input value="v1.0" disabled className="bg-muted w-full" />
+        </div>
       </div>
 
+      {/* 第二行：专业名称、专业代码、适用年级 */}
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>专业名称</Label>
@@ -53,7 +61,7 @@ export default function TabBasicInfo({
               })
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="选择专业" />
             </SelectTrigger>
             <SelectContent>
@@ -66,29 +74,19 @@ export default function TabBasicInfo({
         <div className="space-y-2">
           <Label>专业代码</Label>
           <Input
+            className="w-full"
             value={program.majorCode || ''}
             onChange={(e) => onChange({ ...program, majorCode: e.target.value })}
             placeholder="如 510202"
           />
         </div>
         <div className="space-y-2">
-          <Label>版本号</Label>
-          <Input
-            value={program.version || ''}
-            onChange={(e) => onChange({ ...program, version: e.target.value })}
-            placeholder="如 2025版"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        <div className="space-y-2">
           <Label>适用年级</Label>
           <Select
             value={String(program.entryYear)}
             onValueChange={(v) => onChange({ ...program, entryYear: Number(v) })}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="选择年级" />
             </SelectTrigger>
             <SelectContent>
@@ -98,13 +96,17 @@ export default function TabBasicInfo({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* 第三行：层次、学制、状态 */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>层次</Label>
           <Select
             value={program.level}
             onValueChange={(v) => onChange({ ...program, level: v as TrainingProgram['level'] })}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -117,6 +119,7 @@ export default function TabBasicInfo({
         <div className="space-y-2">
           <Label>学制（年）</Label>
           <Input
+            className="w-full"
             type="number"
             value={program.duration}
             onChange={(e) => onChange({ ...program, duration: Number(e.target.value) })}
@@ -128,7 +131,7 @@ export default function TabBasicInfo({
             value={program.status}
             onValueChange={(v) => onChange({ ...program, status: v as TrainingProgram['status'] })}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -141,45 +144,12 @@ export default function TabBasicInfo({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <div className="space-y-2">
-          <Label>总学分</Label>
-          <Input
-            type="number"
-            value={program.totalCredits}
-            onChange={(e) => onChange({ ...program, totalCredits: Number(e.target.value) })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>必修学分</Label>
-          <Input
-            type="number"
-            value={program.requiredCredits}
-            onChange={(e) => onChange({ ...program, requiredCredits: Number(e.target.value) })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>选修学分</Label>
-          <Input
-            type="number"
-            value={program.electiveCredits}
-            onChange={(e) => onChange({ ...program, electiveCredits: Number(e.target.value) })}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>实践学分</Label>
-          <Input
-            type="number"
-            value={program.practiceCredits}
-            onChange={(e) => onChange({ ...program, practiceCredits: Number(e.target.value) })}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      {/* 第四行：方案开始时间、方案结束时间 */}
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>方案开始时间</Label>
           <Input
+            className="w-full"
             type="date"
             value={program.startDate || ''}
             onChange={(e) => onChange({ ...program, startDate: e.target.value })}
@@ -188,6 +158,7 @@ export default function TabBasicInfo({
         <div className="space-y-2">
           <Label>方案结束时间</Label>
           <Input
+            className="w-full"
             type="date"
             value={program.endDate || ''}
             onChange={(e) => onChange({ ...program, endDate: e.target.value })}
@@ -195,6 +166,7 @@ export default function TabBasicInfo({
         </div>
       </div>
 
+      {/* 入学基本要求 */}
       <div className="space-y-2">
         <Label>入学基本要求</Label>
         <Textarea

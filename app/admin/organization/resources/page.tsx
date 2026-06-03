@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, Pencil, MapPin, Wrench, CheckCircle2, Beaker } from 'lucide-react'
+import { Plus, MapPin, Wrench, CheckCircle2, Beaker, Upload, Download } from 'lucide-react'
 import { venues } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -39,7 +39,15 @@ export default function ResourcesPage() {
           <h1 className="text-2xl font-bold">场地资源管理</h1>
           <p className="text-muted-foreground">管理教学场地与实训资源</p>
         </div>
-        <Button onClick={() => setCreateVenueOpen(true)}><Plus className="h-4 w-4 mr-2" />新建场地</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => toast.success('导入功能开发中')}>
+            <Upload className="h-4 w-4 mr-2" />导入
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => toast.success('导出功能开发中')}>
+            <Download className="h-4 w-4 mr-2" />导出
+          </Button>
+          <Button onClick={() => setCreateVenueOpen(true)}><Plus className="h-4 w-4 mr-2" />新建场地</Button>
+        </div>
       </div>
 
       {/* 统计卡片 */}
@@ -134,7 +142,7 @@ export default function ResourcesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedVenue(v); setEditVenueOpen(true) }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setSelectedVenue(v); setEditVenueOpen(true) }}>编辑</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -146,7 +154,7 @@ export default function ResourcesPage() {
       {/* 新建场地弹窗 */}
       <Dialog open={createVenueOpen} onOpenChange={setCreateVenueOpen}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>新建场地</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>新建场地（教室）</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2"><Label>场地名称</Label><Input placeholder="请输入场地名称" /></div>
             <div className="grid grid-cols-2 gap-4">

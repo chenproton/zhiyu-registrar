@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Pencil } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { majors, departments } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -65,7 +65,7 @@ export default function MajorsPage() {
       <Card>
         <CardContent className="pt-6">
           <FilterBar
-            searchPlaceholder="搜索专业名称或编码..."
+            searchPlaceholder="搜索专业名称或代码..."
             searchValue={search}
             onSearchChange={setSearch}
             filters={[
@@ -96,8 +96,9 @@ export default function MajorsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>专业编码</TableHead>
+                <TableHead className="w-10"></TableHead>
                 <TableHead>专业名称</TableHead>
+                <TableHead>专业代码</TableHead>
                 <TableHead>所属院系</TableHead>
                 <TableHead>培养层次</TableHead>
                 <TableHead>学制</TableHead>
@@ -106,10 +107,11 @@ export default function MajorsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((m) => (
+              {filtered.map((m, idx) => (
                 <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.code}</TableCell>
-                  <TableCell>{m.name}</TableCell>
+                  <TableCell>{idx + 1}</TableCell>
+                  <TableCell className="font-medium">{m.name}</TableCell>
+                  <TableCell>{m.code}</TableCell>
                   <TableCell>{departments.find((d) => d.id === m.departmentId)?.name}</TableCell>
                   <TableCell>{m.level}</TableCell>
                   <TableCell>{m.duration}年</TableCell>
@@ -119,13 +121,13 @@ export default function MajorsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedMajor(m); setEditOpen(true) }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setSelectedMajor(m); setEditOpen(true) }}>编辑</Button>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -141,17 +143,22 @@ export default function MajorsPage() {
           <DialogHeader><DialogTitle>新建专业</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>专业编码</Label><Input placeholder="请输入专业编码" /></div>
               <div className="space-y-2"><Label>专业名称</Label><Input placeholder="请输入专业名称" /></div>
-            </div>
-            <div className="space-y-2"><Label>所属院系</Label>
-              <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+              <div className="space-y-2"><Label>专业代码</Label><Input placeholder="请输入专业代码" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>培养层次</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择层次" /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+              <div className="space-y-2"><Label>所属院系</Label>
+                <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
               </div>
-              <div className="space-y-2"><Label>学制（年）</Label><Input type="number" placeholder="如 4" /></div>
+              <div className="space-y-2"><Label>培养层次</Label>
+                <Select defaultValue="大专"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>学制（年）</Label><Input type="number" defaultValue="3" placeholder="如 3" /></div>
+              <div className="space-y-2"><Label>状态</Label>
+                <Select defaultValue="active"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">启用</SelectItem><SelectItem value="inactive">禁用</SelectItem></SelectContent></Select>
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -168,17 +175,22 @@ export default function MajorsPage() {
           {selectedMajor && (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>专业编码</Label><Input defaultValue={selectedMajor.code} /></div>
                 <div className="space-y-2"><Label>专业名称</Label><Input defaultValue={selectedMajor.name} /></div>
-              </div>
-              <div className="space-y-2"><Label>所属院系</Label>
-                <Select defaultValue={selectedMajor.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                <div className="space-y-2"><Label>专业代码</Label><Input defaultValue={selectedMajor.code} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>所属院系</Label>
+                  <Select defaultValue={selectedMajor.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                </div>
                 <div className="space-y-2"><Label>培养层次</Label>
                   <Select defaultValue={selectedMajor.level}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>学制（年）</Label><Input type="number" defaultValue={selectedMajor.duration} /></div>
+                <div className="space-y-2"><Label>状态</Label>
+                  <Select defaultValue={selectedMajor.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">启用</SelectItem><SelectItem value="inactive">禁用</SelectItem></SelectContent></Select>
+                </div>
               </div>
             </div>
           )}

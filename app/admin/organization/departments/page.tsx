@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Pencil, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { departments as initialDepartments, majors, classes, students, faculty } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -44,11 +44,13 @@ export default function DepartmentsPage() {
   // 新建表单状态
   const [newCode, setNewCode] = useState('')
   const [newName, setNewName] = useState('')
+  const [newDescription, setNewDescription] = useState('')
   const [newStatus, setNewStatus] = useState<'active' | 'inactive'>('active')
 
   // 编辑表单状态
   const [editCode, setEditCode] = useState('')
   const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [editStatus, setEditStatus] = useState<'active' | 'inactive'>('active')
 
   const filtered = useMemo(() => {
@@ -96,11 +98,13 @@ export default function DepartmentsPage() {
       type: '教学院系',
       leader: '',
       status: newStatus,
+      description: newDescription.trim(),
     }
     setDeptData((prev) => [...prev, newDept])
     toast.success('新建院系成功')
     setNewCode('')
     setNewName('')
+    setNewDescription('')
     setNewStatus('active')
     setCreateOpen(false)
   }
@@ -109,6 +113,7 @@ export default function DepartmentsPage() {
     setSelectedDept(d)
     setEditCode(d.code)
     setEditName(d.name)
+    setEditDescription(d.description || '')
     setEditStatus(d.status)
     setEditOpen(true)
   }
@@ -122,7 +127,7 @@ export default function DepartmentsPage() {
     setDeptData((prev) =>
       prev.map((d) =>
         d.id === selectedDept.id
-          ? { ...d, code: editCode.trim(), name: editName.trim(), status: editStatus }
+          ? { ...d, code: editCode.trim(), name: editName.trim(), status: editStatus, description: editDescription.trim() }
           : d
       )
     )
@@ -170,8 +175,10 @@ export default function DepartmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>院系编码</TableHead>
+                <TableHead className="w-10"></TableHead>
                 <TableHead>院系名称</TableHead>
+                <TableHead>院系编码</TableHead>
+                <TableHead>简介</TableHead>
                 <TableHead>专业数量</TableHead>
                 <TableHead>班级数</TableHead>
                 <TableHead>学生数</TableHead>
@@ -181,12 +188,16 @@ export default function DepartmentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((d) => {
+              {filtered.map((d, idx) => {
                 const stats = getStats(d.id)
                 return (
                   <TableRow key={d.id}>
-                    <TableCell className="font-medium">{d.code}</TableCell>
-                    <TableCell>{d.name}</TableCell>
+                    <TableCell>{idx + 1}</TableCell>
+                    <TableCell className="font-medium">{d.name}</TableCell>
+                    <TableCell>{d.code}</TableCell>
+                    <TableCell>
+                      <span className="text-muted-foreground text-sm truncate max-w-[200px] block" title={d.description}>{d.description || '—'}</span>
+                    </TableCell>
                     <TableCell>{stats.majorCount}</TableCell>
                     <TableCell>{stats.classCount}</TableCell>
                     <TableCell>{stats.studentCount}</TableCell>
@@ -198,9 +209,9 @@ export default function DepartmentsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(d)}><Pencil className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => toggleStatus(d.id)}>
-                          {d.status === 'active' ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                        <Button variant="ghost" size="sm" onClick={() => openEdit(d)}>编辑</Button>
+                        <Button variant="ghost" size="sm" onClick={() => toggleStatus(d.id)}>
+                          {d.status === 'active' ? '禁用' : '启用'}
                         </Button>
                       </div>
                     </TableCell>
@@ -209,7 +220,7 @@ export default function DepartmentsPage() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -225,9 +236,10 @@ export default function DepartmentsPage() {
           <DialogHeader><DialogTitle>新建院系</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>院系编码</Label><Input placeholder="请输入院系编码" value={newCode} onChange={(e) => setNewCode(e.target.value)} /></div>
               <div className="space-y-2"><Label>院系名称</Label><Input placeholder="请输入院系名称" value={newName} onChange={(e) => setNewName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>院系编码</Label><Input placeholder="请输入院系编码" value={newCode} onChange={(e) => setNewCode(e.target.value)} /></div>
             </div>
+            <div className="space-y-2"><Label>简介</Label><Input placeholder="请输入院系简介" value={newDescription} onChange={(e) => setNewDescription(e.target.value)} /></div>
             <div className="space-y-2">
               <Label>状态</Label>
               <Select value={newStatus} onValueChange={(v) => setNewStatus(v as 'active' | 'inactive')}>
@@ -253,9 +265,10 @@ export default function DepartmentsPage() {
           {selectedDept && (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>院系编码</Label><Input value={editCode} onChange={(e) => setEditCode(e.target.value)} /></div>
                 <div className="space-y-2"><Label>院系名称</Label><Input value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+                <div className="space-y-2"><Label>院系编码</Label><Input value={editCode} onChange={(e) => setEditCode(e.target.value)} /></div>
               </div>
+              <div className="space-y-2"><Label>简介</Label><Input value={editDescription} onChange={(e) => setEditDescription(e.target.value)} /></div>
               <div className="space-y-2">
                 <Label>状态</Label>
                 <Select value={editStatus} onValueChange={(v) => setEditStatus(v as 'active' | 'inactive')}>

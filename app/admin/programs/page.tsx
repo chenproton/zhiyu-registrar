@@ -32,8 +32,11 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Eye, FileText, Building2, Users, UserPlus, ArrowRight, Copy } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Plus, Pencil, Trash2, Eye, FileText, Users, UserPlus, ArrowRight, Copy, Upload, Sparkles, CalendarDays } from 'lucide-react'
 import { usePrograms } from './_components/program-context'
+import { useSyllabuses } from '@/components/providers/syllabus-provider'
+import { useTeachingPlans } from '@/components/providers/teaching-plan-provider'
 import { majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues, allPeriods } from '@/lib/mock-data'
 import type { TrainingProgram, CoursePlan } from '@/lib/mock-data'
 import { toast } from 'sonner'
@@ -122,110 +125,161 @@ export default function ProgramsPage() {
     toast.success('删除成功')
   }
 
-  const handleClone = (program: TrainingProgram) => {
+  const { syllabuses, sceneSyllabuses, addSyllabus, addSceneSyllabus } = useSyllabuses()
+  const { teachingPlans, addTeachingPlan } = useTeachingPlans()
+
+  // 克隆弹窗
+  const [cloneOpen, setCloneOpen] = useState(false)
+  const [cloneProgram, setCloneProgram] = useState<TrainingProgram | null>(null)
+  const [cloneSyllabus, setCloneSyllabus] = useState(false)
+  const [clonePlan, setClonePlan] = useState(false)
+  const [cloneSchedule, setCloneSchedule] = useState(false)
+
+  const openClone = (program: TrainingProgram) => {
+    setCloneProgram(program)
+    setCloneSyllabus(false)
+    setClonePlan(false)
+    setCloneSchedule(false)
+    setCloneOpen(true)
+  }
+
+  const confirmClone = () => {
+    if (!cloneProgram) return
+    const newId = `tp${Date.now()}`
     const cloned: TrainingProgram = {
-      ...program,
-      id: `tp${Date.now()}`,
-      code: `${program.code}-CLONE`,
-      name: `${program.name}（克隆）`,
+      ...cloneProgram,
+      id: newId,
+      code: `${cloneProgram.code}-CLONE`,
+      name: `${cloneProgram.name}（克隆）`,
       status: 'draft',
       createdAt: new Date().toISOString().split('T')[0],
       creator: '当前用户',
       collaborators: [],
     }
     addProgram(cloned)
-    toast.success('克隆成功')
+
+    let msg = '方案克隆成功'
+
+    // 克隆教学大纲
+    if (cloneSyllabus) {
+      const allSyls = [...syllabuses, ...sceneSyllabuses].filter((s) => s.programId === cloneProgram.id)
+      allSyls.forEach((syl) => {
+        const newSyl = { ...syl, id: `syl-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`, programId: newId }
+        if (syl.type === 'scene') {
+          addSceneSyllabus(newSyl as any)
+        } else {
+          addSyllabus(newSyl as any)
+        }
+      })
+      msg += `，课程与能力目标 ${allSyls.length} 份`
+    }
+
+    // 克隆教学计划
+    if (clonePlan) {
+      const plans = teachingPlans.filter((p) => p.programId === cloneProgram.id)
+      plans.forEach((plan) => {
+        const newPlan = {
+          ...plan,
+          id: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+          programId: newId,
+          programName: cloned.name,
+          entries: plan.entries.map((e) => ({ ...e, id: `pe-${Date.now()}-${Math.random().toString(36).slice(2, 5)}` })),
+        }
+        addTeachingPlan(newPlan)
+      })
+      msg += `，教学计划 ${plans.length} 份`
+    }
+
+    // 克隆排班排课（tasks）
+    if (cloneSchedule) {
+      const programClasses = classes.filter((c) => {
+        const grade = grades.find((g) => g.id === c.gradeId)
+        return c.majorId === cloneProgram.majorId && grade?.entryYear === cloneProgram.entryYear
+      })
+      const classIds = new Set(programClasses.map((c) => c.id))
+      const relatedTasks = tasks.filter((t) => classIds.has(t.classId))
+      relatedTasks.forEach((task) => {
+        const newTask = {
+          ...task,
+          id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+          name: `${task.name}（克隆）`,
+        }
+        tasks.push(newTask as any)
+      })
+      msg += `，排课任务 ${relatedTasks.length} 条`
+    }
+
+    toast.success(msg)
+    setCloneOpen(false)
+    setCloneProgram(null)
   }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧院系导航 */}
-      <div className="w-64 shrink-0 space-y-3">
-        <div className="flex items-center gap-2 px-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">二级学院/院系</span>
+    <div className="h-[calc(100vh-120px)] overflow-y-auto pr-2 space-y-4">
+      {/* 标题 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">人培方案管理</h1>
+          <p className="text-muted-foreground text-sm">
+            {selectedDeptName} · 共 {filteredPrograms.length} 个培养方案
+          </p>
         </div>
-        <div className="space-y-1">
-          <button
-            onClick={() => {
-              setSelectedDeptId('all')
-              setSelectedYear('all')
-              setExpandedId(null)
-            }}
-            className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
-              selectedDeptId === 'all'
-                ? 'bg-primary text-primary-foreground font-medium'
-                : 'hover:bg-muted text-foreground'
-            }`}
-          >
-            <span>全部院系</span>
-            <span
-              className={`text-xs ${
-                selectedDeptId === 'all' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-              }`}
-            >
-              {programs.length}个方案
-            </span>
-          </button>
-          {departments.map((d) => {
-            const count = programs.filter((p) => {
-              const major = majors.find((m) => m.id === p.majorId)
-              return major?.departmentId === d.id
-            }).length
-            return (
-              <button
-                key={d.id}
-                onClick={() => {
-                  setSelectedDeptId(d.id)
-                  setSelectedYear('all')
-                  setExpandedId(null)
-                }}
-                className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
-                  selectedDeptId === d.id
-                    ? 'bg-primary text-primary-foreground font-medium'
-                    : 'hover:bg-muted text-foreground'
-                }`}
-              >
-                <span>{d.name}</span>
-                <span
-                  className={`text-xs ${
-                    selectedDeptId === d.id
-                      ? 'text-primary-foreground/70'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  {count}个方案
-                </span>
-              </button>
-            )
-          })}
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin/programs/import')}>
+            <Upload className="h-4 w-4 mr-2" />
+            导入方案
+          </Button>
+          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />新建方案</Button>
         </div>
       </div>
 
-      {/* 右侧内容 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
-        <div className="flex items-center justify-between">
+      {/* 筛选栏 */}
+      <Card className="py-0">
+        <CardContent className="px-3 pb-3 pt-3 space-y-2">
+          <div className="text-sm font-semibold">筛选条件</div>
+          {/* 院系 */}
           <div>
-            <h1 className="text-2xl font-bold">人培方案管理</h1>
-            <p className="text-muted-foreground text-sm">
-              {selectedDeptName} · 共 {filteredPrograms.length} 个培养方案
-            </p>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
+            <div className="flex flex-wrap gap-1">
+              <Badge
+                variant={selectedDeptId === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer text-xs"
+                onClick={() => { setSelectedDeptId('all'); setExpandedId(null) }}
+              >全部</Badge>
+              {departments.map((d) => (
+                <Badge
+                  key={d.id}
+                  variant={selectedDeptId === d.id ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => { setSelectedDeptId(d.id); setExpandedId(null) }}
+                >{d.name}</Badge>
+              ))}
+            </div>
           </div>
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />新建方案</Button>
-        </div>
+          {/* 年级 */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
+            <div className="flex flex-wrap gap-1">
+              <Badge
+                variant={selectedYear === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer text-xs"
+                onClick={() => setSelectedYear('all')}
+              >全部</Badge>
+              {allYears.map((y) => (
+                <Badge
+                  key={y}
+                  variant={selectedYear === String(y) ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setSelectedYear(String(y))}
+                >{y}级</Badge>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* 年级筛选 */}
-        <Tabs value={selectedYear} onValueChange={setSelectedYear}>
-          <TabsList>
-            <TabsTrigger value="all">全部年级</TabsTrigger>
-            {allYears.map((y) => (
-              <TabsTrigger key={y} value={String(y)}>{y}级</TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        {/* 培养方案卡片列表 */}
-        <div className="space-y-4">
+      {/* 培养方案卡片列表 */}
+      <div className="space-y-4">
           {filteredPrograms.map((tp) => {
             const major = majors.find((m) => m.id === tp.majorId)
             return (
@@ -243,23 +297,22 @@ export default function ProgramsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       {(() => {
-                        const programClasses = classes.filter((c) => {
-                          const grade = grades.find((g) => g.id === c.gradeId)
-                          return c.majorId === tp.majorId && grade?.entryYear === tp.entryYear
-                        })
-                        const hasScheduled = tasks.some((t) => programClasses.some((c) => c.id === t.classId))
+                        const stepLabels = ['已生成大纲', '已生成计划', '已排班排课']
+                        const stepColors = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-emerald-100 text-emerald-700']
+                        const hash = tp.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+                        const stepIdx = hash % 3
                         return (
                           <>
-                            <Badge variant={hasScheduled ? 'default' : 'secondary'} className="text-xs">
-                              是否已排课：{hasScheduled ? '是' : '否'}
+                            <Badge variant="outline" className={`text-xs ${stepColors[stepIdx]}`}>
+                              执行步骤：{stepLabels[stepIdx]}
                             </Badge>
                             <Button
                               variant="outline"
                               size="sm"
                               className="h-7 text-xs gap-1"
-                              onClick={() => window.location.href = `/admin/operations/scheduling?programId=${tp.id}`}
+                              onClick={() => router.push(`/admin/operations/syllabus?programId=${tp.id}`)}
                             >
-                              前往排课 <ArrowRight className="h-3 w-3" />
+                              <Sparkles className="h-3 w-3" /> 生成大纲
                             </Button>
                           </>
                         )
@@ -267,7 +320,7 @@ export default function ProgramsPage() {
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(tp)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleClone(tp)}>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openClone(tp)}>
                         <Copy className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setInviteProgram(tp); setInviteName(''); setInviteOpen(true) }}>
@@ -424,7 +477,6 @@ export default function ProgramsPage() {
               </CardContent>
             </Card>
           )}
-        </div>
       </div>
 
       {/* 邀请共建弹窗 */}
@@ -459,6 +511,45 @@ export default function ProgramsPage() {
               toast.success(`已成功邀请 ${inviteName.trim()} 共建该方案`)
               setInviteOpen(false)
             }}>确认邀请</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 克隆方案弹窗 */}
+      <Dialog open={cloneOpen} onOpenChange={setCloneOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>克隆方案 — {cloneProgram?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">请选择要一并克隆的关联数据：</p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={cloneSyllabus} onCheckedChange={(v) => setCloneSyllabus(!!v)} />
+                <div>
+                  <div className="text-sm font-medium">课程与能力目标</div>
+                  <div className="text-xs text-muted-foreground">复制该方案下所有课程/场景的课程与能力目标</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={clonePlan} onCheckedChange={(v) => setClonePlan(!!v)} />
+                <div>
+                  <div className="text-sm font-medium">教学计划</div>
+                  <div className="text-xs text-muted-foreground">复制该方案下所有学期的教学计划</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={cloneSchedule} onCheckedChange={(v) => setCloneSchedule(!!v)} />
+                <div>
+                  <div className="text-sm font-medium">排班排课数据</div>
+                  <div className="text-xs text-muted-foreground">复制该方案对应班级的排课任务</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCloneOpen(false)}>取消</Button>
+            <Button onClick={confirmClone}>确认克隆</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

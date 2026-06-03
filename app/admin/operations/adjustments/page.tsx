@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -29,7 +29,8 @@ import {
   History,
   Plus,
 } from 'lucide-react'
-import { taskChangeLogs as initialLogs, tasks, type TaskChangeLog } from '@/lib/mock-data'
+import { taskChangeLogs as initialLogs, tasks, classes, departments, majors, grades, trainingPrograms, type TaskChangeLog } from '@/lib/mock-data'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const changeTypeMap: Record<TaskChangeLog['changeType'], { label: string; icon: React.ElementType }> = {
@@ -58,9 +59,42 @@ export default function TaskSchedulingPage() {
   const [selectedTaskId, setSelectedTaskId] = useState('')
   const [reason, setReason] = useState('')
 
-  const pendingCount = logs.filter((l) => l.status === 'pending').length
-  const approvedCount = logs.filter((l) => l.status === 'approved').length
-  const rejectedCount = logs.filter((l) => l.status === 'rejected').length
+  // 左侧筛选
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
+  const [selectedYear, setSelectedYear] = useState<string>('all')
+  const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
+
+  const deptPrograms = useMemo(() => {
+    let list = trainingPrograms
+    if (selectedDeptId !== 'all') {
+      const deptMajorIds = majors.filter((m) => m.departmentId === selectedDeptId).map((m) => m.id)
+      list = list.filter((p) => deptMajorIds.includes(p.majorId))
+    }
+    if (selectedYear !== 'all') {
+      list = list.filter((p) => String(p.entryYear) === selectedYear)
+    }
+    return list
+  }, [selectedDeptId, selectedYear])
+
+  const filteredLogs = useMemo(() => {
+    if (selectedProgramId === 'all') return logs
+    const program = trainingPrograms.find((p) => p.id === selectedProgramId)
+    if (!program) return logs
+    const relatedTaskIds = new Set(
+      tasks
+        .filter((t) => {
+          const cls = classes.find((c) => c.id === t.classId)
+          const grade = grades.find((g) => g.id === cls?.gradeId)
+          return cls?.majorId === program.majorId && grade?.entryYear === program.entryYear
+        })
+        .map((t) => t.id)
+    )
+    return logs.filter((l) => relatedTaskIds.has(l.taskId))
+  }, [logs, selectedProgramId])
+
+  const pendingCount = filteredLogs.filter((l) => l.status === 'pending').length
+  const approvedCount = filteredLogs.filter((l) => l.status === 'approved').length
+  const rejectedCount = filteredLogs.filter((l) => l.status === 'rejected').length
 
   const handleApprove = (logId: string) => {
     setLogs((prev) =>
@@ -110,20 +144,66 @@ export default function TaskSchedulingPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* 头部 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">任务调度</h1>
-          <p className="text-muted-foreground">对任务实例进行时间、人员、场地、资源的变更调度</p>
-        </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          发起变更申请
-        </Button>
+    <div className="flex gap-6 h-[calc(100vh-120px)]">
+      {/* 左侧筛选 */}
+      <div className="w-60 shrink-0">
+        <Card className="h-full flex flex-col py-0">
+          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
+            <div className="text-sm font-semibold">筛选条件</div>
+            {/* 院系 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedDeptId === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}>全部</Badge>
+                {departments.map((d) => (
+                  <Badge key={d.id} variant={selectedDeptId === d.id ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}>{d.name}</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 年级 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedYear === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear('all')}>全部</Badge>
+                {grades.map((g) => (
+                  <Badge key={g.id} variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear(String(g.entryYear))}>{g.entryYear}级</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 人培方案 — 筛选结果 */}
+            <div className="border-t pt-2 mt-0.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
+                <span className="text-[10px] text-muted-foreground">
+                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                <button className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')} onClick={() => setSelectedProgramId('all')}>全部方案</button>
+                {deptPrograms.map((p) => (
+                  <button key={p.id} className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')} onClick={() => setSelectedProgramId(p.id)}>{p.name}</button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 统计 */}
+      {/* 右侧内容 */}
+      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
+        {/* 头部 */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">任务调度</h1>
+            <p className="text-muted-foreground">对任务实例进行时间、人员、场地、资源的变更调度</p>
+          </div>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            发起变更申请
+          </Button>
+        </div>
+
+        {/* 统计 */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="flex items-center justify-between p-4">
@@ -162,7 +242,7 @@ export default function TaskSchedulingPage() {
           <CardContent className="flex items-center justify-between p-4">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">影响任务数</p>
-              <p className="text-2xl font-bold">{new Set(logs.map((l) => l.taskId)).size}</p>
+              <p className="text-2xl font-bold">{new Set(filteredLogs.map((l) => l.taskId)).size}</p>
             </div>
             <div className="rounded-full p-2 bg-blue-500">
               <History className="h-4 w-4 text-white" />
@@ -191,7 +271,7 @@ export default function TaskSchedulingPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((log) => {
+              {filteredLogs.map((log) => {
                 const task = tasks.find((t) => t.id === log.taskId)
                 const typeInfo = changeTypeMap[log.changeType]
                 const TypeIcon = typeInfo.icon
@@ -255,7 +335,7 @@ export default function TaskSchedulingPage() {
                   </TableRow>
                 )
               })}
-              {logs.length === 0 && (
+              {filteredLogs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
                     暂无变更申请记录
@@ -266,6 +346,8 @@ export default function TaskSchedulingPage() {
           </Table>
         </CardContent>
       </Card>
+
+      </div>
 
       {/* 发起变更申请对话框 */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

@@ -1,13 +1,11 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import {
   BookOpen,
@@ -23,6 +21,8 @@ import {
   GraduationCap,
   Beaker,
   Wrench,
+  List,
+  CalendarDays,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -33,17 +33,18 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import {
   trainingPrograms,
-  syllabuses,
-  sceneSyllabuses,
   departments,
   majors,
   grades,
   type TrainingProgram,
   type Syllabus,
   type SceneSyllabus,
+  type CoursePlan,
 } from '@/lib/mock-data'
+import { useSyllabuses } from '@/components/providers/syllabus-provider'
 
 // ============================================
 // 状态样式
@@ -74,11 +75,52 @@ const generateLogs = [
   '大纲生成完成',
 ]
 
-export default function SyllabusPage() {
+// 获取培养方案下所有课程（优先 curriculum，回退 courses/practiceScenes）
+function getProgramAllCourses(program: TrainingProgram) {
+  if (program.curriculum) {
+    const { publicBasic, professional } = program.curriculum
+    return [
+      ...publicBasic.required,
+      ...publicBasic.limitedElective,
+      ...publicBasic.freeElective,
+      ...professional.basic,
+      ...professional.core,
+      ...professional.extended,
+      ...professional.practice,
+    ]
+  }
+  return [...program.courses, ...program.practiceScenes]
+}
+
+// 获取课程分类：优先从 curriculum 查找，否则基于 courseId 哈希随机分配
+function getCourseCategory(program: TrainingProgram | undefined, courseId: string) {
+  if (program?.curriculum) {
+    const { publicBasic, professional } = program.curriculum
+    if (publicBasic.required.some((c) => c.id === courseId)) return { level1: 'public', level2: 'required' }
+    if (publicBasic.limitedElective.some((c) => c.id === courseId)) return { level1: 'public', level2: 'elective' }
+    if (publicBasic.freeElective.some((c) => c.id === courseId)) return { level1: 'public', level2: 'elective' }
+    if (professional.basic.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'required' }
+    if (professional.core.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'required' }
+    if (professional.extended.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'elective' }
+    if (professional.practice.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'required' }
+  }
+  const hash = courseId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
+  const level1 = hash % 2 === 0 ? 'public' : 'professional'
+  const level2 = hash % 3 === 0 ? 'elective' : 'required'
+  return { level1, level2 }
+}
+
+function SyllabusPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { syllabuses, sceneSyllabuses, generateSyllabusesFromProgram } = useSyllabuses()
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
   const [selectedYear, setSelectedYear] = useState<string>('all')
   const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
+
+  // 二级筛选
+  const [filterCategory, setFilterCategory] = useState<'all' | 'public' | 'professional'>('all')
+  const [filterNature, setFilterNature] = useState<'all' | 'required' | 'elective'>('all')
 
   // 生成弹窗
   const [generateOpen, setGenerateOpen] = useState(false)
@@ -87,6 +129,22 @@ export default function SyllabusPage() {
   const [generateLogsVisible, setGenerateLogsVisible] = useState<string[]>([])
   const [selectedCourses, setSelectedCourses] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+
+  // 从 URL 参数自动选中培养方案
+  useEffect(() => {
+    const programIdFromUrl = searchParams.get('programId')
+    if (programIdFromUrl) {
+      const program = trainingPrograms.find((p) => p.id === programIdFromUrl)
+      if (program) {
+        const major = majors.find((m) => m.id === program.majorId)
+        if (major) {
+          setSelectedDeptId(major.departmentId)
+        }
+        setSelectedYear(String(program.entryYear))
+        setSelectedProgramId(programIdFromUrl)
+      }
+    }
+  }, [searchParams])
 
   // 筛选逻辑
   const deptPrograms = useMemo(() => {
@@ -111,35 +169,59 @@ export default function SyllabusPage() {
     const plain: (Syllabus | SceneSyllabus)[] = [...syllabuses]
     const scenes: (Syllabus | SceneSyllabus)[] = [...sceneSyllabuses]
     return [...plain, ...scenes]
-  }, [])
+  }, [syllabuses, sceneSyllabuses])
+
+  // 当前方案下的所有课程
+  const programAllCourses = useMemo(() => {
+    if (!currentProgram) return []
+    return getProgramAllCourses(currentProgram)
+  }, [currentProgram])
 
   // 当前方案下的大纲
   const programSyllabuses = useMemo(() => {
     if (!currentProgram) return []
-    const courseIds = [
-      ...currentProgram.courses.map((c) => c.id),
-      ...currentProgram.practiceScenes.map((p) => p.id),
-    ]
+    const courseIds = programAllCourses.map((c) => c.id)
     return allSyllabuses.filter((s) => courseIds.includes(s.courseId) || s.programId === currentProgram.id)
-  }, [currentProgram, allSyllabuses])
+  }, [currentProgram, programAllCourses, allSyllabuses])
 
   // 未生成大纲的课程
   const ungeneratedCourses = useMemo(() => {
     if (!currentProgram) return []
     const existingIds = new Set(programSyllabuses.map((s) => s.courseId))
-    return [
-      ...currentProgram.courses.filter((c) => !existingIds.has(c.id)).map((c) => ({ ...c, type: 'theory' as const })),
-      ...currentProgram.practiceScenes.filter((p) => !existingIds.has(p.id)).map((p) => ({ ...p, type: 'scene' as const })),
-    ]
-  }, [currentProgram, programSyllabuses])
+    return programAllCourses
+      .filter((c) => !existingIds.has(c.id))
+      .map((c) => ({ ...c, type: (c.nature === '实践' || c.nature === '场景' ? 'scene' : 'theory') as 'theory' | 'scene' }))
+  }, [currentProgram, programAllCourses, programSyllabuses])
 
   // 统计
   const stats = useMemo(() => {
-    const total = currentProgram ? currentProgram.courses.length + currentProgram.practiceScenes.length : allSyllabuses.length
+    const total = currentProgram ? programAllCourses.length : allSyllabuses.length
     const generated = programSyllabuses.length || allSyllabuses.filter((s) => s.status !== 'draft').length
     const finalized = programSyllabuses.filter((s) => s.status === 'finalized').length || allSyllabuses.filter((s) => s.status === 'finalized').length
     return { total, generated, finalized, pending: total - generated }
-  }, [currentProgram, programSyllabuses, allSyllabuses])
+  }, [currentProgram, programAllCourses, programSyllabuses, allSyllabuses])
+
+  // 基于二级筛选过滤后的大纲和未生成课程
+  const filteredSyllabuses = useMemo(() => {
+    const source = currentProgram ? programSyllabuses : allSyllabuses
+    return source.filter((syl) => {
+      const program = trainingPrograms.find((p) => p.id === syl.programId)
+      const cat = getCourseCategory(program, syl.courseId)
+      if (filterCategory !== 'all' && cat.level1 !== filterCategory) return false
+      if (filterNature !== 'all' && cat.level2 !== filterNature) return false
+      return true
+    })
+  }, [currentProgram, programSyllabuses, allSyllabuses, filterCategory, filterNature])
+
+  const filteredUngenerated = useMemo(() => {
+    if (!currentProgram) return []
+    return ungeneratedCourses.filter((course) => {
+      const cat = getCourseCategory(currentProgram, course.id)
+      if (filterCategory !== 'all' && cat.level1 !== filterCategory) return false
+      if (filterNature !== 'all' && cat.level2 !== filterNature) return false
+      return true
+    })
+  }, [currentProgram, ungeneratedCourses, filterCategory, filterNature])
 
   // 打开生成弹窗
   const openGenerate = (program: TrainingProgram) => {
@@ -150,12 +232,14 @@ export default function SyllabusPage() {
     setGenerateOpen(true)
   }
 
-  // Mock生成
+  // 真实生成：从培养方案构造大纲并写入 provider
   const startGenerate = () => {
     if (selectedCourses.length === 0) {
       toast.error('请至少选择一门课程')
       return
     }
+    if (!generatingProgram) return
+
     setIsGenerating(true)
     setGenerateProgress(0)
     let progress = 0
@@ -171,127 +255,249 @@ export default function SyllabusPage() {
       if (progress >= 100) {
         clearInterval(interval)
         setTimeout(() => {
+          const result = generateSyllabusesFromProgram(generatingProgram, selectedCourses)
           setIsGenerating(false)
           setGenerateOpen(false)
-          toast.success(`成功生成 ${selectedCourses.length} 份教学大纲！`)
+          setSelectedCourses([])
+          if (result.added > 0) {
+            toast.success(`成功生成 ${result.added} 份课程与能力目标！${result.skipped > 0 ? `（跳过 ${result.skipped} 门已存在）` : ''}`)
+          } else {
+            toast.info('所选课程大纲已存在，未生成新内容')
+          }
         }, 500)
       }
     }, 250)
   }
 
-  return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
-      {/* 左侧筛选 */}
-      <div className="w-64 shrink-0 space-y-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">筛选条件</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">院系</label>
-              <ScrollArea className="h-48">
-                <div className="space-y-1">
-                  <button
-                    className={cn(
-                      'w-full text-left px-2 py-1.5 rounded text-sm transition-colors',
-                      selectedDeptId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
-                    )}
-                    onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
-                  >
-                    全部院系
-                  </button>
-                  {departments.map((d) => (
-                    <button
-                      key={d.id}
-                      className={cn(
-                        'w-full text-left px-2 py-1.5 rounded text-sm transition-colors',
-                        selectedDeptId === d.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
-                      )}
-                      onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}
-                    >
-                      {d.name}
-                    </button>
-                  ))}
+  // 渲染单个大纲卡片
+  const renderSyllabusCard = (syl: Syllabus | SceneSyllabus) => {
+    const typeInfo = typeMap[syl.type]
+    const statusInfo = statusMap[syl.status]
+    const TypeIcon = typeInfo.icon
+    const StatusIcon = statusInfo.icon
+    const isScene = syl.type === 'scene'
+    return (
+      <Card key={syl.id} className="hover:shadow-sm transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg bg-muted', typeInfo.color)}>
+                <TypeIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium">{syl.courseName}</h3>
+                  <Badge className={cn('text-xs', statusInfo.color)}>
+                    <StatusIcon className="h-3 w-3 mr-1" />
+                    {statusInfo.label}
+                  </Badge>
+                  {isScene && (
+                    <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
+                      场景课
+                    </Badge>
+                  )}
                 </div>
-              </ScrollArea>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  代码：{syl.courseCode} · {syl.credits}学分 · {syl.totalHours}学时
+                  {isScene && ` · 岗位：${(syl as SceneSyllabus).mappedPositionName}`}
+                </p>
+              </div>
             </div>
-            <Separator />
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">年级</label>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/admin/operations/syllabus/${syl.id}`)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                查看
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => router.push(`/admin/operations/syllabus/${syl.id}?edit=1`)}
+              >
+                <Edit3 className="h-4 w-4 mr-1" />
+                编辑
+              </Button>
+            </div>
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-4 text-xs text-muted-foreground border-t pt-3">
+            <div>
+              <span className="text-foreground font-medium">{syl.chapters.length}</span> 个章节
+            </div>
+            <div>
+              <span className="text-foreground font-medium">{syl.objectives.length}</span> 个教学目标
+            </div>
+            <div>
+              <span className="text-foreground font-medium">{syl.theoryHours}</span> 理论 /
+              <span className="text-foreground font-medium">{syl.practiceHours}</span> 实践
+            </div>
+            <div>版本：{syl.version}</div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // 渲染未生成课程卡片
+  const renderUngeneratedCard = (course: CoursePlan & { type?: string }) => {
+    const courseType = course.type || (course.nature === '实践' || course.nature === '场景' ? 'scene' : 'theory')
+    const typeInfo = typeMap[courseType] || typeMap.theory
+    const TypeIcon = typeInfo.icon
+    return (
+      <Card key={course.id} className="border-dashed opacity-70">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg bg-muted', typeInfo.color)}>
+                <TypeIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-medium">{course.name}</h3>
+                  <Badge variant="outline" className="text-xs text-slate-500">未生成</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  代码：{course.code} · {course.credits}学分 · {course.hours}学时 · 第{course.semester}学期
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => currentProgram && openGenerate(currentProgram)}
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              生成大纲
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // 渲染分类区域
+  const renderCategory = (
+    title: string,
+    data: { syllabuses: (Syllabus | SceneSyllabus)[]; ungenerated: CoursePlan[] },
+    color: string
+  ) => {
+    const total = data.syllabuses.length + data.ungenerated.length
+    if (total === 0) return null
+    return (
+      <div className="space-y-2">
+        <h4 className={cn('text-sm font-medium flex items-center gap-1', color)}>
+          <List className="h-3.5 w-3.5" />
+          {title}
+          <span className="text-xs font-normal text-muted-foreground">({total}门 · 已生成{data.syllabuses.length}门)</span>
+        </h4>
+        <div className="space-y-2">
+          {data.syllabuses.map(renderSyllabusCard)}
+          {data.ungenerated.map(renderUngeneratedCard)}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex gap-6 h-[calc(100vh-120px)]">
+      {/* 左侧筛选 */}
+      <div className="w-60 shrink-0">
+        <Card className="h-full flex flex-col py-0">
+          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
+            <div className="text-sm font-semibold">筛选条件</div>
+            {/* 院系 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge
+                  variant={selectedDeptId === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
+                >全部</Badge>
+                {departments.map((d) => (
+                  <Badge
+                    key={d.id}
+                    variant={selectedDeptId === d.id ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}
+                  >{d.name}</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 年级 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
               <div className="flex flex-wrap gap-1">
                 <Badge
                   variant={selectedYear === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setSelectedYear('all')}
-                >
-                  全部
-                </Badge>
+                >全部</Badge>
                 {grades.map((g) => (
                   <Badge
                     key={g.id}
                     variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'}
-                    className="cursor-pointer"
+                    className="cursor-pointer text-xs"
                     onClick={() => setSelectedYear(String(g.entryYear))}
-                  >
-                    {g.entryYear}级
-                  </Badge>
+                  >{g.entryYear}级</Badge>
                 ))}
               </div>
             </div>
-            <Separator />
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">人培方案</label>
-              <ScrollArea className="h-48">
-                <div className="space-y-1">
+            {/* 人培方案 — 筛选结果 */}
+            <div className="border-t pt-2 mt-0.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
+                <span className="text-[10px] text-muted-foreground">
+                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                <button
+                  className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
+                  onClick={() => setSelectedProgramId('all')}
+                >全部方案</button>
+                {deptPrograms.map((p) => (
                   <button
-                    className={cn(
-                      'w-full text-left px-2 py-1.5 rounded text-sm transition-colors',
-                      selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
-                    )}
-                    onClick={() => setSelectedProgramId('all')}
-                  >
-                    全部方案
-                  </button>
-                  {deptPrograms.map((p) => (
-                    <button
-                      key={p.id}
-                      className={cn(
-                        'w-full text-left px-2 py-1.5 rounded text-sm transition-colors truncate',
-                        selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted'
-                      )}
-                      onClick={() => setSelectedProgramId(p.id)}
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
+                    key={p.id}
+                    className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
+                    onClick={() => setSelectedProgramId(p.id)}
+                  >{p.name}</button>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* 主内容 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto">
+      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
         {/* 标题 */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <BookOpen className="h-6 w-6 text-primary" />
-              教学大纲管理
+              课程与能力目标管理
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
               {currentProgram ? currentProgram.name : '全部方案'} · 
               共 {stats.total} 门课程/场景，已生成 {stats.generated} 份大纲
             </p>
           </div>
-          {currentProgram && ungeneratedCourses.length > 0 && (
-            <Button onClick={() => openGenerate(currentProgram)}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              生成教学大纲
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {currentProgram && (
+              <Button variant="outline" onClick={() => router.push(`/admin/operations/teaching-plans?programId=${currentProgram.id}`)}>
+                <CalendarDays className="mr-2 h-4 w-4" />
+                前往制定教学计划
+              </Button>
+            )}
+            {currentProgram && ungeneratedCourses.length > 0 && (
+              <Button onClick={() => openGenerate(currentProgram)}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                生成课程与能力目标
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* 统计卡 */}
@@ -334,12 +540,61 @@ export default function SyllabusPage() {
           </Card>
         </div>
 
+        {/* 二级筛选 */}
+        <Card className="py-0">
+          <CardContent className="px-3 pb-3 pt-3 space-y-2">
+            <div className="text-sm font-semibold">课程筛选</div>
+            {/* 第一级：课程类别 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">课程类别</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge
+                  variant={filterCategory === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setFilterCategory('all')}
+                >全部</Badge>
+                <Badge
+                  variant={filterCategory === 'public' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setFilterCategory('public')}
+                >公共基础课程</Badge>
+                <Badge
+                  variant={filterCategory === 'professional' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setFilterCategory('professional')}
+                >专业课程</Badge>
+              </div>
+            </div>
+            {/* 第二级：课程性质 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">课程性质</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge
+                  variant={filterNature === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setFilterNature('all')}
+                >全部</Badge>
+                <Badge
+                  variant={filterNature === 'required' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setFilterNature('required')}
+                >必选</Badge>
+                <Badge
+                  variant={filterNature === 'elective' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setFilterNature('elective')}
+                >选修</Badge>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* 未生成提示 */}
-        {currentProgram && ungeneratedCourses.length > 0 && (
+        {currentProgram && filteredUngenerated.length > 0 && (
           <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-800">
             <AlertCircle className="h-5 w-5 shrink-0" />
             <span className="text-sm">
-              当前方案还有 {ungeneratedCourses.length} 门课程/场景未生成教学大纲，建议尽快生成
+              当前筛选下还有 {filteredUngenerated.length} 门课程/场景未生成课程与能力目标，建议尽快生成
             </span>
             <Button size="sm" variant="outline" className="ml-auto h-7" onClick={() => openGenerate(currentProgram)}>
               立即生成
@@ -350,123 +605,15 @@ export default function SyllabusPage() {
         {/* 大纲列表 */}
         <div className="space-y-3">
           {/* 已生成的大纲 */}
-          {(currentProgram ? programSyllabuses : allSyllabuses).map((syl) => {
-            const typeInfo = typeMap[syl.type]
-            const statusInfo = statusMap[syl.status]
-            const TypeIcon = typeInfo.icon
-            const StatusIcon = statusInfo.icon
-            const isScene = syl.type === 'scene'
-            return (
-              <Card key={syl.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg bg-muted', typeInfo.color)}>
-                        <TypeIcon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium">{syl.courseName}</h3>
-                          <Badge className={cn('text-xs', statusInfo.color)}>
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusInfo.label}
-                          </Badge>
-                          {isScene && (
-                            <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
-                              场景课
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          代码：{syl.courseCode} · {syl.credits}学分 · {syl.totalHours}学时
-                          {isScene && ` · 岗位：${(syl as SceneSyllabus).mappedPositionName}`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/admin/operations/syllabus/${syl.id}`)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        查看
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => router.push(`/admin/operations/syllabus/${syl.id}?edit=1`)}
-                      >
-                        <Edit3 className="h-4 w-4 mr-1" />
-                        编辑
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* 快捷信息 */}
-                  <div className="mt-3 grid grid-cols-4 gap-4 text-xs text-muted-foreground border-t pt-3">
-                    <div>
-                      <span className="text-foreground font-medium">{syl.chapters.length}</span> 个章节
-                    </div>
-                    <div>
-                      <span className="text-foreground font-medium">{syl.objectives.length}</span> 个教学目标
-                    </div>
-                    <div>
-                      <span className="text-foreground font-medium">{syl.theoryHours}</span> 理论 / 
-                      <span className="text-foreground font-medium">{syl.practiceHours}</span> 实践
-                    </div>
-                    <div>
-                      版本：{syl.version}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
+          {(currentProgram ? filteredSyllabuses : allSyllabuses).map(renderSyllabusCard)}
           {/* 未生成的课程 */}
-          {currentProgram && ungeneratedCourses.map((course) => {
-            const typeInfo = typeMap[course.type] || typeMap.theory
-            const TypeIcon = typeInfo.icon
-            return (
-              <Card key={course.id} className="border-dashed opacity-70">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={cn('flex h-10 w-10 items-center justify-center rounded-lg bg-muted', typeInfo.color)}>
-                        <TypeIcon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium">{course.name}</h3>
-                          <Badge variant="outline" className="text-xs text-slate-500">
-                            未生成
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          代码：{course.code} · {course.credits}学分 · {course.hours}学时 · 第{course.semester}学期
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openGenerate(currentProgram)}
-                    >
-                      <Sparkles className="h-4 w-4 mr-1" />
-                      生成大纲
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          {(currentProgram ? programSyllabuses : allSyllabuses).length === 0 &&
-            (!currentProgram || ungeneratedCourses.length === 0) && (
+          {currentProgram && filteredUngenerated.map(renderUngeneratedCard)}
+          {(currentProgram ? filteredSyllabuses : allSyllabuses).length === 0 &&
+            (!currentProgram || filteredUngenerated.length === 0) && (
             <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
               <BookOpen className="h-12 w-12 mb-3 opacity-30" />
-              <p>暂无教学大纲</p>
-              <p className="text-sm">请先选择人培方案并生成教学大纲</p>
+              <p>暂无课程与能力目标</p>
+              <p className="text-sm">请先选择人培方案并生成课程与能力目标</p>
             </div>
           )}
         </div>
@@ -478,12 +625,12 @@ export default function SyllabusPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              生成教学大纲
+              生成课程与能力目标
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
-              为「{generatingProgram?.name}」生成教学大纲，基于课程信息自动匹配模板
+              为「{generatingProgram?.name}」生成课程与能力目标，基于课程信息自动匹配模板
             </p>
 
             {isGenerating ? (
@@ -545,5 +692,13 @@ export default function SyllabusPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function SyllabusPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">加载中...</div>}>
+      <SyllabusPageInner />
+    </Suspense>
   )
 }

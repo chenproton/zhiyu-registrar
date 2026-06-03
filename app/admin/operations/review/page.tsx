@@ -17,7 +17,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { PenLine, Archive, CheckCircle2, BarChart3, MessageSquare, Star, Clock, ClipboardList } from 'lucide-react'
-import { tasks as initialTasks, type Task } from '@/lib/mock-data'
+import { tasks as initialTasks, classes, departments, majors, grades, trainingPrograms, type Task } from '@/lib/mock-data'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const statusFilters = [
@@ -119,6 +120,43 @@ export default function TaskReviewPage() {
   const [taskList, setTaskList] = useState<Task[]>(() => enrichTasks(initialTasks))
   const [selectedStatus, setSelectedStatus] = useState<string>('pending')
 
+  // 左侧筛选
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
+  const [selectedYear, setSelectedYear] = useState<string>('all')
+  const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
+
+  const deptPrograms = useMemo(() => {
+    let list = trainingPrograms
+    if (selectedDeptId !== 'all') {
+      const deptMajorIds = majors.filter((m) => m.departmentId === selectedDeptId).map((m) => m.id)
+      list = list.filter((p) => deptMajorIds.includes(p.majorId))
+    }
+    if (selectedYear !== 'all') {
+      list = list.filter((p) => String(p.entryYear) === selectedYear)
+    }
+    return list
+  }, [selectedDeptId, selectedYear])
+
+  const programTaskIds = useMemo(() => {
+    if (selectedProgramId === 'all') return new Set<string>()
+    const program = trainingPrograms.find((p) => p.id === selectedProgramId)
+    if (!program) return new Set<string>()
+    return new Set(
+      initialTasks
+        .filter((t) => {
+          const cls = classes.find((c) => c.id === t.classId)
+          const grade = grades.find((g) => g.id === cls?.gradeId)
+          return cls?.majorId === program.majorId && grade?.entryYear === program.entryYear
+        })
+        .map((t) => t.id)
+    )
+  }, [selectedProgramId])
+
+  const filteredTaskList = useMemo(() => {
+    if (selectedProgramId === 'all') return taskList
+    return taskList.filter((t) => programTaskIds.has(t.id))
+  }, [taskList, selectedProgramId, programTaskIds])
+
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -129,14 +167,14 @@ export default function TaskReviewPage() {
   const [studentFeedbackSummary, setStudentFeedbackSummary] = useState('')
 
   const pendingTasks = useMemo(
-    () => taskList.filter((t) => t.status === 'completed' && !t.review?.facultyReview),
-    [taskList]
+    () => filteredTaskList.filter((t) => t.status === 'completed' && !t.review?.facultyReview),
+    [filteredTaskList]
   )
   const reviewedTasks = useMemo(
-    () => taskList.filter((t) => t.status === 'completed' && !!t.review?.facultyReview),
-    [taskList]
+    () => filteredTaskList.filter((t) => t.status === 'completed' && !!t.review?.facultyReview),
+    [filteredTaskList]
   )
-  const archivedTasks = useMemo(() => taskList.filter((t) => t.status === 'archived'), [taskList])
+  const archivedTasks = useMemo(() => filteredTaskList.filter((t) => t.status === 'archived'), [filteredTaskList])
 
   const displayedTasks =
     selectedStatus === 'pending'
@@ -206,45 +244,48 @@ export default function TaskReviewPage() {
 
   return (
     <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧状态导航 */}
-      <div className="w-64 shrink-0 space-y-3">
-        <div className="flex items-center gap-2 px-2">
-          <ClipboardList className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">复盘状态</span>
-        </div>
-        <div className="space-y-1">
-          {statusFilters.map((sf) => {
-            const count =
-              sf.id === 'pending'
-                ? pendingTasks.length
-                : sf.id === 'reviewed'
-                  ? reviewedTasks.length
-                  : archivedTasks.length
-            return (
-              <button
-                key={sf.id}
-                onClick={() => setSelectedStatus(sf.id)}
-                className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
-                  selectedStatus === sf.id
-                    ? 'bg-primary text-primary-foreground font-medium'
-                    : 'hover:bg-muted text-foreground'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <sf.icon className="h-4 w-4" />
-                  {sf.label}
+      {/* 左侧筛选 */}
+      <div className="w-60 shrink-0">
+        <Card className="h-full flex flex-col py-0">
+          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
+            <div className="text-sm font-semibold">筛选条件</div>
+            {/* 院系 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedDeptId === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}>全部</Badge>
+                {departments.map((d) => (
+                  <Badge key={d.id} variant={selectedDeptId === d.id ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}>{d.name}</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 年级 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedYear === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear('all')}>全部</Badge>
+                {grades.map((g) => (
+                  <Badge key={g.id} variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear(String(g.entryYear))}>{g.entryYear}级</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 人培方案 — 筛选结果 */}
+            <div className="border-t pt-2 mt-0.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
+                <span className="text-[10px] text-muted-foreground">
+                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
                 </span>
-                <span
-                  className={`text-xs ${
-                    selectedStatus === sf.id ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+              </div>
+              <div className="space-y-0.5">
+                <button className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')} onClick={() => setSelectedProgramId('all')}>全部方案</button>
+                {deptPrograms.map((p) => (
+                  <button key={p.id} className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')} onClick={() => setSelectedProgramId(p.id)}>{p.name}</button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 右侧内容 */}
@@ -256,6 +297,30 @@ export default function TaskReviewPage() {
               共 {displayedTasks.length} 个任务 · 课后教学反思与复盘归档
             </p>
           </div>
+        </div>
+
+        {/* 复盘状态筛选 */}
+        <div className="flex flex-wrap gap-1">
+          {statusFilters.map((sf) => {
+            const count =
+              sf.id === 'pending'
+                ? pendingTasks.length
+                : sf.id === 'reviewed'
+                  ? reviewedTasks.length
+                  : archivedTasks.length
+            const isActive = selectedStatus === sf.id
+            return (
+              <Badge
+                key={sf.id}
+                variant={isActive ? 'default' : 'outline'}
+                className="cursor-pointer text-xs"
+                onClick={() => setSelectedStatus(sf.id)}
+              >
+                <sf.icon className="h-3 w-3 mr-1" />
+                {sf.label} · {count}
+              </Badge>
+            )
+          })}
         </div>
 
         {/* 统计卡片 */}

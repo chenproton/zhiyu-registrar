@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -14,8 +14,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import {
   CalendarDays,
@@ -39,16 +37,17 @@ import {
 } from '@/components/ui/dialog'
 import {
   trainingPrograms,
-  teachingPlansV2,
-  syllabuses,
   departments,
   majors,
   grades,
   type TeachingPlan,
 } from '@/lib/mock-data'
+import { useTeachingPlans } from '@/components/providers/teaching-plan-provider'
 
-export default function TeachingPlansPage() {
+function TeachingPlansPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { teachingPlans, generatePlanFromProgram } = useTeachingPlans()
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
   const [selectedYear, setSelectedYear] = useState<string>('all')
   const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
@@ -76,9 +75,9 @@ export default function TeachingPlansPage() {
   }, [selectedProgramId])
 
   const programPlans = useMemo(() => {
-    if (!currentProgram) return teachingPlansV2
-    return teachingPlansV2.filter((p) => p.programId === currentProgram.id)
-  }, [currentProgram])
+    if (!currentProgram) return teachingPlans
+    return teachingPlans.filter((p) => p.programId === currentProgram.id)
+  }, [currentProgram, teachingPlans])
 
   const currentPlan = programPlans[0]
 
@@ -91,6 +90,22 @@ export default function TeachingPlansPage() {
     return { total, confirmed, scheduled, pending: total - confirmed, scene }
   }, [currentPlan])
 
+  // 从 URL 参数自动选中培养方案
+  useEffect(() => {
+    const programIdFromUrl = searchParams.get('programId')
+    if (programIdFromUrl) {
+      const program = trainingPrograms.find((p) => p.id === programIdFromUrl)
+      if (program) {
+        const major = majors.find((m) => m.id === program.majorId)
+        if (major) {
+          setSelectedDeptId(major.departmentId)
+        }
+        setSelectedYear(String(program.entryYear))
+        setSelectedProgramId(programIdFromUrl)
+      }
+    }
+  }, [searchParams])
+
   const openGenerate = (program: any) => {
     setGeneratingProgram(program)
     setGenerateProgress(0)
@@ -98,6 +113,7 @@ export default function TeachingPlansPage() {
   }
 
   const startGenerate = () => {
+    if (!generatingProgram) return
     setIsGenerating(true)
     let progress = 0
     const interval = setInterval(() => {
@@ -107,9 +123,14 @@ export default function TeachingPlansPage() {
       if (progress >= 100) {
         clearInterval(interval)
         setTimeout(() => {
+          const plan = generatePlanFromProgram(generatingProgram)
           setIsGenerating(false)
           setGenerateOpen(false)
-          toast.success('教学计划生成成功！')
+          if (plan) {
+            toast.success(`教学计划生成成功！共 ${plan.entries.length} 门课程/场景`)
+          } else {
+            toast.info('该培养方案的教学计划已存在')
+          }
         }, 500)
       }
     }, 200)
@@ -127,59 +148,78 @@ export default function TeachingPlansPage() {
   }, [currentPlan])
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
+    <div className="flex gap-6 h-[calc(100vh-120px)]">
       {/* 左侧筛选 */}
-      <div className="w-64 shrink-0 space-y-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">筛选条件</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">院系</label>
-              <ScrollArea className="h-48">
-                <div className="space-y-1">
-                  <button
-                    className={cn('w-full text-left px-2 py-1.5 rounded text-sm transition-colors', selectedDeptId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                    onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
-                  >全部院系</button>
-                  {departments.map((d) => (
-                    <button key={d.id} className={cn('w-full text-left px-2 py-1.5 rounded text-sm transition-colors', selectedDeptId === d.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                      onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}>{d.name}</button>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-            <Separator />
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">年级</label>
+      <div className="w-60 shrink-0">
+        <Card className="h-full flex flex-col py-0">
+          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
+            <div className="text-sm font-semibold">筛选条件</div>
+            {/* 院系 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
               <div className="flex flex-wrap gap-1">
-                <Badge variant={selectedYear === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setSelectedYear('all')}>全部</Badge>
-                {grades.map((g) => (
-                  <Badge key={g.id} variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setSelectedYear(String(g.entryYear))}>{g.entryYear}级</Badge>
+                <Badge
+                  variant={selectedDeptId === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
+                >全部</Badge>
+                {departments.map((d) => (
+                  <Badge
+                    key={d.id}
+                    variant={selectedDeptId === d.id ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}
+                  >{d.name}</Badge>
                 ))}
               </div>
             </div>
-            <Separator />
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">人培方案</label>
-              <ScrollArea className="h-48">
-                <div className="space-y-1">
-                  <button className={cn('w-full text-left px-2 py-1.5 rounded text-sm transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                    onClick={() => setSelectedProgramId('all')}>全部方案</button>
-                  {deptPrograms.map((p) => (
-                    <button key={p.id} className={cn('w-full text-left px-2 py-1.5 rounded text-sm transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                      onClick={() => setSelectedProgramId(p.id)}>{p.name}</button>
-                  ))}
-                </div>
-              </ScrollArea>
+            {/* 年级 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge
+                  variant={selectedYear === 'all' ? 'default' : 'outline'}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setSelectedYear('all')}
+                >全部</Badge>
+                {grades.map((g) => (
+                  <Badge
+                    key={g.id}
+                    variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setSelectedYear(String(g.entryYear))}
+                  >{g.entryYear}级</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 人培方案 — 筛选结果 */}
+            <div className="border-t pt-2 mt-0.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
+                <span className="text-[10px] text-muted-foreground">
+                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
+                </span>
+              </div>
+              <div className="space-y-0.5">
+                <button
+                  className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
+                  onClick={() => setSelectedProgramId('all')}
+                >全部方案</button>
+                {deptPrograms.map((p) => (
+                  <button
+                    key={p.id}
+                    className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
+                    onClick={() => setSelectedProgramId(p.id)}
+                  >{p.name}</button>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* 主内容 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto">
+      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -191,12 +231,26 @@ export default function TeachingPlansPage() {
               {currentPlan && ` · ${currentPlan.totalSemesters}个学期 · ${stats.total}门课程/场景`}
             </p>
           </div>
-          {currentProgram && (
-            <Button onClick={() => openGenerate(currentProgram)}>
-              <Sparkles className="mr-2 h-4 w-4" />
-              生成教学计划
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {currentProgram && (
+              <Button variant="outline" onClick={() => router.push(`/admin/operations/syllabus?programId=${currentProgram.id}`)}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                查看大纲
+              </Button>
+            )}
+            {currentProgram && (
+              <Button variant="outline" onClick={() => router.push(`/admin/operations/scheduling?programId=${currentProgram.id}`)}>
+                <ArrowRight className="mr-2 h-4 w-4" />
+                前往排课
+              </Button>
+            )}
+            {currentProgram && (
+              <Button onClick={() => openGenerate(currentProgram)}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                生成教学计划
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* 统计 */}
@@ -324,16 +378,6 @@ export default function TeachingPlansPage() {
               </Card>
             ))}
 
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => router.push('/admin/operations/syllabus?programId=' + currentPlan.programId)}>
-                <ArrowRight className="h-4 w-4 mr-1 rotate-180" />
-                查看大纲
-              </Button>
-              <Button onClick={() => router.push('/admin/operations/scheduling?programId=' + currentPlan.programId)}>
-                前往排课
-                <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
@@ -354,7 +398,7 @@ export default function TeachingPlansPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
-              为「{generatingProgram?.name}」基于教学大纲自动生成教学计划
+              为「{generatingProgram?.name}」基于课程与能力目标自动生成教学计划
             </p>
             {isGenerating ? (
               <div className="space-y-3">
@@ -396,5 +440,13 @@ export default function TeachingPlansPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+export default function TeachingPlansPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">加载中...</div>}>
+      <TeachingPlansPageInner />
+    </Suspense>
   )
 }

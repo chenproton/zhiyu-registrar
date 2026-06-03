@@ -11,19 +11,20 @@ export interface Department {
   type: string
   leader: string
   status: 'active' | 'inactive'
+  description?: string
 }
 
 export const departments: Department[] = [
-  { id: 'd1', code: 'CS', name: '计算机科学与技术学院', type: '工科', leader: '张教授', status: 'active' },
-  { id: 'd2', code: 'ME', name: '机械工程学院', type: '工科', leader: '李教授', status: 'active' },
-  { id: 'd3', code: 'BM', name: '商学院', type: '商科', leader: '王教授', status: 'active' },
-  { id: 'd4', code: 'DES', name: '艺术设计学院', type: '艺术', leader: '赵教授', status: 'active' },
-  { id: 'd5', code: 'AUTO', name: '汽车工程学院', type: '工科', leader: '刘教授', status: 'active' },
-  { id: 'd6', code: 'FL', name: '外国语学院', type: '文科', leader: '陈教授', status: 'active' },
-  { id: 'd7', code: 'CE', name: '土木工程学院', type: '工科', leader: '周教授', status: 'active' },
-  { id: 'd8', code: 'MED', name: '医学院', type: '医科', leader: '吴教授', status: 'active' },
-  { id: 'd9', code: 'MUS', name: '音乐学院', type: '艺术', leader: '郑教授', status: 'active' },
-  { id: 'd10', code: 'PE', name: '体育学院', type: '体育', leader: '孙教授', status: 'active' },
+  { id: 'd1', code: 'CS', name: '计算机科学与技术学院', type: '工科', leader: '张教授', status: 'active', description: '培养计算机科学与技术、软件工程、人工智能等领域的高级专业人才' },
+  { id: 'd2', code: 'ME', name: '机械工程学院', type: '工科', leader: '李教授', status: 'active', description: '专注于机械设计、制造及自动化领域的人才培养与科学研究' },
+  { id: 'd3', code: 'BM', name: '商学院', type: '商科', leader: '王教授', status: 'active', description: '涵盖会计、市场营销、工商管理等专业，培养现代商业管理人才' },
+  { id: 'd4', code: 'DES', name: '艺术设计学院', type: '艺术', leader: '赵教授', status: 'active', description: '致力于视觉传达、环境设计、数字媒体艺术等创意设计人才培养' },
+  { id: 'd5', code: 'AUTO', name: '汽车工程学院', type: '工科', leader: '刘教授', status: 'active', description: '聚焦汽车检测与维修、新能源汽车技术等应用型人才培养' },
+  { id: 'd6', code: 'FL', name: '外国语学院', type: '文科', leader: '陈教授', status: 'active', description: '提供英语、日语等外语专业教育，培养国际化语言应用人才' },
+  { id: 'd7', code: 'CE', name: '土木工程学院', type: '工科', leader: '周教授', status: 'active', description: '从事土木工程、建筑信息模型技术等专业的教学与科研工作' },
+  { id: 'd8', code: 'MED', name: '医学院', type: '医科', leader: '吴教授', status: 'active', description: '培养护理学、药学等医学相关专业的高素质应用型人才' },
+  { id: 'd9', code: 'MUS', name: '音乐学院', type: '艺术', leader: '郑教授', status: 'active', description: '专注于音乐表演、音乐教育等艺术类专业人才培养' },
+  { id: 'd10', code: 'PE', name: '体育学院', type: '体育', leader: '孙教授', status: 'active', description: '致力于体育教育、运动训练等专业人才的培养与发展' },
 ]
 
 export interface Major {
@@ -68,7 +69,7 @@ export interface Class {
   gradeId: string
   headTeacher: string
   studentCount: number
-  type: '行政班' | '教学班'
+  type: '行政班' | '教学班（如订单班）'
 }
 
 export const classes: Class[] = [
@@ -309,6 +310,42 @@ export const venues: Venue[] = [
     digitalInfo: { floorPlanUrl: '#', smartDeviceCount: 5, iotSensors: ['温湿度', ' occupancy'] } },
 ]
 
+// ----- 4.5 岗位公共库 -----
+
+export interface Position {
+  id: string
+  code: string
+  name: string
+  industry: string
+}
+
+export const positions: Position[] = [
+  { id: 'pos-001', code: 'J001', name: '软件开发工程师', industry: '计算机软件' },
+  { id: 'pos-002', code: 'J002', name: '前端开发工程师', industry: '互联网' },
+  { id: 'pos-003', code: 'J003', name: '后端开发工程师', industry: '互联网' },
+  { id: 'pos-004', code: 'J004', name: '测试工程师', industry: '计算机软件' },
+  { id: 'pos-005', code: 'J005', name: '运维工程师', industry: '互联网' },
+  { id: 'pos-006', code: 'J006', name: '网络运维工程师', industry: '通信/网络' },
+  { id: 'pos-007', code: 'J007', name: '网络系统集成工程师', industry: '通信/网络' },
+  { id: 'pos-008', code: 'J008', name: '网络安全运维工程师', industry: '信息安全' },
+  { id: 'pos-009', code: 'J009', name: '云计算运维工程师', industry: '云计算' },
+  { id: 'pos-010', code: 'J010', name: '网络技术支持工程师', industry: '通信/网络' },
+  { id: 'pos-011', code: 'J011', name: '数据库管理员', industry: '计算机软件' },
+  { id: 'pos-012', code: 'J012', name: '系统架构师', industry: '计算机软件' },
+  { id: 'pos-013', code: 'J013', name: '产品经理', industry: '互联网' },
+  { id: 'pos-014', code: 'J014', name: 'UI设计师', industry: '互联网' },
+  { id: 'pos-015', code: 'J015', name: '数据分析师', industry: '人工智能' },
+  { id: 'pos-016', code: 'J016', name: '人工智能工程师', industry: '人工智能' },
+  { id: 'pos-017', code: 'J017', name: '嵌入式开发工程师', industry: '智能制造' },
+  { id: 'pos-018', code: 'J018', name: '物联网工程师', industry: '物联网' },
+  { id: 'pos-019', code: 'J019', name: '信息安全工程师', industry: '信息安全' },
+  { id: 'pos-020', code: 'J020', name: '技术支持工程师', industry: '计算机软件' },
+  { id: 'pos-021', code: 'J021', name: '项目经理', industry: '互联网' },
+  { id: 'pos-022', code: 'J022', name: '网络技术支持', industry: '通信/网络' },
+  { id: 'pos-023', code: 'J023', name: '网络系统运维', industry: '通信/网络' },
+  { id: 'pos-024', code: 'J024', name: '网络应用开发', industry: '通信/网络' },
+]
+
 // ----- 5. 培养方案 -----
 
 export interface CoursePlan {
@@ -385,6 +422,7 @@ export interface TrainingProgram {
     professionalSubcategory: { name: string; code: string }
     correspondingIndustries: { name: string; code: string }[]
     mainOccupations: { name: string; code: string }[]
+    /** 主要岗位ID列表（关联岗位公共库） */
     mainPositions: string[]
     vocationalCertificates: string[]
   }
@@ -1782,16 +1820,7 @@ export const trainingPrograms: TrainingProgram[] = [
         { name: '计算机网络工程技术人员', code: '2-02-10-04' },
         { name: '信息安全管理员', code: '4-04-04-02' },
       ],
-      mainPositions: [
-        '网络运维工程师',
-        '网络系统集成工程师',
-        '网络安全运维工程师',
-        '云计算运维工程师',
-        '网络技术支持工程师',
-        '网络管理员',
-        '系统管理员',
-        'IT运维工程师',
-      ],
+      mainPositions: ['pos-006', 'pos-007', 'pos-008', 'pos-009', 'pos-010', 'pos-006', 'pos-005', 'pos-005'],
       vocationalCertificates: [
         '华为认证网络工程师（HCIA/HCIP）',
         '思科认证网络助理（CCNA）',
@@ -1978,7 +2007,7 @@ export const trainingPrograms: TrainingProgram[] = [
         { name: '信息通信网络维护人员', code: '4-04-02' },
         { name: '信息通信网络运行管理人员', code: '4-04-04' },
       ],
-      mainPositions: ['网络技术支持', '网络系统运维', '网络系统集成', '网络应用开发'],
+      mainPositions: ['pos-022', 'pos-023', 'pos-007', 'pos-024'],
       vocationalCertificates: [
         '计算机技术与软件专业技术资格',
         '网络系统建设与运维',
@@ -3063,7 +3092,7 @@ export const tasks: Task[] = [
     venueId: 'v1',
     venueName: 'A101 多媒体教室',
     resources: [
-      { id: 'tr-003', taskId: 'task-002', name: '高等数学教学大纲', type: 'document', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-18', sortOrder: 1 },
+      { id: 'tr-003', taskId: 'task-002', name: '高等数学课程与能力目标', type: 'document', url: '#', isVisibleToStudents: true, uploadBy: 'f1', uploadedAt: '2026-08-18', sortOrder: 1 },
     ],
     progressSummary: {
       plannedHours: 64,
@@ -5370,6 +5399,7 @@ export interface SyllabusChapter {
   teachingMethod: string
   keyPoints: string
   difficultPoints: string
+  semester?: number
 }
 
 export type SyllabusStatus = 'draft' | 'generated' | 'editing' | 'finalized'
@@ -5404,6 +5434,7 @@ export interface Syllabus {
   createdAt: string
   updatedAt: string
   generatorLog?: string
+  semesterList?: number[]
 }
 
 // 场景大纲扩展
@@ -5788,6 +5819,31 @@ export const teachingPlansV2: TeachingPlan[] = [
       },
     ],
   },
+  {
+    id: 'plan-cn-2025',
+    programId: 'tp-cn-2025',
+    programName: '2025级计算机网络技术专业人才培养方案',
+    majorId: 'm3',
+    entryYear: 2025,
+    totalSemesters: 6,
+    status: 'confirmed',
+    generatedAt: '2025-06-20',
+    confirmedAt: '2025-06-25',
+    entries: [
+      { id: 'pe-cn-001', courseId: 'pb1', courseName: '思想道德与法治', courseCode: 'GB101', type: 'theory', nature: '必修', credits: 3, totalHours: 48, semester: 1, weekHours: 3, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '教室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-002', courseId: 'pb7', courseName: '体育与健康', courseCode: 'GB107', type: 'theory', nature: '必修', credits: 4, totalHours: 64, semester: 1, weekHours: 2, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '教室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-003', courseId: 'pb10', courseName: '高等数学', courseCode: 'GB110', type: 'theory', nature: '必修', credits: 3, totalHours: 48, semester: 1, weekHours: 3, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '教室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-004', courseId: 'pb15', courseName: '信息技术', courseCode: 'GB115', type: 'theory', nature: '必修', credits: 2, totalHours: 32, semester: 1, weekHours: 2, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '机房', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-005', courseId: 'pro-b1', courseName: 'Python程序设计基础', courseCode: 'PB201', type: 'theory', nature: '必修', credits: 4, totalHours: 64, semester: 1, weekHours: 4, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '机房', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-006', courseId: 'pro-b6', courseName: '计算机组装与维护', courseCode: 'PB206', type: 'practice', nature: '必修', credits: 3, totalHours: 48, semester: 1, weekHours: 3, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '实训室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-007', courseId: 'le1', courseName: '实用数学提高', courseCode: 'LE101', type: 'theory', nature: '选修', credits: 2, totalHours: 32, semester: 2, weekHours: 2, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '教室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-008', courseId: 'pro-c1', courseName: 'Linux网络操作系统', courseCode: 'PC301', type: 'theory', nature: '必修', credits: 4, totalHours: 64, semester: 3, weekHours: 4, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '机房', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-009', courseId: 'pro-c4', courseName: '路由交换技术', courseCode: 'PC304', type: 'theory', nature: '必修', credits: 4, totalHours: 64, semester: 3, weekHours: 4, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '实训室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-010', courseId: 'pro-e1', courseName: '云计算技术与应用', courseCode: 'PE401', type: 'theory', nature: '选修', credits: 3, totalHours: 48, semester: 4, weekHours: 3, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '机房', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-011', courseId: 'pro-p1', courseName: '网络技术综合实训', courseCode: 'PP501', type: 'practice', nature: '实践', credits: 4, totalHours: 96, semester: 5, weekHours: 6, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '实训室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-012', courseId: 'pro-p3', courseName: '岗位实习', courseCode: 'PP503', type: 'scene', nature: '实践', credits: 12, totalHours: 480, semester: 6, weekHours: 30, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '校外基地', syllabusId: '', status: 'planned' },
+    ],
+  },
 ]
 
 // ============================================
@@ -5983,5 +6039,69 @@ export const courseLaunchRecords: CourseLaunchRecord[] = [
     },
     studentVisibility: false,
     notes: '等待备课完成',
+  },
+]
+
+
+// ==================== 调课申请 ====================
+
+export type AdjustmentType = 'change_time' | 'change_venue' | 'substitute' | 'cancel' | 'makeup'
+export type AdjustmentStatus = 'pending' | 'secretary_approved' | 'admin_approved' | 'rejected'
+
+export interface AdjustmentRequest {
+  id: string
+  facultyId: string
+  facultyName: string
+  courseName: string
+  className: string
+  type: AdjustmentType
+  status: AdjustmentStatus
+  reason: string
+  originalInfo: {
+    dayOfWeek?: number
+    periods?: string[]
+    venueName?: string
+  }
+  newInfo: {
+    dayOfWeek?: number
+    periods?: string[]
+    venueName?: string
+    substituteFacultyName?: string
+  }
+  createdAt: string
+  reviewedAt?: string
+  reviewerName?: string
+  reviewRemark?: string
+}
+
+export const adjustmentRequests: AdjustmentRequest[] = [
+  {
+    id: 'adj-001',
+    facultyId: 'f1',
+    facultyName: '周建国',
+    courseName: '程序设计基础',
+    className: '软件工程2026级1班',
+    type: 'change_time',
+    status: 'pending',
+    reason: '因参加学术会议，需将本周课程调整至周五',
+    originalInfo: { dayOfWeek: 1, periods: ['上午 1', '上午 2'], venueName: '教学楼A-301' },
+    newInfo: { dayOfWeek: 5, periods: ['上午 1', '上午 2'], venueName: '教学楼A-301' },
+    createdAt: '2026-05-28',
+  },
+  {
+    id: 'adj-002',
+    facultyId: 'f1',
+    facultyName: '周建国',
+    courseName: '高等数学',
+    className: '软件工程2026级1班',
+    type: 'change_venue',
+    status: 'secretary_approved',
+    reason: '原教室投影仪故障，申请更换至多媒体教室',
+    originalInfo: { dayOfWeek: 1, periods: ['上午 3', '上午 4'], venueName: '教学楼B-205' },
+    newInfo: { dayOfWeek: 1, periods: ['上午 3', '上午 4'], venueName: '教学楼A-401' },
+    createdAt: '2026-05-25',
+    reviewedAt: '2026-05-26',
+    reviewerName: '张秘书',
+    reviewRemark: '已确认B-205设备故障，同意更换',
   },
 ]

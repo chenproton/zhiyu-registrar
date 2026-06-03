@@ -51,7 +51,6 @@ function CourseTable({
               <TableHead className="w-16">学时</TableHead>
               <TableHead className="w-20">学期</TableHead>
               <TableHead className="w-20">性质</TableHead>
-              <TableHead className="w-20">考核</TableHead>
               <TableHead className="w-10"></TableHead>
             </TableRow>
           </TableHeader>
@@ -115,23 +114,6 @@ function CourseTable({
                       <SelectItem value="必修">必修</SelectItem>
                       <SelectItem value="选修">选修</SelectItem>
                       <SelectItem value="实践">实践</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </TableCell>
-                <TableCell>
-                  <Select
-                    value={c.assessment}
-                    onValueChange={(v) => update(i, { assessment: v as CoursePlan['assessment'] })}
-                  >
-                    <SelectTrigger className="h-8 text-xs w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="考试">考试</SelectItem>
-                      <SelectItem value="考查">考查</SelectItem>
-                      <SelectItem value="论文">论文</SelectItem>
-                      <SelectItem value="作品">作品</SelectItem>
-                      <SelectItem value="场景测评">场景测评</SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>

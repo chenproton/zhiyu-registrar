@@ -26,8 +26,13 @@ import {
 import {
   tasks,
   classes,
+  departments,
+  majors,
+  grades,
+  trainingPrograms,
   type Task,
 } from '@/lib/mock-data'
+import { cn } from '@/lib/utils'
 
 type AnomalySeverity = 'critical' | 'warning' | 'info'
 
@@ -291,6 +296,21 @@ function TypeBadge({ type }: { type: AnomalyType }) {
 export default function AnomaliesPage() {
   const router = useRouter()
   const [selectedType, setSelectedType] = useState<AnomalyType | 'all'>('all')
+  const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
+  const [selectedYear, setSelectedYear] = useState<string>('all')
+  const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
+
+  const deptPrograms = useMemo(() => {
+    let list = trainingPrograms
+    if (selectedDeptId !== 'all') {
+      const deptMajorIds = majors.filter((m) => m.departmentId === selectedDeptId).map((m) => m.id)
+      list = list.filter((p) => deptMajorIds.includes(p.majorId))
+    }
+    if (selectedYear !== 'all') {
+      list = list.filter((p) => String(p.entryYear) === selectedYear)
+    }
+    return list
+  }, [selectedDeptId, selectedYear])
 
   const allAnomalies = useMemo(() => {
     const anomalies: Anomaly[] = []
@@ -301,9 +321,27 @@ export default function AnomaliesPage() {
   }, [])
 
   const filteredAnomalies = useMemo(() => {
-    if (selectedType === 'all') return allAnomalies
-    return allAnomalies.filter((a) => a.type === selectedType)
-  }, [allAnomalies, selectedType])
+    let result = allAnomalies
+    if (selectedType !== 'all') {
+      result = result.filter((a) => a.type === selectedType)
+    }
+    if (selectedProgramId !== 'all') {
+      const program = trainingPrograms.find((p) => p.id === selectedProgramId)
+      if (program) {
+        const relatedTaskIds = new Set(
+          tasks
+            .filter((t) => {
+              const cls = classes.find((c) => c.id === t.classId)
+              const grade = grades.find((g) => g.id === cls?.gradeId)
+              return cls?.majorId === program.majorId && grade?.entryYear === program.entryYear
+            })
+            .map((t) => t.id)
+        )
+        result = result.filter((a) => relatedTaskIds.has(a.taskId))
+      }
+    }
+    return result
+  }, [allAnomalies, selectedType, selectedProgramId])
 
   const totalCount = allAnomalies.length
   const criticalCount = allAnomalies.filter((a) => a.severity === 'critical').length
@@ -321,63 +359,48 @@ export default function AnomaliesPage() {
 
   return (
     <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧筛选导航 */}
-      <div className="w-64 shrink-0 space-y-3">
-        <div className="flex items-center gap-2 px-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">
-            按异常类型筛选
-          </span>
-        </div>
-        <div className="space-y-1">
-          {filterKeys.map((key) => {
-            const count = getFilterCount(key)
-            const config = typeConfig[key]
-            const isActive = selectedType === key
-            return (
-              <button
-                key={key}
-                onClick={() => setSelectedType(key)}
-                className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground font-medium'
-                    : 'hover:bg-muted text-foreground'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  {config.severity === 'critical' && (
-                    <ShieldAlert
-                      className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-red-500'}`}
-                    />
-                  )}
-                  {config.severity === 'warning' && key !== 'all' && (
-                    <AlertTriangle
-                      className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-amber-500'}`}
-                    />
-                  )}
-                  {config.severity === 'info' && (
-                    <Info
-                      className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-blue-500'}`}
-                    />
-                  )}
-                  {key === 'all' && (
-                    <Activity
-                      className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}
-                    />
-                  )}
-                  {config.label}
+      {/* 左侧筛选 */}
+      <div className="w-60 shrink-0">
+        <Card className="h-full flex flex-col py-0">
+          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
+            <div className="text-sm font-semibold">筛选条件</div>
+            {/* 院系 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedDeptId === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}>全部</Badge>
+                {departments.map((d) => (
+                  <Badge key={d.id} variant={selectedDeptId === d.id ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}>{d.name}</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 年级 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedYear === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear('all')}>全部</Badge>
+                {grades.map((g) => (
+                  <Badge key={g.id} variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear(String(g.entryYear))}>{g.entryYear}级</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 人培方案 — 筛选结果 */}
+            <div className="border-t pt-2 mt-0.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
+                <span className="text-[10px] text-muted-foreground">
+                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
                 </span>
-                <span
-                  className={`text-xs ${
-                    isActive ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+              </div>
+              <div className="space-y-0.5">
+                <button className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')} onClick={() => setSelectedProgramId('all')}>全部方案</button>
+                {deptPrograms.map((p) => (
+                  <button key={p.id} className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')} onClick={() => setSelectedProgramId(p.id)}>{p.name}</button>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 右侧内容 */}
@@ -390,6 +413,25 @@ export default function AnomaliesPage() {
               共 {filteredAnomalies.length} 条异常 · 自动识别教学运行中的风险点
             </p>
           </div>
+        </div>
+
+        {/* 异常类型筛选 */}
+        <div className="flex flex-wrap gap-1">
+          {filterKeys.map((key) => {
+            const count = getFilterCount(key)
+            const config = typeConfig[key]
+            const isActive = selectedType === key
+            return (
+              <Badge
+                key={key}
+                variant={isActive ? 'default' : 'outline'}
+                className="cursor-pointer text-xs"
+                onClick={() => setSelectedType(key)}
+              >
+                {config.label} · {count}
+              </Badge>
+            )
+          })}
         </div>
 
         {/* 统计卡片 */}

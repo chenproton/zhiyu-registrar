@@ -24,6 +24,7 @@ import {
   Upload,
   FileText,
   FileSpreadsheet,
+  FileDigit,
   BrainCircuit,
   CheckCircle2,
   AlertTriangle,
@@ -40,6 +41,11 @@ import {
   Layers,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { usePrograms } from '../_components/program-context'
+import { majors, type TrainingProgram, type CoursePlan } from '@/lib/mock-data'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Archive } from 'lucide-react'
 
 // ============================================
 // 步骤定义
@@ -48,7 +54,6 @@ const steps = [
   { id: 'upload', label: '上传文档', icon: Upload },
   { id: 'parsing', label: 'AI解析', icon: BrainCircuit },
   { id: 'preview', label: '结果预览', icon: EyeIcon },
-  { id: 'confirm', label: '编辑确认', icon: Edit3 },
   { id: 'done', label: '导入完成', icon: CheckCircle2 },
 ]
 
@@ -155,14 +160,20 @@ const parseLogs = [
 
 export default function ProgramImportPage() {
   const router = useRouter()
+  const { addProgram } = usePrograms()
   const [currentStep, setCurrentStep] = useState(0)
   const [file, setFile] = useState<File | null>(null)
   const [parsingProgress, setParsingProgress] = useState(0)
   const [parsedResult, setParsedResult] = useState<ParsedProgram | null>(null)
   const [logs, setLogs] = useState<typeof parseLogs>([])
-  const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState<ParsedProgram | null>(null)
+  const [createdProgramId, setCreatedProgramId] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [zipFile, setZipFile] = useState<File | null>(null)
+  const zipFileInputRef = useRef<HTMLInputElement>(null)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
+  const [importSyllabus, setImportSyllabus] = useState(false)
+  const [importPlan, setImportPlan] = useState(false)
+  const [importSchedule, setImportSchedule] = useState(false)
 
   // 步骤颜色
   const stepStatus = (index: number) => {
@@ -178,6 +189,20 @@ export default function ProgramImportPage() {
       setFile(f)
       toast.success(`已选择文件：${f.name}`)
     }
+  }
+
+  const handleZipFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (f) {
+      setZipFile(f)
+      toast.success(`已选择压缩包：${f.name}`)
+    }
+  }
+
+  const confirmZipImport = () => {
+    setImportDialogOpen(false)
+    toast.success('系统导出包导入成功！')
+    setCurrentStep(3)
   }
 
   // 开始解析（Mock）
@@ -209,7 +234,6 @@ export default function ProgramImportPage() {
         clearInterval(progressInterval)
         setTimeout(() => {
           setParsedResult(mockParsedResult)
-          setEditData(mockParsedResult)
           setCurrentStep(2)
           toast.success('AI解析完成！')
         }, 500)
@@ -219,25 +243,76 @@ export default function ProgramImportPage() {
 
   // 确认并导入
   const handleImport = () => {
+    if (!parsedResult) return
+
+    // 根据专业名称匹配 majorId
+    const matchedMajor = majors.find((m) =>
+      parsedResult.majorName.includes(m.name) || m.name.includes(parsedResult.majorName)
+    )
+
+    const mappedCourses: CoursePlan[] = parsedResult.courses.map((c) => ({
+      id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: c.name,
+      code: c.code,
+      credits: c.credits,
+      hours: c.hours,
+      semester: c.semester,
+      nature: c.nature,
+      assessment: c.assessment as CoursePlan['assessment'],
+      version: 'v1.0',
+      category: c.category,
+    }))
+
+    const mappedScenes: CoursePlan[] = parsedResult.practiceScenes.map((s) => ({
+      id: `p-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      name: s.name,
+      code: s.code,
+      credits: s.credits,
+      hours: s.hours,
+      semester: s.semester,
+      nature: s.nature as CoursePlan['nature'],
+      assessment: s.assessment as CoursePlan['assessment'],
+      version: 'v1.0',
+      category: s.category,
+    }))
+
+    const requiredCredits = parsedResult.courses
+      .filter((c) => c.nature === '必修')
+      .reduce((sum, c) => sum + c.credits, 0)
+    const electiveCredits = parsedResult.courses
+      .filter((c) => c.nature === '选修')
+      .reduce((sum, c) => sum + c.credits, 0)
+    const practiceCredits = parsedResult.practiceScenes.reduce((sum, s) => sum + s.credits, 0)
+
+    const programId = `tp${Date.now()}`
+    const newProgram: TrainingProgram = {
+      id: programId,
+      name: parsedResult.name,
+      code: parsedResult.code,
+      majorId: matchedMajor?.id || '',
+      entryYear: new Date().getFullYear(),
+      level: (parsedResult.level.includes('本') ? '本科' : parsedResult.level.includes('专') ? '大专' : '中专') as TrainingProgram['level'],
+      duration: parsedResult.duration,
+      totalCredits: parsedResult.totalCredits,
+      requiredCredits,
+      electiveCredits,
+      practiceCredits,
+      courses: mappedCourses,
+      practiceScenes: mappedScenes,
+      status: 'draft',
+      creator: '当前用户',
+      collaborators: [],
+      createdAt: new Date().toISOString().split('T')[0],
+      importSource: file?.name.endsWith('.pdf') ? 'ai-word' : 'ai-excel',
+      aiExtractStatus: 'completed',
+      startDate: `${new Date().getFullYear()}-09-01`,
+      endDate: `${new Date().getFullYear() + parsedResult.duration}-07-01`,
+    }
+
+    addProgram(newProgram)
+    setCreatedProgramId(programId)
     toast.success('人培方案导入成功！')
-    setCurrentStep(4)
-  }
-
-  // 编辑课程
-  const updateCourse = (courseId: string, field: keyof ParsedCourse, value: any) => {
-    if (!editData) return
-    const newCourses = editData.courses.map((c) =>
-      c.id === courseId ? { ...c, [field]: value } : c
-    )
-    setEditData({ ...editData, courses: newCourses })
-  }
-
-  const updateScene = (sceneId: string, field: keyof ParsedCourse, value: any) => {
-    if (!editData) return
-    const newScenes = editData.practiceScenes.map((s) =>
-      s.id === sceneId ? { ...s, [field]: value } : s
-    )
-    setEditData({ ...editData, practiceScenes: newScenes })
+    setCurrentStep(3)
   }
 
   return (
@@ -312,74 +387,158 @@ export default function ProgramImportPage() {
         <CardContent className="pt-6">
           {/* ===== Step 0: 上传 ===== */}
           {currentStep === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 space-y-6">
-              <div
-                className={cn(
-                  'flex h-48 w-full max-w-lg flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors cursor-pointer',
-                  file
-                    ? 'border-emerald-400 bg-emerald-50/50'
-                    : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
-                )}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls,.doc,.docx"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-                {file ? (
-                  <>
-                    <FileText className="h-12 w-12 text-emerald-500 mb-3" />
-                    <p className="text-lg font-medium text-emerald-700">{file.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-12 w-12 text-muted-foreground mb-3" />
-                    <p className="text-lg font-medium">点击或拖拽上传文档</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      支持 Excel (.xlsx, .xls) 和 Word (.doc, .docx) 格式
-                    </p>
-                  </>
-                )}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
+              {/* 左侧：传统人培方案 */}
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    传统人培方案 PDF/Word
+                  </CardTitle>
+                  <CardDescription>
+                    上传传统格式的人才培养方案文档，AI自动解析
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col space-y-4">
+                  <div
+                    className={cn(
+                      'flex h-40 flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors cursor-pointer',
+                      file
+                        ? 'border-emerald-400 bg-emerald-50/50'
+                        : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                    )}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.doc,.docx,.pdf"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    {file ? (
+                      <>
+                        <FileText className="h-10 w-10 text-emerald-500 mb-2" />
+                        <p className="text-base font-medium text-emerald-700">{file.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(file.size / 1024).toFixed(1)} KB
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p className="text-base font-medium">点击或拖拽上传文档</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          支持 Word、PDF 和 Excel 格式
+                        </p>
+                      </>
+                    )}
+                  </div>
 
-              {file && (
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={() => { setFile(null); setLogs([]) }}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    重新选择
-                  </Button>
-                  <Button onClick={startParsing}>
-                    <BrainCircuit className="mr-2 h-4 w-4" />
-                    开始AI解析
-                  </Button>
-                </div>
-              )}
+                  {file && (
+                    <div className="flex gap-3 justify-center">
+                      <Button variant="outline" size="sm" onClick={() => { setFile(null); setLogs([]) }}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        重新选择
+                      </Button>
+                      <Button size="sm" onClick={startParsing}>
+                        <BrainCircuit className="mr-2 h-4 w-4" />
+                        开始AI解析
+                      </Button>
+                    </div>
+                  )}
 
-              <div className="w-full max-w-lg space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">文档格式建议：</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-start gap-3 rounded-lg border p-3">
-                    <FileSpreadsheet className="h-5 w-5 text-emerald-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Excel 表格</p>
-                      <p className="text-xs text-muted-foreground">课程列表、学时安排等结构化数据</p>
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">文档格式建议：</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="flex flex-col items-center gap-1 rounded-lg border p-2 text-center">
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        <p className="text-xs font-medium">Excel</p>
+                        <p className="text-[10px] text-muted-foreground">结构化数据</p>
+                      </div>
+                      <div className="flex flex-col items-center gap-1 rounded-lg border p-2 text-center">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <p className="text-xs font-medium">Word</p>
+                        <p className="text-[10px] text-muted-foreground">完整方案文档</p>
+                      </div>
+                      <div className="flex flex-col items-center gap-1 rounded-lg border p-2 text-center">
+                        <FileDigit className="h-4 w-4 text-red-600" />
+                        <p className="text-xs font-medium">PDF</p>
+                        <p className="text-[10px] text-muted-foreground">扫描/电子版</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 rounded-lg border p-3">
-                    <FileText className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium">Word 文档</p>
-                      <p className="text-xs text-muted-foreground">完整人培方案文档，AI自动提取</p>
-                    </div>
+                </CardContent>
+              </Card>
+
+              {/* 右侧：系统导出压缩包 */}
+              <Card className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Archive className="h-5 w-5 text-purple-600" />
+                    系统导出压缩包
+                  </CardTitle>
+                  <CardDescription>
+                    上传从本系统导出的压缩包，快速恢复完整数据
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col space-y-4">
+                  <div
+                    className={cn(
+                      'flex h-40 flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors cursor-pointer',
+                      zipFile
+                        ? 'border-purple-400 bg-purple-50/50'
+                        : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50'
+                    )}
+                    onClick={() => zipFileInputRef.current?.click()}
+                  >
+                    <input
+                      ref={zipFileInputRef}
+                      type="file"
+                      accept=".zip"
+                      className="hidden"
+                      onChange={handleZipFileChange}
+                    />
+                    {zipFile ? (
+                      <>
+                        <Archive className="h-10 w-10 text-purple-500 mb-2" />
+                        <p className="text-base font-medium text-purple-700">{zipFile.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(zipFile.size / 1024).toFixed(1)} KB
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p className="text-base font-medium">点击或拖拽上传压缩包</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          仅支持 .zip 格式
+                        </p>
+                      </>
+                    )}
                   </div>
-                </div>
-              </div>
+
+                  {zipFile && (
+                    <div className="flex gap-3 justify-center">
+                      <Button variant="outline" size="sm" onClick={() => setZipFile(null)}>
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        重新选择
+                      </Button>
+                      <Button size="sm" onClick={() => setImportDialogOpen(true)}>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        确认导入
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">导入内容说明：</p>
+                    <p className="text-xs text-muted-foreground">
+                      系统将自动识别人培方案主体数据，您可在下一步选择是否一并导入关联的课程与能力目标、教学计划及排课数据。
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
@@ -599,213 +758,6 @@ export default function ProgramImportPage() {
                 <Button variant="outline" onClick={() => setCurrentStep(0)}>
                   重新上传
                 </Button>
-                <Button onClick={() => setCurrentStep(3)}>
-                  进入编辑确认
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* ===== Step 3: 编辑确认 ===== */}
-          {currentStep === 3 && editData && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium">编辑确认</h3>
-                  <p className="text-sm text-muted-foreground">核对并修正AI解析结果，确认后导入系统</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
-                  {isEditing ? (
-                    <><X className="mr-2 h-4 w-4" />取消编辑</>
-                  ) : (
-                    <><Edit3 className="mr-2 h-4 w-4" />批量编辑</>
-                  )}
-                </Button>
-              </div>
-
-              {/* 基本信息 */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="space-y-1.5">
-                  <Label>方案名称</Label>
-                  <Input value={editData.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>方案代码</Label>
-                  <Input value={editData.code} onChange={(e) => setEditData({ ...editData, code: e.target.value })} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>层次</Label>
-                  <Input value={editData.level} disabled />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>学制（年）</Label>
-                  <Input type="number" value={editData.duration} onChange={(e) => setEditData({ ...editData, duration: parseInt(e.target.value) || 3 })} />
-                </div>
-              </div>
-
-              {/* 课程编辑表格 */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">课程信息</h4>
-                <div className="rounded-lg border">
-                  <ScrollArea className="h-[400px]">
-                    <Table>
-                      <TableHeader className="sticky top-0 bg-background z-10">
-                        <TableRow>
-                          <TableHead className="w-48">课程名称</TableHead>
-                          <TableHead>代码</TableHead>
-                          <TableHead>性质</TableHead>
-                          <TableHead>学分</TableHead>
-                          <TableHead>学时</TableHead>
-                          <TableHead>学期</TableHead>
-                          <TableHead>考核</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {editData.courses.map((course) => (
-                          <TableRow key={course.id}>
-                            <TableCell>
-                              <Input
-                                value={course.name}
-                                onChange={(e) => updateCourse(course.id, 'name', e.target.value)}
-                                className="h-8"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                value={course.code}
-                                onChange={(e) => updateCourse(course.id, 'code', e.target.value)}
-                                className="h-8 w-28 font-mono text-xs"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <select
-                                value={course.nature}
-                                onChange={(e) => updateCourse(course.id, 'nature', e.target.value)}
-                                className="h-8 rounded-md border px-2 text-sm"
-                              >
-                                <option value="必修">必修</option>
-                                <option value="选修">选修</option>
-                                <option value="实践">实践</option>
-                                <option value="场景">场景</option>
-                              </select>
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={course.credits}
-                                onChange={(e) => updateCourse(course.id, 'credits', parseFloat(e.target.value))}
-                                className="h-8 w-16"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={course.hours}
-                                onChange={(e) => updateCourse(course.id, 'hours', parseInt(e.target.value))}
-                                className="h-8 w-16"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                value={course.semester}
-                                onChange={(e) => updateCourse(course.id, 'semester', parseInt(e.target.value))}
-                                className="h-8 w-16"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <select
-                                value={course.assessment}
-                                onChange={(e) => updateCourse(course.id, 'assessment', e.target.value)}
-                                className="h-8 rounded-md border px-2 text-sm"
-                              >
-                                <option value="考试">考试</option>
-                                <option value="考查">考查</option>
-                                <option value="论文">论文</option>
-                                <option value="作品">作品</option>
-                                <option value="场景测评">场景测评</option>
-                              </select>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </ScrollArea>
-                </div>
-              </div>
-
-              {/* 实践场景编辑 */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">实践场景</h4>
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-48">场景名称</TableHead>
-                        <TableHead>代码</TableHead>
-                        <TableHead>学分</TableHead>
-                        <TableHead>学时</TableHead>
-                        <TableHead>学期</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {editData.practiceScenes.map((scene) => (
-                        <TableRow key={scene.id}>
-                          <TableCell>
-                            <Input
-                              value={scene.name}
-                              onChange={(e) => updateScene(scene.id, 'name', e.target.value)}
-                              className="h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={scene.code}
-                              onChange={(e) => updateScene(scene.id, 'code', e.target.value)}
-                              className="h-8 w-28 font-mono text-xs"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={scene.credits}
-                              onChange={(e) => updateScene(scene.id, 'credits', parseFloat(e.target.value))}
-                              className="h-8 w-16"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={scene.hours}
-                              onChange={(e) => updateScene(scene.id, 'hours', parseInt(e.target.value))}
-                              className="h-8 w-16"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={scene.semester}
-                              onChange={(e) => updateScene(scene.id, 'semester', parseInt(e.target.value))}
-                              className="h-8 w-16"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setCurrentStep(2)}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  返回预览
-                </Button>
                 <Button onClick={handleImport}>
                   <Save className="mr-2 h-4 w-4" />
                   确认导入
@@ -814,8 +766,8 @@ export default function ProgramImportPage() {
             </div>
           )}
 
-          {/* ===== Step 4: 完成 ===== */}
-          {currentStep === 4 && (
+          {/* ===== Step 3: 导入完成 ===== */}
+          {currentStep === 3 && (
             <div className="flex flex-col items-center justify-center py-16 space-y-6">
               <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
                 <CheckCircle2 className="h-10 w-10 text-emerald-600" />
@@ -823,22 +775,61 @@ export default function ProgramImportPage() {
               <div className="text-center">
                 <h3 className="text-xl font-bold">人培方案导入成功！</h3>
                 <p className="text-muted-foreground mt-1">
-                  已生成「{editData?.name}」，包含 {editData?.courses.length} 门课程和 {editData?.practiceScenes.length} 个实践场景
+                  已生成「{parsedResult?.name}」，包含 {parsedResult?.courses.length} 门课程和 {parsedResult?.practiceScenes.length} 个实践场景
                 </p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => router.push('/admin/programs')}>
                   返回人培方案列表
                 </Button>
-                <Button onClick={() => router.push('/admin/operations/syllabus?programId=tp-new')}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  生成教学大纲
+                <Button onClick={() => router.push(`/admin/programs/${createdProgramId}/edit`)}>
+                  <Edit3 className="mr-2 h-4 w-4" />
+                  前往编辑
                 </Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* 系统导出包导入选项弹窗 */}
+      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>选择要一并导入的关联数据</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-muted-foreground">除了人培方案主体，还可以选择导入以下关联数据：</p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={importSyllabus} onCheckedChange={(v) => setImportSyllabus(!!v)} />
+                <div>
+                  <div className="text-sm font-medium">课程与能力目标</div>
+                  <div className="text-xs text-muted-foreground">复制该方案下所有课程/场景的课程与能力目标</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={importPlan} onCheckedChange={(v) => setImportPlan(!!v)} />
+                <div>
+                  <div className="text-sm font-medium">教学计划</div>
+                  <div className="text-xs text-muted-foreground">复制该方案下所有学期的教学计划</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={importSchedule} onCheckedChange={(v) => setImportSchedule(!!v)} />
+                <div>
+                  <div className="text-sm font-medium">排班排课数据</div>
+                  <div className="text-xs text-muted-foreground">复制该方案对应班级的排课任务</div>
+                </div>
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setImportDialogOpen(false)}>取消</Button>
+            <Button onClick={confirmZipImport}>确认导入</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

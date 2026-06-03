@@ -843,19 +843,26 @@ export default function SchedulingCenterPage() {
   const [selectedGradeId, setSelectedGradeId] = useState<string>('')
   const [selectedProgramId, setSelectedProgramId] = useState<string>('')
 
-  // 从 URL 参数自动选中培养方案
+  // 从 URL 参数自动选中培养方案，无参数时默认选中第一个
   useEffect(() => {
     const programId = getProgramIdFromUrl()
+    let targetProgram = null
+
     if (programId && !selectedProgramId) {
-      const program = trainingPrograms.find((tp) => tp.id === programId)
-      if (program) {
-        const major = majors.find((m) => m.id === program.majorId)
-        const grade = grades.find((g) => g.entryYear === program.entryYear)
-        if (major && grade) {
-          setSelectedDept(major.departmentId)
-          setSelectedGradeId(grade.id)
-          setSelectedProgramId(program.id)
-        }
+      targetProgram = trainingPrograms.find((tp) => tp.id === programId) || null
+    }
+
+    if (!targetProgram && !selectedProgramId && trainingPrograms.length > 0) {
+      targetProgram = trainingPrograms[0]
+    }
+
+    if (targetProgram) {
+      const major = majors.find((m) => m.id === targetProgram.majorId)
+      const grade = grades.find((g) => g.entryYear === targetProgram.entryYear)
+      if (major && grade) {
+        setSelectedDept(major.departmentId)
+        setSelectedGradeId(grade.id)
+        setSelectedProgramId(targetProgram.id)
       }
     }
   }, [])
@@ -881,11 +888,14 @@ export default function SchedulingCenterPage() {
       {/* 页面头部 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">排课中心</h1>
+          <h1 className="text-2xl font-bold">排课管理</h1>
           <p className="text-muted-foreground">排课全流程管理：从班级作息到课表导出的统一工作区</p>
         </div>
         {selectedProgram && (
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => toast.info('外部排课系统对接功能正在开发中')}>
+              外部排课系统对接
+            </Button>
             <Button variant="outline" size="sm" onClick={() => toast.success('已暂存为草稿')}>
               <Save className="h-4 w-4 mr-1" />
               暂存草稿

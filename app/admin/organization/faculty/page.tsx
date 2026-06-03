@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Pencil, Users, GraduationCap, HardHat, Building2 } from 'lucide-react'
+import { Plus, Users, GraduationCap, HardHat, Building2, Upload, Download, ShieldCheck } from 'lucide-react'
 import { faculty, departments } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
@@ -59,7 +59,18 @@ export default function FacultyPage() {
           <h1 className="text-2xl font-bold">师资管理</h1>
           <p className="text-muted-foreground">维护教师档案、授课资格与企业导师信息</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => toast.success('导入功能开发中')}>
+            <Upload className="h-4 w-4 mr-2" />导入
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => toast.success('导出功能开发中')}>
+            <Download className="h-4 w-4 mr-2" />导出
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => toast.success('批量授权功能开发中')}>
+            <ShieldCheck className="h-4 w-4 mr-2" />批量授权
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
+        </div>
       </div>
 
       {/* 统计卡片 */}
@@ -182,7 +193,7 @@ export default function FacultyPage() {
                     <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}>编辑</Button>
                   </TableCell>
                 </TableRow>
               ))}

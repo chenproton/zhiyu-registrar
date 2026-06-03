@@ -13,9 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Building2,
   Layers,
   BarChart3,
   TrendingUp,
@@ -153,72 +151,35 @@ export default function ProgramProgressPage() {
     return Math.round(rates.reduce((a, b) => a + b, 0) / rates.length)
   }, [programStats])
 
-  const deptProgramCounts = useMemo(() => {
-    return departments.map((d) => {
-      const deptMajors = majors.filter((m) => m.departmentId === d.id)
-      const deptMajorIds = deptMajors.map((m) => m.id)
-      const count = trainingPrograms.filter((tp) => deptMajorIds.includes(tp.majorId)).length
-      return { dept: d, count }
-    })
-  }, [])
-
   return (
     <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧院系导航 */}
-      <div className="w-64 shrink-0 space-y-3">
-        <div className="flex items-center gap-2 px-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">二级学院/院系</span>
-        </div>
-        <div className="space-y-1">
-          <button
-            onClick={() => {
-              setSelectedDeptId('all')
-              setSelectedYear('all')
-              setSelectedProgramId(null)
-            }}
-            className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
-              selectedDeptId === 'all'
-                ? 'bg-primary text-primary-foreground font-medium'
-                : 'hover:bg-muted text-foreground'
-            }`}
-          >
-            <span>全部院系</span>
-            <span
-              className={`text-xs ${
-                selectedDeptId === 'all' ? 'text-primary-foreground/70' : 'text-muted-foreground'
-              }`}
-            >
-              {trainingPrograms.length}
-            </span>
-          </button>
-          {deptProgramCounts.map(({ dept, count }) => (
-            <button
-              key={dept.id}
-              onClick={() => {
-                setSelectedDeptId(dept.id)
-                setSelectedYear('all')
-                setSelectedProgramId(null)
-              }}
-              className={`w-full text-left px-3 py-2.5 rounded-md text-sm transition-colors flex items-center justify-between ${
-                selectedDeptId === dept.id
-                  ? 'bg-primary text-primary-foreground font-medium'
-                  : 'hover:bg-muted text-foreground'
-              }`}
-            >
-              <span>{dept.name}</span>
-              <span
-                className={`text-xs ${
-                  selectedDeptId === dept.id
-                    ? 'text-primary-foreground/70'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {count}个方案
-              </span>
-            </button>
-          ))}
-        </div>
+      {/* 左侧筛选 */}
+      <div className="w-60 shrink-0">
+        <Card className="h-full flex flex-col py-0">
+          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
+            <div className="text-sm font-semibold">筛选条件</div>
+            {/* 院系 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedDeptId === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId('all'); setSelectedProgramId(null) }}>全部</Badge>
+                {departments.map((d) => (
+                  <Badge key={d.id} variant={selectedDeptId === d.id ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId(null) }}>{d.name}</Badge>
+                ))}
+              </div>
+            </div>
+            {/* 年级 */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
+              <div className="flex flex-wrap gap-1">
+                <Badge variant={selectedYear === 'all' ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear('all')}>全部</Badge>
+                {allYears.map((y) => (
+                  <Badge key={y} variant={selectedYear === String(y) ? 'default' : 'outline'} className="cursor-pointer text-xs" onClick={() => setSelectedYear(String(y))}>{y}级</Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 右侧内容 */}
@@ -231,18 +192,6 @@ export default function ProgramProgressPage() {
             </p>
           </div>
         </div>
-
-        {/* 年级筛选 */}
-        <Tabs value={selectedYear} onValueChange={setSelectedYear}>
-          <TabsList>
-            <TabsTrigger value="all">全部年级</TabsTrigger>
-            {allYears.map((y) => (
-              <TabsTrigger key={y} value={String(y)}>
-                {y}级
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
 
         {/* 统计卡片 */}
         <div className="grid gap-4 md:grid-cols-5">

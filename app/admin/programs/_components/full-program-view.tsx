@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { TrainingProgram } from '@/lib/mock-data'
+import { positions } from '@/lib/mock-data'
 
 export default function FullProgramView({ program }: { program: TrainingProgram }) {
   return (
@@ -70,9 +71,14 @@ export default function FullProgramView({ program }: { program: TrainingProgram 
             <div>
               <span className="text-muted-foreground">主要岗位：</span>
               <div className="flex flex-wrap gap-1 mt-1">
-                {program.careerOrientation.mainPositions.map((pos, i) => (
-                  <Badge key={i} variant="secondary" className="text-xs">{pos}</Badge>
-                ))}
+                {program.careerOrientation.mainPositions.map((posId, i) => {
+                  const pos = positions.find((p) => p.id === posId)
+                  return (
+                    <Badge key={i} variant="secondary" className="text-xs">
+                      {pos?.name || posId}
+                    </Badge>
+                  )
+                })}
               </div>
             </div>
             <div>
