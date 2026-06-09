@@ -219,7 +219,7 @@ export default function TasksDashboardPage() {
         {/* 标题区 */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">学习任务中心</h1>
+            <h1 className="text-2xl font-bold">教学任务中心</h1>
             <p className="text-muted-foreground text-sm">
               {selectedProgram
                 ? `${selectedProgram.name} · 共 ${filteredTasks.length} 个任务`
@@ -380,7 +380,7 @@ export default function TasksDashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>学习任务/编码</TableHead>
+                  <TableHead>教学任务/编码</TableHead>
                   <TableHead>类型</TableHead>
                   <TableHead>班级</TableHead>
                   <TableHead>教师</TableHead>

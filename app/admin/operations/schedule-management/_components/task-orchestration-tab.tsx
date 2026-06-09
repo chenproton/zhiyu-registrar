@@ -51,7 +51,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  Download,
 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -1104,13 +1103,13 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
           </TabsList>
         </Tabs>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-1" onClick={() => toast.success('模板下载中...')}>
-            <Download className="h-4 w-4" />
-            下载模板
-          </Button>
           <Button variant="outline" className="gap-1" onClick={() => setImportDialogOpen(true)}>
             <FileSpreadsheet className="h-4 w-4" />
             导入排课Excel
+          </Button>
+          <Button className="gap-1" onClick={() => setNewTaskDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            新建任务
           </Button>
         </div>
       </div>

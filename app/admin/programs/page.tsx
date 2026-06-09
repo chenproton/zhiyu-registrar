@@ -2,22 +2,45 @@
 
 import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  FolderKanban,
+  GitBranch,
+  LayoutList,
+  ListFilter,
+  Plus,
+  RotateCcw,
+  Search,
+  Trash2,
+  Upload,
+  X,
+  SlidersHorizontal,
+  ArrowUpFromLine,
+  Send,
+  Download,
+} from 'lucide-react'
+import { ProgramList } from './_components/program-list'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -25,76 +48,238 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Plus, Pencil, Trash2, Eye, FileText, Users, UserPlus, ArrowRight, Copy, Upload, Sparkles, CalendarDays } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { usePrograms } from './_components/program-context'
-import { useSyllabuses } from '@/components/providers/syllabus-provider'
-import { useTeachingPlans } from '@/components/providers/teaching-plan-provider'
-import { majors, departments, grades, curriculumCoursePool, curriculumPracticePool, tasks, classes, faculty, venues, allPeriods } from '@/lib/mock-data'
-import type { TrainingProgram, CoursePlan } from '@/lib/mock-data'
+import { majors, departments } from '@/lib/mock-data'
+import type { TrainingProgram } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
-const emptyProgram: TrainingProgram = {
-  id: '',
-  name: '',
-  code: '',
-  majorId: '',
-  entryYear: 2026,
-  level: '本科',
-  duration: 4,
-  totalCredits: 0,
-  requiredCredits: 0,
-  electiveCredits: 0,
-  practiceCredits: 0,
-  courses: [],
-  practiceScenes: [],
-  startDate: '',
-  endDate: '',
-  creator: '',
-  collaborators: [],
-  createdAt: '',
-}
+const CURRENT_USER = '当前用户'
 
-function getDefaultCoursesForMajor(majorId: string): CoursePlan[] {
-  // Return a basic set of default courses based on major
-  // For now, use a simple mapping with courses from the pool
-  const commonCourses: CoursePlan[] = [
-    { id: `c-${Date.now()}-1`, name: '程序设计基础', code: 'CS101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0' },
-    { id: `c-${Date.now()}-2`, name: '高等数学', code: 'MATH101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0' },
-    { id: `c-${Date.now()}-3`, name: '线性代数', code: 'MATH102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0' },
-    { id: `c-${Date.now()}-4`, name: '企业认知实习', code: 'PRAC001', credits: 2, hours: 32, semester: 3, nature: '实践', assessment: '报告', version: 'v1.0' },
-  ]
-  return commonCourses
+type TabType = 'my' | 'collab' | 'public'
+type ViewMode = 'list' | 'group'
+
+// 模拟批次数据（按年级+专业维度）
+function getMockBatches() {
+  const batches: { id: string; name: string; entryYear: number; majorId: string }[] = []
+  const years = [2026, 2025, 2024, 2023]
+  years.forEach((year) => {
+    majors.forEach((major) => {
+      batches.push({
+        id: `batch-${year}-${major.id}`,
+        name: `${year}级${major.name}批次`,
+        entryYear: year,
+        majorId: major.id,
+      })
+    })
+  })
+  return batches
 }
 
 export default function ProgramsPage() {
   const router = useRouter()
-  const { programs, deleteProgram, addProgram, updateProgram } = usePrograms()
-  const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
-  const [selectedYear, setSelectedYear] = useState<string>('all')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const { programs, deleteProgram, updateProgram, addProgram } = usePrograms()
+
+  const [activeTab, setActiveTab] = useState<TabType>('my')
+  const [viewMode, setViewMode] = useState<ViewMode>('list')
+
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedYear, setSelectedYear] = useState<string | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const [selectedMajorId, setSelectedMajorId] = useState<string | null>(null)
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['2026', '2025', '2024', '2023'])
+
+  // Dialogs
+  const [isBatchDialogOpen, setIsBatchDialogOpen] = useState(false)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
 
   // 邀请共建弹窗
   const [inviteOpen, setInviteOpen] = useState(false)
   const [inviteProgram, setInviteProgram] = useState<TrainingProgram | null>(null)
   const [inviteName, setInviteName] = useState('')
 
-  // 当前选中院系下的专业列表
-  const deptMajors = useMemo(() => {
-    if (selectedDeptId === 'all') return majors
-    return majors.filter((m) => m.departmentId === selectedDeptId)
-  }, [selectedDeptId])
+  // 克隆弹窗
+  const [isCloneSourceDialogOpen, setIsCloneSourceDialogOpen] = useState(false)
+  const [cloneSearchQuery, setCloneSearchQuery] = useState('')
+  const [cloneSelectedDept, setCloneSelectedDept] = useState<string | null>(null)
+  const [cloneSelectedMajor, setCloneSelectedMajor] = useState<string | null>(null)
 
-  const selectedDeptName = selectedDeptId === 'all'
-    ? '全部院系'
-    : (departments.find((d) => d.id === selectedDeptId)?.name || '')
+  // 公共人培方案库（用于克隆来源）
+  const publicPrograms = useMemo(() => {
+    return programs.filter((p) => p.status === 'published')
+  }, [programs])
+
+  const cloneFilteredPrograms = useMemo(() => {
+    let result = publicPrograms
+    if (cloneSearchQuery.trim()) {
+      const q = cloneSearchQuery.toLowerCase()
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
+      )
+    }
+    if (cloneSelectedDept) {
+      const deptMajorIds = majors.filter((m) => m.departmentId === cloneSelectedDept).map((m) => m.id)
+      result = result.filter((p) => deptMajorIds.includes(p.majorId))
+    }
+    if (cloneSelectedMajor) {
+      result = result.filter((p) => p.majorId === cloneSelectedMajor)
+    }
+    return result
+  }, [publicPrograms, cloneSearchQuery, cloneSelectedDept, cloneSelectedMajor])
+
+  const toggleGroup = (groupId: string) => {
+    setExpandedGroups((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId]
+    )
+  }
+
+  const tabFilteredPrograms = useMemo(() => {
+    switch (activeTab) {
+      case 'my':
+        return programs.filter((p) => p.creator === CURRENT_USER || !p.creator)
+      case 'collab':
+        return programs.filter((p) => p.collaborators && p.collaborators.length > 0)
+      case 'public':
+      default:
+        return programs.filter((p) => p.status === 'published')
+    }
+  }, [programs, activeTab])
+
+  const filteredPrograms = useMemo(() => {
+    let result = tabFilteredPrograms
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter((p) =>
+        p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
+      )
+    }
+    if (selectedYear) {
+      result = result.filter((p) => p.entryYear === Number(selectedYear))
+    }
+    if (selectedStatus) {
+      result = result.filter((p) => p.status === selectedStatus)
+    }
+    if (selectedMajorId) {
+      result = result.filter((p) => p.majorId === selectedMajorId)
+    }
+    return result
+  }, [tabFilteredPrograms, searchQuery, selectedYear, selectedStatus, selectedMajorId])
+
+  const stats = useMemo(() => {
+    const total = filteredPrograms.length
+    const draft = filteredPrograms.filter((p) => p.status === 'draft').length
+    const pending = filteredPrograms.filter((p) => p.status === 'pending').length
+    const published = filteredPrograms.filter((p) => p.status === 'published').length
+    const deprecated = filteredPrograms.filter((p) => p.status === 'deprecated').length
+    return { total, draft, pending, published, deprecated }
+  }, [filteredPrograms])
+
+  // 分组数据（按年级分组）
+  const programsByYear = useMemo(() => {
+    if (viewMode !== 'group') return null
+    const groups: Record<string, TrainingProgram[]> = {}
+    filteredPrograms.forEach((p) => {
+      if (!groups[p.entryYear]) groups[p.entryYear] = []
+      groups[p.entryYear].push(p)
+    })
+    return groups
+  }, [filteredPrograms, viewMode])
+
+  const handleSelectId = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((sid) => sid !== id)))
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredPrograms.map((p) => p.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const hasSelected = selectedIds.length > 0
+
+  const handleBatchDelete = () => {
+    selectedIds.forEach((id) => deleteProgram(id))
+    setSelectedIds([])
+    toast.success(`已删除 ${selectedIds.length} 个方案`)
+  }
+
+  const handleDelete = (program: TrainingProgram) => {
+    if (confirm(`确定要删除人培方案「${program.name}」吗？`)) {
+      deleteProgram(program.id)
+      toast.success('删除成功')
+    }
+  }
+
+  const handleEdit = (program: TrainingProgram) => {
+    router.push(`/admin/programs/${program.id}/edit`)
+  }
+
+  const handleInvite = (program: TrainingProgram) => {
+    setInviteProgram(program)
+    setInviteName('')
+    setInviteOpen(true)
+  }
+
+  const confirmClone = (program: TrainingProgram) => {
+    const newId = `tp${Date.now()}`
+    const cloned: TrainingProgram = {
+      ...program,
+      id: newId,
+      code: `${program.code}-CLONE`,
+      name: `${program.name}（克隆）`,
+      status: 'draft',
+      createdAt: new Date().toISOString().split('T')[0],
+      creator: CURRENT_USER,
+      collaborators: [],
+    }
+    addProgram(cloned)
+    toast.success(`已成功克隆「${program.name}」到「我的人培方案」`)
+  }
+
+  const handleClone = (program: TrainingProgram) => {
+    confirmClone(program)
+  }
+
+  const handleCloneFromPublic = (program: TrainingProgram) => {
+    setIsCloneSourceDialogOpen(false)
+    confirmClone(program)
+  }
+
+  const handleSubmitApproval = (program: TrainingProgram) => {
+    updateProgram({ ...program, status: 'pending' })
+    toast.success('已提交审批')
+  }
+
+  const handleWithdrawApproval = (program: TrainingProgram) => {
+    updateProgram({ ...program, status: 'draft' })
+    toast.success('已撤回审批')
+  }
+
+  const handleWithdrawPublish = (program: TrainingProgram) => {
+    updateProgram({ ...program, status: 'draft' })
+    toast.success('已撤回发布')
+  }
+
+  const handleExport = (program: TrainingProgram) => {
+    toast.success(`正在导出「${program.name}」...`)
+  }
+
+  const handleResetFilters = () => {
+    setSearchQuery('')
+    setSelectedYear(null)
+    setSelectedStatus(null)
+    setSelectedMajorId(null)
+  }
+
+  const openCreate = () => {
+    router.push('/admin/programs/new')
+  }
 
   // 所有不重复的入学年份
   const allYears = useMemo(() => {
@@ -102,382 +287,362 @@ export default function ProgramsPage() {
     return years.sort((a, b) => b - a)
   }, [programs])
 
-  // 过滤后的培养方案
-  const filteredPrograms = useMemo(() => {
-    return programs.filter((p) => {
-      const major = majors.find((m) => m.id === p.majorId)
-      if (selectedDeptId !== 'all' && major?.departmentId !== selectedDeptId) return false
-      if (selectedYear !== 'all' && p.entryYear !== Number(selectedYear)) return false
-      return true
-    })
-  }, [programs, selectedDeptId, selectedYear])
-
-  const openCreate = () => {
-    router.push('/admin/programs/new')
-  }
-
-  const openEdit = (program: TrainingProgram) => {
-    router.push(`/admin/programs/${program.id}/edit`)
-  }
-
-  const handleDelete = (programId: string) => {
-    deleteProgram(programId)
-    toast.success('删除成功')
-  }
-
-  const { syllabuses, sceneSyllabuses, addSyllabus, addSceneSyllabus } = useSyllabuses()
-  const { teachingPlans, addTeachingPlan } = useTeachingPlans()
-
-  // 克隆弹窗
-  const [cloneOpen, setCloneOpen] = useState(false)
-  const [cloneProgram, setCloneProgram] = useState<TrainingProgram | null>(null)
-  const [cloneSyllabus, setCloneSyllabus] = useState(false)
-  const [clonePlan, setClonePlan] = useState(false)
-  const [cloneSchedule, setCloneSchedule] = useState(false)
-
-  const openClone = (program: TrainingProgram) => {
-    setCloneProgram(program)
-    setCloneSyllabus(false)
-    setClonePlan(false)
-    setCloneSchedule(false)
-    setCloneOpen(true)
-  }
-
-  const confirmClone = () => {
-    if (!cloneProgram) return
-    const newId = `tp${Date.now()}`
-    const cloned: TrainingProgram = {
-      ...cloneProgram,
-      id: newId,
-      code: `${cloneProgram.code}-CLONE`,
-      name: `${cloneProgram.name}（克隆）`,
-      status: 'draft',
-      createdAt: new Date().toISOString().split('T')[0],
-      creator: '当前用户',
-      collaborators: [],
-    }
-    addProgram(cloned)
-
-    let msg = '方案克隆成功'
-
-    // 克隆教学大纲
-    if (cloneSyllabus) {
-      const allSyls = [...syllabuses, ...sceneSyllabuses].filter((s) => s.programId === cloneProgram.id)
-      allSyls.forEach((syl) => {
-        const newSyl = { ...syl, id: `syl-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`, programId: newId }
-        if (syl.type === 'scene') {
-          addSceneSyllabus(newSyl as any)
-        } else {
-          addSyllabus(newSyl as any)
-        }
-      })
-      msg += `，课程与能力目标 ${allSyls.length} 份`
-    }
-
-    // 克隆教学计划
-    if (clonePlan) {
-      const plans = teachingPlans.filter((p) => p.programId === cloneProgram.id)
-      plans.forEach((plan) => {
-        const newPlan = {
-          ...plan,
-          id: `plan-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-          programId: newId,
-          programName: cloned.name,
-          entries: plan.entries.map((e) => ({ ...e, id: `pe-${Date.now()}-${Math.random().toString(36).slice(2, 5)}` })),
-        }
-        addTeachingPlan(newPlan)
-      })
-      msg += `，教学计划 ${plans.length} 份`
-    }
-
-    // 克隆排班排课（tasks）
-    if (cloneSchedule) {
-      const programClasses = classes.filter((c) => {
-        const grade = grades.find((g) => g.id === c.gradeId)
-        return c.majorId === cloneProgram.majorId && grade?.entryYear === cloneProgram.entryYear
-      })
-      const classIds = new Set(programClasses.map((c) => c.id))
-      const relatedTasks = tasks.filter((t) => classIds.has(t.classId))
-      relatedTasks.forEach((task) => {
-        const newTask = {
-          ...task,
-          id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-          name: `${task.name}（克隆）`,
-        }
-        tasks.push(newTask as any)
-      })
-      msg += `，排课任务 ${relatedTasks.length} 条`
-    }
-
-    toast.success(msg)
-    setCloneOpen(false)
-    setCloneProgram(null)
-  }
-
   return (
-    <div className="h-[calc(100vh-120px)] overflow-y-auto pr-2 space-y-4">
-      {/* 标题 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">人培方案管理</h1>
-          <p className="text-muted-foreground text-sm">
-            {selectedDeptName} · 共 {filteredPrograms.length} 个培养方案
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => router.push('/admin/programs/import')}>
-            <Upload className="h-4 w-4 mr-2" />
-            导入方案
-          </Button>
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />新建方案</Button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      {/* ===== Part 1: Top Title Card ===== */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold text-slate-900">人培方案管理</h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                维护人才培养方案信息、课程计划、实践场景等人培资源
+              </p>
+            </div>
 
-      {/* 筛选栏 */}
-      <Card className="py-0">
-        <CardContent className="px-3 pb-3 pt-3 space-y-2">
-          <div className="text-sm font-semibold">筛选条件</div>
-          {/* 院系 */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
-            <div className="flex flex-wrap gap-1">
-              <Badge
-                variant={selectedDeptId === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer text-xs"
-                onClick={() => { setSelectedDeptId('all'); setExpandedId(null) }}
-              >全部</Badge>
-              {departments.map((d) => (
-                <Badge
-                  key={d.id}
-                  variant={selectedDeptId === d.id ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => { setSelectedDeptId(d.id); setExpandedId(null) }}
-                >{d.name}</Badge>
-              ))}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" disabled>
+                <GitBranch className="mr-2 h-4 w-4" />
+                配置审批流程
+              </Button>
+
+              <Dialog open={isBatchDialogOpen} onOpenChange={setIsBatchDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <FolderKanban className="mr-2 h-4 w-4" />
+                    配置批次分组
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-hidden flex flex-col">
+                  <DialogHeader>
+                    <div>
+                      <DialogTitle>批次分组管理</DialogTitle>
+                      <DialogDescription>管理人培方案批次分组</DialogDescription>
+                    </div>
+                  </DialogHeader>
+                  <div className="flex-1 overflow-y-auto py-4 space-y-4">
+                    <div className="rounded-lg border overflow-hidden">
+                      <div className="grid grid-cols-3 gap-4 px-4 py-2 bg-slate-50 text-xs font-medium text-slate-500 border-b">
+                        <div>分组名称</div>
+                        <div>年级</div>
+                        <div>专业</div>
+                      </div>
+                      {getMockBatches().slice(0, 12).map((batch) => {
+                        const major = majors.find((m) => m.id === batch.majorId)
+                        return (
+                          <div key={batch.id} className="grid grid-cols-3 gap-4 px-4 py-2 text-sm border-b last:border-0">
+                            <div className="font-medium">{batch.name}</div>
+                            <div className="text-gray-500">{batch.entryYear}级</div>
+                            <div>
+                              <Badge variant="outline" className="text-xs">
+                                {major?.name || '-'}
+                              </Badge>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsBatchDialogOpen(false)}>关闭</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Button variant="outline" size="sm" onClick={() => setIsCloneSourceDialogOpen(true)}>
+                <Copy className="mr-2 h-4 w-4" />
+                克隆人培方案
+              </Button>
+
+              <Button variant="outline" size="sm" onClick={() => router.push('/admin/programs/import')}>
+                <Upload className="mr-2 h-4 w-4" />
+                导入人培方案
+              </Button>
+
+              <Button size="sm" className="bg-primary hover:bg-primary/90" onClick={openCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                新建人培方案
+              </Button>
             </div>
           </div>
-          {/* 年级 */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
-            <div className="flex flex-wrap gap-1">
-              <Badge
-                variant={selectedYear === 'all' ? 'default' : 'outline'}
-                className="cursor-pointer text-xs"
-                onClick={() => setSelectedYear('all')}
-              >全部</Badge>
-              {allYears.map((y) => (
-                <Badge
-                  key={y}
-                  variant={selectedYear === String(y) ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedYear(String(y))}
-                >{y}级</Badge>
-              ))}
+
+          {/* Stats dashboard - hidden in public tab */}
+          {activeTab !== 'public' && (
+            <div className="grid grid-cols-5 gap-3 mt-3">
+              <Card className="border-slate-200 shadow-sm w-full">
+                <CardContent className="px-3 py-[3px] flex items-center justify-between">
+                  <div className="leading-none">
+                    <p className="text-xs text-slate-500 leading-none">方案总数</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none mt-[3px]">{stats.total}</p>
+                  </div>
+                  <div className="h-6 w-6 rounded-full bg-blue-50 flex items-center justify-center">
+                    <SlidersHorizontal className="h-3 w-3 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-slate-200 shadow-sm w-full">
+                <CardContent className="px-3 py-[3px] flex items-center justify-between">
+                  <div className="leading-none">
+                    <p className="text-xs text-slate-500 leading-none">草稿</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none mt-[3px]">{stats.draft}</p>
+                  </div>
+                  <div className="h-6 w-6 rounded-full bg-gray-50 flex items-center justify-center">
+                    <RotateCcw className="h-3 w-3 text-gray-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-slate-200 shadow-sm w-full">
+                <CardContent className="px-3 py-[3px] flex items-center justify-between">
+                  <div className="leading-none">
+                    <p className="text-xs text-slate-500 leading-none">审批中</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none mt-[3px]">{stats.pending}</p>
+                  </div>
+                  <div className="h-6 w-6 rounded-full bg-yellow-50 flex items-center justify-center">
+                    <GitBranch className="h-3 w-3 text-yellow-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-slate-200 shadow-sm w-full">
+                <CardContent className="px-3 py-[3px] flex items-center justify-between">
+                  <div className="leading-none">
+                    <p className="text-xs text-slate-500 leading-none">已发布</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none mt-[3px]">{stats.published}</p>
+                  </div>
+                  <div className="h-6 w-6 rounded-full bg-green-50 flex items-center justify-center">
+                    <ArrowUpFromLine className="h-3 w-3 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-slate-200 shadow-sm w-full">
+                <CardContent className="px-3 py-[3px] flex items-center justify-between">
+                  <div className="leading-none">
+                    <p className="text-xs text-slate-500 leading-none">已废弃</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none mt-[3px]">{stats.deprecated}</p>
+                  </div>
+                  <div className="h-6 w-6 rounded-full bg-red-50 flex items-center justify-center">
+                    <X className="h-3 w-3 text-red-500" />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* 培养方案卡片列表 */}
-      <div className="space-y-4">
-          {filteredPrograms.map((tp) => {
-            const major = majors.find((m) => m.id === tp.majorId)
-            return (
-              <Card key={tp.id}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        {tp.name}
-                      </CardTitle>
-                      <CardDescription className="mt-1">
-                        方案编码：{tp.code} · 适用专业：{major?.name} · {tp.entryYear}级入学
-                      </CardDescription>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {(() => {
-                        const stepLabels = ['已生成大纲', '已生成计划', '已排班排课']
-                        const stepColors = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-emerald-100 text-emerald-700']
-                        const hash = tp.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
-                        const stepIdx = hash % 3
-                        return (
-                          <>
-                            <Badge variant="outline" className={`text-xs ${stepColors[stepIdx]}`}>
-                              执行步骤：{stepLabels[stepIdx]}
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs gap-1"
-                              onClick={() => router.push(`/admin/operations/syllabus?programId=${tp.id}`)}
-                            >
-                              <Sparkles className="h-3 w-3" /> 生成大纲
-                            </Button>
-                          </>
-                        )
-                      })()}
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(tp)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openClone(tp)}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setInviteProgram(tp); setInviteName(''); setInviteOpen(true) }}>
-                        <UserPlus className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(tp.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-4 gap-4 text-sm">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">课程总学分</p>
-                      <p className="font-medium">{tp.totalCredits}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">课程必修学分</p>
-                      <p className="font-medium">{tp.requiredCredits}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">课程选修学分</p>
-                      <p className="font-medium">{tp.electiveCredits}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground">实践场景学分</p>
-                      <p className="font-medium">{tp.practiceScenes.reduce((s, c) => s + c.credits, 0)}</p>
-                    </div>
-                  </div>
+      {/* ===== Part 2: View Switch Area ===== */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as TabType); setSelectedIds([]); }}>
+          <TabsList className="grid w-full max-w-md grid-cols-3">
+            <TabsTrigger value="my" className="w-full">我的人培方案</TabsTrigger>
+            <TabsTrigger value="collab" className="w-full">共建人培方案</TabsTrigger>
+            <TabsTrigger value="public" className="w-full">公共人培方案库</TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" />
-                      <span>创建人：{tp.creator || '—'}</span>
-                    </div>
-                    {tp.collaborators && tp.collaborators.length > 0 && (
-                      <div className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5" />
-                        <span>共建人：{tp.collaborators.join('、')}</span>
-                      </div>
-                    )}
-                    <div>
-                      <span>创建时间：{tp.createdAt || '—'}</span>
-                    </div>
-                    {tp.startDate && tp.endDate && (
-                      <div>
-                        <span>有效期：{tp.startDate} 至 {tp.endDate}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setExpandedId(expandedId === tp.id ? null : tp.id)}>
-                      <Eye className="h-4 w-4 mr-1" />
-                      {expandedId === tp.id ? '收起课程计划' : '查看课程计划'}
-                    </Button>
-                  </div>
-
-                  {expandedId === tp.id && (
-                    <div className="space-y-4">
-                      <Tabs defaultValue="courses">
-                        <TabsList>
-                          <TabsTrigger value="courses">课程计划</TabsTrigger>
-                          <TabsTrigger value="practice">实践场景</TabsTrigger>
-                          <TabsTrigger value="combined">综合课表</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="courses" className="space-y-4 mt-4">
-                          {/* Existing course table + timetable */}
-                          <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>课程编码</TableHead>
-                                  <TableHead>课程名称</TableHead>
-                                  <TableHead>学分</TableHead>
-                                  <TableHead>学时</TableHead>
-                                  <TableHead>学期</TableHead>
-                                  <TableHead>课程性质</TableHead>
-                                  <TableHead>考核方式</TableHead>
-                                  <TableHead>版本号</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {tp.courses.map((c) => (
-                                  <TableRow key={c.id}>
-                                    <TableCell>{c.code}</TableCell>
-                                    <TableCell>{c.name}</TableCell>
-                                    <TableCell>{c.credits}</TableCell>
-                                    <TableCell>{c.hours}</TableCell>
-                                    <TableCell>第{c.semester}学期</TableCell>
-                                    <TableCell><Badge variant="outline">{c.nature}</Badge></TableCell>
-                                    <TableCell>{c.assessment}</TableCell>
-                                    <TableCell>{c.version}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-
-                        </TabsContent>
-
-                        <TabsContent value="practice" className="space-y-4 mt-4">
-                          {/* Practice scenes table + timetable */}
-                          <div className="border rounded-lg overflow-hidden">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>场景编码</TableHead>
-                                  <TableHead>场景名称</TableHead>
-                                  <TableHead>学分</TableHead>
-                                  <TableHead>学时</TableHead>
-                                  <TableHead>学期</TableHead>
-                                  <TableHead>性质</TableHead>
-                                  <TableHead>考核方式</TableHead>
-                                  <TableHead>版本号</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {tp.practiceScenes.map((c) => (
-                                  <TableRow key={c.id}>
-                                    <TableCell>{c.code}</TableCell>
-                                    <TableCell>{c.name}</TableCell>
-                                    <TableCell>{c.credits}</TableCell>
-                                    <TableCell>{c.hours}</TableCell>
-                                    <TableCell>第{c.semester}学期</TableCell>
-                                    <TableCell><Badge variant="outline" className="border-orange-300 text-orange-600">{c.nature}</Badge></TableCell>
-                                    <TableCell>{c.assessment}</TableCell>
-                                    <TableCell>{c.version}</TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </div>
-
-                        </TabsContent>
-
-                        <TabsContent value="combined" className="space-y-4 mt-4">
-                          <ProgramScheduleView program={tp} />
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
-          })}
-
-          {filteredPrograms.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                该院系下暂无培养方案
-              </CardContent>
-            </Card>
-          )}
+        <div className="flex items-center border rounded-md overflow-hidden">
+          <button
+            onClick={() => setViewMode('list')}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors",
+              viewMode === 'list' ? "bg-primary text-primary-foreground" : "bg-white text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <LayoutList className="h-3.5 w-3.5" />
+            资源列表
+          </button>
+          <button
+            onClick={() => setViewMode('group')}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium flex items-center gap-1 transition-colors",
+              viewMode === 'group' ? "bg-primary text-primary-foreground" : "bg-white text-slate-600 hover:bg-slate-50"
+            )}
+          >
+            <ListFilter className="h-3.5 w-3.5" />
+            批次分组
+          </button>
+        </div>
       </div>
+
+      {/* ===== Part 3: Data List Area ===== */}
+      <Card className="border-slate-200 shadow-sm">
+        <CardContent className="flex flex-col gap-4 p-5">
+          {/* Search + Filter row */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[200px]">
+              <div className="flex items-center gap-2 w-full">
+                <Search className="h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="搜索方案名称 / 编码"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-9 text-sm flex-1"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={selectedYear || '__all__'} onValueChange={(v) => setSelectedYear(v === '__all__' ? null : v)}>
+                <SelectTrigger className="h-9 text-sm w-36">
+                  <SelectValue placeholder="按年级筛选" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部年级</SelectItem>
+                  {allYears.map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}级</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMajorId || '__all__'} onValueChange={(v) => setSelectedMajorId(v === '__all__' ? null : v)}>
+                <SelectTrigger className="h-9 text-sm w-40">
+                  <SelectValue placeholder="按专业筛选" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部专业</SelectItem>
+                  {majors.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedStatus || '__all__'} onValueChange={(v) => setSelectedStatus(v === '__all__' ? null : v)}>
+                <SelectTrigger className="h-9 text-sm w-32">
+                  <SelectValue placeholder="按状态筛选" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部状态</SelectItem>
+                  <SelectItem value="draft">草稿</SelectItem>
+                  <SelectItem value="pending">审批中</SelectItem>
+                  <SelectItem value="published">已发布</SelectItem>
+                  <SelectItem value="deprecated">已废弃</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button variant="outline" size="sm" className="h-9" onClick={handleResetFilters}>
+              <RotateCcw className="mr-1 h-3.5 w-3.5" />
+              重置
+            </Button>
+          </div>
+
+          {/* Quick actions - linked with checkboxes */}
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            <span className={cn("text-xs mr-1", hasSelected ? "text-slate-700 font-medium" : "text-slate-400")}>
+              {hasSelected ? `已选择 ${selectedIds.length} 项：` : "请选择方案："}
+            </span>
+            <Button variant="outline" size="sm" className="h-8 text-xs" disabled={!hasSelected} onClick={handleBatchDelete}>
+              <Trash2 className="mr-1 h-3 w-3" />
+              删除
+            </Button>
+          </div>
+        </CardContent>
+
+        {/* Program list - merged into the same Card */}
+        {filteredPrograms.length > 0 && viewMode !== 'group' && (
+          <CardContent className="pt-0">
+            <ProgramList
+              programs={filteredPrograms}
+              majors={majors}
+              selectedIds={selectedIds}
+              onSelectId={handleSelectId}
+              onSelectAll={handleSelectAll}
+              onEdit={handleEdit}
+              onInvite={handleInvite}
+              onDelete={handleDelete}
+              onClone={handleClone}
+              onSubmitApproval={handleSubmitApproval}
+              onWithdrawApproval={handleWithdrawApproval}
+              onWithdrawPublish={handleWithdrawPublish}
+              onExport={handleExport}
+              className="border-0 rounded-none"
+            />
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Program list - group view remains outside the card */}
+      {filteredPrograms.length > 0 && viewMode === 'group' && programsByYear && (
+        <div className="space-y-4">
+          {Object.entries(programsByYear)
+            .sort((a, b) => Number(b[0]) - Number(a[0]))
+            .map(([year, yearPrograms]) => {
+              const isExpanded = expandedGroups.includes(year)
+
+              return (
+                <Collapsible key={year} open={isExpanded} onOpenChange={() => toggleGroup(year)}>
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <CollapsibleTrigger asChild>
+                      <div className="flex cursor-pointer items-center justify-between px-4 py-3 transition-colors hover:bg-slate-50">
+                        <div className="flex items-center gap-3">
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                          )}
+                          <span className="font-medium text-gray-800">{year}级</span>
+                        </div>
+                        <Badge variant="secondary" className="text-xs">
+                          {yearPrograms.length} 个方案
+                        </Badge>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="p-4 pt-0">
+                        <ProgramList
+                          programs={yearPrograms}
+                          majors={majors}
+                          selectedIds={selectedIds}
+                          onSelectId={handleSelectId}
+                          onSelectAll={handleSelectAll}
+                          onEdit={handleEdit}
+                          onInvite={handleInvite}
+                          onDelete={handleDelete}
+                          onClone={handleClone}
+                          onSubmitApproval={handleSubmitApproval}
+                          onWithdrawApproval={handleWithdrawApproval}
+                          onWithdrawPublish={handleWithdrawPublish}
+                          onExport={handleExport}
+                        />
+                      </div>
+                    </CollapsibleContent>
+                  </div>
+                </Collapsible>
+              )
+            })}
+        </div>
+      )}
+
+      {filteredPrograms.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white py-20 shadow-sm">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+            <Search className="h-8 w-8 text-slate-400" />
+          </div>
+          <h3 className="mb-2 text-lg font-medium text-slate-700">暂无方案</h3>
+          <p className="mb-4 text-sm text-slate-500">当前筛选条件下没有人培方案数据</p>
+          <Button size="sm" onClick={openCreate}>
+            <Plus className="mr-2 h-4 w-4" />
+            新建人培方案
+          </Button>
+        </div>
+      )}
+
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>导入人培方案</DialogTitle>
+            <DialogDescription>上传 Excel 或 CSV 文件批量导入人培方案数据</DialogDescription>
+          </DialogHeader>
+          <div className="py-8">
+            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground mb-2">
+                拖拽文件到此处，或点击选择文件
+              </p>
+              <Button variant="outline" size="sm" onClick={() => router.push('/admin/programs/import')}>前往导入页面</Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>取消</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 邀请共建弹窗 */}
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
@@ -515,279 +680,88 @@ export default function ProgramsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 克隆方案弹窗 */}
-      <Dialog open={cloneOpen} onOpenChange={setCloneOpen}>
-        <DialogContent className="max-w-md">
+      {/* 克隆来源弹窗 — 公共人培方案库 */}
+      <Dialog open={isCloneSourceDialogOpen} onOpenChange={setIsCloneSourceDialogOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>克隆方案 — {cloneProgram?.name}</DialogTitle>
+            <DialogTitle>克隆人培方案</DialogTitle>
+            <DialogDescription>从公共人培方案库中选择一个方案进行整体克隆</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">请选择要一并克隆的关联数据：</p>
-            <div className="space-y-3">
-              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox checked={cloneSyllabus} onCheckedChange={(v) => setCloneSyllabus(!!v)} />
-                <div>
-                  <div className="text-sm font-medium">课程与能力目标</div>
-                  <div className="text-xs text-muted-foreground">复制该方案下所有课程/场景的课程与能力目标</div>
-                </div>
-              </label>
-              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox checked={clonePlan} onCheckedChange={(v) => setClonePlan(!!v)} />
-                <div>
-                  <div className="text-sm font-medium">教学计划</div>
-                  <div className="text-xs text-muted-foreground">复制该方案下所有学期的教学计划</div>
-                </div>
-              </label>
-              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox checked={cloneSchedule} onCheckedChange={(v) => setCloneSchedule(!!v)} />
-                <div>
-                  <div className="text-sm font-medium">排班排课数据</div>
-                  <div className="text-xs text-muted-foreground">复制该方案对应班级的排课任务</div>
-                </div>
-              </label>
+          <div className="space-y-3 py-2">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="搜索方案名称 / 编码"
+                  value={cloneSearchQuery}
+                  onChange={(e) => setCloneSearchQuery(e.target.value)}
+                  className="h-9 text-sm pl-9"
+                />
+              </div>
+              <Select value={cloneSelectedDept || '__all__'} onValueChange={(v) => { setCloneSelectedDept(v === '__all__' ? null : v); setCloneSelectedMajor(null) }}>
+                <SelectTrigger className="h-9 text-sm w-36">
+                  <SelectValue placeholder="全部院系" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部院系</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={cloneSelectedMajor || '__all__'} onValueChange={(v) => setCloneSelectedMajor(v === '__all__' ? null : v)}>
+                <SelectTrigger className="h-9 text-sm w-36">
+                  <SelectValue placeholder="全部专业" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">全部专业</SelectItem>
+                  {majors.filter((m) => !cloneSelectedDept || m.departmentId === cloneSelectedDept).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+          <div className="flex-1 overflow-y-auto py-2">
+            {cloneFilteredPrograms.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                公共人培方案库中暂无符合条件的方案
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {cloneFilteredPrograms.map((program) => {
+                  const major = majors.find((m) => m.id === program.majorId)
+                  return (
+                    <div
+                      key={program.id}
+                      className="flex items-center justify-between rounded-lg border p-3 hover:bg-slate-50 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-900">{program.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {program.code} · {major?.name || '-'} · {program.entryYear}级 · {program.duration}年/{program.level}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs ml-4 shrink-0"
+                        onClick={() => handleCloneFromPublic(program)}
+                      >
+                        <Copy className="mr-1 h-3 w-3" />
+                        克隆
+                      </Button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCloneOpen(false)}>取消</Button>
-            <Button onClick={confirmClone}>确认克隆</Button>
+            <Button variant="outline" onClick={() => setIsCloneSourceDialogOpen(false)}>关闭</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  )
-}
-
-function ProgramScheduleView({ program }: { program: TrainingProgram }) {
-  const [exportType, setExportType] = useState<'class' | 'teacher' | 'venue'>('class')
-  const [showVersion, setShowVersion] = useState(false)
-
-  const exportTypes = [
-    { id: 'class', label: '班级课表' },
-    { id: 'teacher', label: '教师课表' },
-    { id: 'venue', label: '场地课表' },
-  ]
-  const dayLabels = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
-  const days = [1, 2, 3, 4, 5, 6, 7]
-  const periods = allPeriods
-
-  // 找到该培养方案对应的年级和班级
-  const programGrade = grades.find((g) => g.entryYear === program.entryYear)
-  const programClasses = classes.filter((c) => c.gradeId === programGrade?.id)
-  const classIds = programClasses.map((c) => c.id)
-
-  // 筛选相关任务
-  const programTasks = tasks.filter((t) => classIds.includes(t.classId))
-
-  const renderPeriodTable = (
-    items: { id: string; name: string }[],
-    getTasks: (id: string) => typeof programTasks,
-    nameLabel: string
-  ) => (
-    <div className="border rounded-lg overflow-hidden overflow-x-auto">
-      <table className="w-full border-collapse text-sm min-w-[600px]">
-        <thead>
-          <tr className="bg-muted">
-            <th className="border p-3 text-left font-medium w-[140px]">{nameLabel}</th>
-            <th className="border p-3 text-center font-medium w-[72px]">节次</th>
-            {days.map((d) => (
-              <th key={d} className="border p-3 text-center font-medium">
-                {dayLabels[d - 1]}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => {
-            const itemTasks = getTasks(item.id)
-            return periods.map((period, idx) => (
-              <tr key={`${item.id}-${period}`} className="border-t">
-                {idx === 0 && (
-                  <td
-                    rowSpan={periods.length}
-                    className="border p-3 font-medium align-middle text-center bg-muted/20"
-                  >
-                    {item.name}
-                  </td>
-                )}
-                <td className="border p-2 text-center text-muted-foreground text-xs bg-muted/10">
-                  {period}
-                </td>
-                {days.map((day) => {
-                  const task = itemTasks.find(
-                    (t) => t.dayOfWeek === day && t.periods.includes(period)
-                  )
-                  return (
-                    <td key={day} className="border p-2 min-w-[120px] align-top">
-                      {task ? (
-                        <div
-                          className={cn(
-                            'text-xs rounded px-2 py-1 space-y-0.5',
-                            task.type === 'scene'
-                              ? 'bg-orange-50 border border-orange-100'
-                              : 'bg-blue-50 border border-blue-100'
-                          )}
-                        >
-                          <div className="font-medium truncate">{task.courseName}</div>
-                          {showVersion && (
-                            <div className="text-[10px] text-blue-600">{task.courseVersion}</div>
-                          )}
-                          <div className="text-muted-foreground">{task.facultyName}</div>
-                          <div className="text-muted-foreground text-[10px]">
-                            {task.venueName}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground/20 text-xs">-</span>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))
-          })}
-        </tbody>
-      </table>
-    </div>
-  )
-
-  // 班级课表
-  const classItems = programClasses.map((c) => ({ id: c.id, name: c.name }))
-  const classTable = renderPeriodTable(
-    classItems,
-    (id) => programTasks.filter((t) => t.classId === id),
-    '班级名称'
-  )
-
-  // 教师课表
-  const teacherIds = Array.from(new Set(programTasks.map((t) => t.facultyId)))
-  const teacherItems = faculty
-    .filter((f) => teacherIds.includes(f.id))
-    .map((f) => ({ id: f.id, name: `${f.name} (${f.title})` }))
-  const teacherTable = renderPeriodTable(
-    teacherItems,
-    (id) => programTasks.filter((t) => t.facultyId === id),
-    '教师名称'
-  )
-
-  // 场地课表
-  const venueIds = Array.from(new Set(programTasks.map((t) => t.venueId)))
-  const venueItems = venues
-    .filter((v) => venueIds.includes(v.id))
-    .map((v) => ({ id: v.id, name: v.name }))
-  const venueTable = renderPeriodTable(
-    venueItems,
-    (id) => programTasks.filter((t) => t.venueId === id),
-    '场地名称'
-  )
-
-  const currentTable =
-    {
-      class: classTable,
-      teacher: teacherTable,
-      venue: venueTable,
-    }[exportType] || classTable
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">课表类型：</span>
-          {exportTypes.map((t) => (
-            <Button
-              key={t.id}
-              size="sm"
-              variant={exportType === t.id ? 'default' : 'outline'}
-              onClick={() => setExportType(t.id as typeof exportType)}
-            >
-              {t.label}
-            </Button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2">
-          <Switch
-            id={`show-version-${program.id}`}
-            checked={showVersion}
-            onCheckedChange={setShowVersion}
-          />
-          <Label htmlFor={`show-version-${program.id}`} className="text-sm font-medium cursor-pointer">
-            显示版本号
-          </Label>
-        </div>
-      </div>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">
-            {exportTypes.find((t) => t.id === exportType)?.label}预览
-          </CardTitle>
-        </CardHeader>
-        <CardContent>{currentTable}</CardContent>
-      </Card>
-    </div>
-  )
-}
-
-function ProgramTimetable({
-  courses,
-  title = '课表视图',
-  cardClassName = '',
-  showType = false,
-}: {
-  courses: CoursePlan[]
-  title?: string
-  cardClassName?: string
-  showType?: boolean
-}) {
-  const semesterGroups = useMemo(() => {
-    const groups: Record<number, CoursePlan[]> = {}
-    courses.forEach(c => {
-      if (!groups[c.semester]) groups[c.semester] = []
-      groups[c.semester].push(c)
-    })
-    return groups
-  }, [courses])
-
-  if (courses.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground py-8 border rounded-lg">
-        暂无课程
-      </div>
-    )
-  }
-
-  return (
-    <div>
-      <h4 className="text-sm font-medium mb-3">{title}</h4>
-      <div className="space-y-3">
-        {Object.entries(semesterGroups)
-          .sort((a, b) => Number(a[0]) - Number(b[0]))
-          .map(([semester, semCourses]) => (
-            <Card key={semester} className="mb-3">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">第{semester}学期</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {semCourses.map(c => (
-                    <div key={c.id} className={`border rounded-lg p-3 space-y-1 ${cardClassName} ${showType ? (c.code.startsWith('PRAC') ? 'border-orange-200 bg-orange-50' : 'border-blue-200 bg-blue-50') : ''}`}>
-                      <div className="font-medium text-sm">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">{c.code}</div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <Badge variant="outline">{c.nature}</Badge>
-                        <span className="text-muted-foreground">{c.credits}学分</span>
-                      </div>
-                      {showType && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          {c.code.startsWith('PRAC') ? '实践场景' : '课程'}
-                        </Badge>
-                      )}
-                      <div className="text-xs text-blue-600">版本: {c.version}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-      </div>
     </div>
   )
 }

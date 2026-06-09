@@ -1,8 +1,13 @@
 'use client'
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useSearchParams } from 'next/navigation'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import {
   Table,
   TableBody,
@@ -11,23 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { toast } from 'sonner'
-import {
-  CalendarDays,
-  Sparkles,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  Layers,
-  GraduationCap,
-  BookOpen,
-  AlertCircle,
-  Beaker,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -36,406 +24,779 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+import {
+  Plus,
+  Trash2,
+  BookOpen,
+  Beaker,
+  CheckCircle2,
+  GraduationCap,
+  Layers,
+  Clock,
+  Download,
+  Send,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
   trainingPrograms,
   departments,
-  majors,
   grades,
+  majors,
+  type TrainingProgram,
+  type CoursePlan,
+  type PlanCourseEntry,
   type TeachingPlan,
 } from '@/lib/mock-data'
 import { useTeachingPlans } from '@/components/providers/teaching-plan-provider'
 
-function TeachingPlansPageInner() {
-  const router = useRouter()
+// ============================================
+// 辅助：从培养方案生成教学计划
+// ============================================
+function buildPlanFromProgram(program: TrainingProgram): TeachingPlan {
+  const allCourses: CoursePlan[] = []
+  if (program.courses?.length) allCourses.push(...program.courses)
+  if (program.practiceScenes?.length) allCourses.push(...program.practiceScenes)
+  if (!allCourses.length && program.curriculum?.length) {
+    allCourses.push(...program.curriculum)
+  }
+
+  const entries: PlanCourseEntry[] = allCourses.map((course, idx) => {
+    const isScene = course.courseType === '场景' || course.nature === '场景' || course.nature === '实践'
+    const isPractice = course.nature === '实践' || isScene
+    const weekHours = Math.max(1, Math.ceil(course.hours / 16))
+    const endWeek = Math.min(16, Math.ceil(course.hours / weekHours))
+
+    return {
+      id: `pe-${program.id}-${idx}`,
+      courseId: course.id,
+      courseName: course.name,
+      courseCode: course.code,
+      type: isScene ? 'scene' : 'theory',
+      nature: (isScene ? '场景' : course.nature) as PlanCourseEntry['nature'],
+      courseTypeLabel: isScene ? undefined : (course.courseTypeLabel || ''),
+      credits: course.credits,
+      totalHours: course.hours,
+      semester: course.semester || 1,
+      weekHours,
+      startWeek: 1,
+      endWeek,
+      weekPattern: 'all',
+      assignedClassIds: [],
+      preferredFacultyIds: [],
+      venueTypeRequired: isScene
+        ? '校外基地'
+        : isPractice
+          ? '实训室'
+          : '教室',
+      syllabusId: `syl-placeholder-${course.id}`,
+      status: 'planned',
+    }
+  })
+
+  return {
+    id: `plan-${program.id}`,
+    programId: program.id,
+    programName: program.name,
+    majorId: program.majorId,
+    entryYear: program.entryYear,
+    totalSemesters: program.duration * 2,
+    entries,
+    status: 'draft',
+    generatedAt: new Date().toISOString(),
+  }
+}
+
+// 固定数据源：无论选什么专业，都使用同一个教学计划
+const FIXED_PROGRAM = trainingPrograms.find((p) => p.id === 'tp1')!
+
+// ============================================
+// 内部页面组件
+// ============================================
+function PlanPage() {
   const searchParams = useSearchParams()
-  const { teachingPlans, generatePlanFromProgram } = useTeachingPlans()
-  const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
-  const [selectedYear, setSelectedYear] = useState<string>('all')
-  const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
+  const { teachingPlans, updateTeachingPlan } = useTeachingPlans()
 
-  const [generateOpen, setGenerateOpen] = useState(false)
-  const [generatingProgram, setGeneratingProgram] = useState<any>(null)
-  const [generateProgress, setGenerateProgress] = useState(0)
-  const [isGenerating, setIsGenerating] = useState(false)
+  // ---- 选择器状态（默认：计算机科学与技术学院 / 2029级 / 软件工程 / 全部学期）----
+  const [selectedDept, setSelectedDept] = useState<string>('d1')
+  const [selectedGradeId, setSelectedGradeId] = useState<string>('g2029')
+  const [selectedMajorId, setSelectedMajorId] = useState<string>('m1')
+  const [selectedSemester, setSelectedSemester] = useState<string>('1')
 
-  const deptPrograms = useMemo(() => {
-    let list = trainingPrograms
-    if (selectedDeptId !== 'all') {
-      const deptMajorIds = majors.filter((m) => m.departmentId === selectedDeptId).map((m) => m.id)
-      list = list.filter((p) => deptMajorIds.includes(p.majorId))
-    }
-    if (selectedYear !== 'all') {
-      list = list.filter((p) => String(p.entryYear) === selectedYear)
-    }
-    return list
-  }, [selectedDeptId, selectedYear])
+  // ---- 本地教学计划状态（固定数据）----
+  const [localPlan, setLocalPlan] = useState<TeachingPlan | null>(null)
+  const [planInitialized, setPlanInitialized] = useState(false)
 
-  const currentProgram = useMemo(() => {
-    if (selectedProgramId === 'all') return null
-    return trainingPrograms.find((p) => p.id === selectedProgramId)
-  }, [selectedProgramId])
+  // ---- 添加课程弹窗状态 ----
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [selectedCourseToAdd, setSelectedCourseToAdd] = useState<CoursePlan | null>(null)
+  const [newEntryCredits, setNewEntryCredits] = useState<number>(0)
+  const [newEntryHours, setNewEntryHours] = useState<number>(0)
+  const [newEntrySemester, setNewEntrySemester] = useState<number>(1)
 
-  const programPlans = useMemo(() => {
-    if (!currentProgram) return teachingPlans
-    return teachingPlans.filter((p) => p.programId === currentProgram.id)
-  }, [currentProgram, teachingPlans])
+  // ---- 提交确认弹窗状态 ----
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
 
-  const currentPlan = programPlans[0]
-
-  const stats = useMemo(() => {
-    if (!currentPlan) return { total: 0, confirmed: 0, scheduled: 0, pending: 0, scene: 0 }
-    const total = currentPlan.entries.length
-    const confirmed = currentPlan.entries.filter((e) => e.status === 'confirmed' || e.status === 'scheduled').length
-    const scheduled = currentPlan.entries.filter((e) => e.status === 'scheduled').length
-    const scene = currentPlan.entries.filter((e) => e.type === 'scene').length
-    return { total, confirmed, scheduled, pending: total - confirmed, scene }
-  }, [currentPlan])
-
-  // 从 URL 参数自动选中培养方案
+  // ---- 从 URL 参数自动恢复院系/年级 ----
   useEffect(() => {
-    const programIdFromUrl = searchParams.get('programId')
-    if (programIdFromUrl) {
-      const program = trainingPrograms.find((p) => p.id === programIdFromUrl)
-      if (program) {
-        const major = majors.find((m) => m.id === program.majorId)
-        if (major) {
-          setSelectedDeptId(major.departmentId)
-        }
-        setSelectedYear(String(program.entryYear))
-        setSelectedProgramId(programIdFromUrl)
-      }
-    }
+    const deptFromUrl = searchParams.get('dept')
+    const gradeFromUrl = searchParams.get('grade')
+    const majorFromUrl = searchParams.get('major')
+    if (deptFromUrl) setSelectedDept(deptFromUrl)
+    if (gradeFromUrl) setSelectedGradeId(gradeFromUrl)
+    if (majorFromUrl) setSelectedMajorId(majorFromUrl)
   }, [searchParams])
 
-  const openGenerate = (program: any) => {
-    setGeneratingProgram(program)
-    setGenerateProgress(0)
-    setGenerateOpen(true)
-  }
+  // ---- 初始化固定教学计划（只执行一次）----
+  useEffect(() => {
+    if (planInitialized) return
+    // 始终从固定培养方案重新生成，确保与 mock-data 同步
+    const freshPlan = buildPlanFromProgram(FIXED_PROGRAM)
+    setLocalPlan(freshPlan)
+    updateTeachingPlan(freshPlan)
+    setPlanInitialized(true)
+  }, [updateTeachingPlan, planInitialized])
 
-  const startGenerate = () => {
-    if (!generatingProgram) return
-    setIsGenerating(true)
-    let progress = 0
-    const interval = setInterval(() => {
-      progress += Math.random() * 12
-      if (progress > 100) progress = 100
-      setGenerateProgress(Math.min(progress, 100))
-      if (progress >= 100) {
-        clearInterval(interval)
-        setTimeout(() => {
-          const plan = generatePlanFromProgram(generatingProgram)
-          setIsGenerating(false)
-          setGenerateOpen(false)
-          if (plan) {
-            toast.success(`教学计划生成成功！共 ${plan.entries.length} 门课程/场景`)
-          } else {
-            toast.info('该培养方案的教学计划已存在')
-          }
-        }, 500)
-      }
-    }, 200)
-  }
+  // ---- 联动计算 ----
+  const matchedMajors = useMemo(() => {
+    if (!selectedDept) return []
+    return majors.filter((m) => m.departmentId === selectedDept)
+  }, [selectedDept])
 
-  const semesterGroups = useMemo(() => {
-    if (!currentPlan) return []
-    const groups = new Map<number, typeof currentPlan.entries>()
-    currentPlan.entries.forEach((entry) => {
-      const list = groups.get(entry.semester) || []
-      list.push(entry)
-      groups.set(entry.semester, list)
+  const selectedMajor = useMemo(
+    () => majors.find((m) => m.id === selectedMajorId) || null,
+    [selectedMajorId]
+  )
+
+  // 根据选择匹配人培方案
+  const matchedProgram = useMemo(() => {
+    if (!selectedMajorId || !selectedGradeId) return null
+    const gradeData = grades.find((g) => g.id === selectedGradeId)
+    if (!gradeData) return null
+    const exact = trainingPrograms.find(
+      (tp) => tp.majorId === selectedMajorId && tp.entryYear === gradeData.entryYear
+    )
+    if (exact) return exact
+    return trainingPrograms.find((tp) => tp.majorId === selectedMajorId) || null
+  }, [selectedMajorId, selectedGradeId])
+
+  const semesterOptions = useMemo(
+    () => Array.from({ length: FIXED_PROGRAM.duration * 2 }, (_, i) => i + 1),
+    []
+  )
+
+  // ---- 按学期筛选 entries ----
+  const displayedEntries = useMemo(() => {
+    if (!localPlan) return []
+    if (selectedSemester === 'all') return localPlan.entries
+    const sem = parseInt(selectedSemester)
+    return localPlan.entries.filter((e) => e.semester === sem)
+  }, [localPlan, selectedSemester])
+
+  // ---- 统计 ----
+  const stats = useMemo(() => {
+    if (!localPlan) return { total: 0, credits: 0, hours: 0 }
+    const total = displayedEntries.length
+    const credits = displayedEntries.reduce((s, e) => s + (e.credits || 0), 0)
+    const hours = displayedEntries.reduce((s, e) => s + (e.totalHours || 0), 0)
+    return { total, credits, hours }
+  }, [displayedEntries])
+
+  // ---- 学时统计 ----
+  const programHoursStats = useMemo(() => {
+    const allCourses: CoursePlan[] = []
+    if (FIXED_PROGRAM.courses?.length) allCourses.push(...FIXED_PROGRAM.courses)
+    if (FIXED_PROGRAM.practiceScenes?.length) allCourses.push(...FIXED_PROGRAM.practiceScenes)
+    if (!allCourses.length && FIXED_PROGRAM.curriculum?.length) allCourses.push(...FIXED_PROGRAM.curriculum)
+
+    let sceneHours = 0
+    let courseHours = 0
+    allCourses.forEach((c) => {
+      const isScene = c.courseType === '场景' || c.nature === '场景' || c.nature === '实践'
+      if (isScene) sceneHours += c.hours || 0
+      else courseHours += c.hours || 0
     })
-    return Array.from(groups.entries()).sort((a, b) => a[0] - b[0])
-  }, [currentPlan])
+    return { sceneHours, courseHours }
+  }, [])
+
+  const actualHoursStats = useMemo(() => {
+    if (!localPlan) return { sceneHours: 0, courseHours: 0 }
+    let sceneHours = 0
+    let courseHours = 0
+    localPlan.entries.forEach((e) => {
+      if (e.type === 'scene') sceneHours += e.totalHours || 0
+      else courseHours += e.totalHours || 0
+    })
+    return { sceneHours, courseHours }
+  }, [localPlan])
+
+  // ---- 操作函数 ----
+  const commitPlanUpdate = (nextPlan: TeachingPlan) => {
+    setLocalPlan(nextPlan)
+    updateTeachingPlan(nextPlan)
+  }
+
+  const updateEntry = (entryId: string, updates: Partial<PlanCourseEntry>) => {
+    if (!localPlan) return
+    const nextEntries = localPlan.entries.map((e) =>
+      e.id === entryId ? { ...e, ...updates } : e
+    )
+    commitPlanUpdate({ ...localPlan, entries: nextEntries })
+  }
+
+  const removeEntry = (entryId: string) => {
+    if (!localPlan) return
+    const nextEntries = localPlan.entries.filter((e) => e.id !== entryId)
+    commitPlanUpdate({ ...localPlan, entries: nextEntries })
+    toast.success('已从教学计划中移除')
+  }
+
+  // ---- 添加课程（固定从 tp1 的课程池）----
+  const availableCourses = useMemo(() => {
+    if (!localPlan) return []
+    const allCourses: CoursePlan[] = []
+    if (FIXED_PROGRAM.courses?.length) allCourses.push(...FIXED_PROGRAM.courses)
+    if (FIXED_PROGRAM.practiceScenes?.length)
+      allCourses.push(...FIXED_PROGRAM.practiceScenes)
+    if (!allCourses.length && FIXED_PROGRAM.curriculum?.length) {
+      allCourses.push(...FIXED_PROGRAM.curriculum)
+    }
+    const existingIds = new Set(localPlan.entries.map((e) => e.courseId))
+    return allCourses.filter((c) => !existingIds.has(c.id))
+  }, [localPlan])
+
+  const openAddDialog = () => {
+    if (availableCourses.length === 0) {
+      toast.info('人培方案中所有课程/场景已加入教学计划')
+      return
+    }
+    const first = availableCourses[0]
+    setSelectedCourseToAdd(first)
+    setNewEntryCredits(first.credits)
+    setNewEntryHours(first.hours)
+    setNewEntrySemester(first.semester || 1)
+    setAddDialogOpen(true)
+  }
+
+  const handleCourseSelect = (courseId: string) => {
+    const course = availableCourses.find((c) => c.id === courseId)
+    if (!course) return
+    setSelectedCourseToAdd(course)
+    setNewEntryCredits(course.credits)
+    setNewEntryHours(course.hours)
+    setNewEntrySemester(course.semester || 1)
+  }
+
+  const confirmAdd = () => {
+    if (!selectedCourseToAdd || !localPlan) return
+    const course = selectedCourseToAdd
+    const isScene = course.courseType === '场景' || course.nature === '场景'
+    const isPractice = course.nature === '实践' || isScene
+    const weekHours = Math.max(1, Math.ceil(course.hours / 16))
+    const endWeek = Math.min(16, Math.ceil(course.hours / weekHours))
+
+    const newEntry: PlanCourseEntry = {
+      id: `pe-fixed-${Date.now()}`,
+      courseId: course.id,
+      courseName: course.name,
+      courseCode: course.code,
+      type: isScene ? 'scene' : isPractice ? 'practice' : 'theory',
+      nature: (isScene ? '场景' : course.nature) as PlanCourseEntry['nature'],
+      credits: newEntryCredits,
+      totalHours: newEntryHours,
+      semester: newEntrySemester,
+      weekHours,
+      startWeek: 1,
+      endWeek,
+      weekPattern: 'all',
+      assignedClassIds: [],
+      preferredFacultyIds: [],
+      venueTypeRequired: isScene
+        ? '校外基地'
+        : isPractice
+          ? '实训室'
+          : '教室',
+      syllabusId: `syl-placeholder-${course.id}`,
+      status: 'planned',
+    }
+
+    commitPlanUpdate({ ...localPlan, entries: [...localPlan.entries, newEntry] })
+    setAddDialogOpen(false)
+    toast.success(`已添加「${course.name}」到教学计划`)
+  }
+
+  // ---- 导出教学计划为 CSV ----
+  const exportToCSV = () => {
+    if (!localPlan) return
+    const headers = ['课程/场景名称', '课程代码', '类型', '性质', '学分', '总学时', '学期']
+    const rows = localPlan.entries.map((e) => [
+      e.courseName,
+      e.courseCode,
+      e.type === 'scene' ? '场景' : e.type === 'practice' ? '实践' : '理论',
+      e.nature,
+      String(e.credits),
+      String(e.totalHours),
+      `第${e.semester}学期`,
+    ])
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    const deptName = departments.find((d) => d.id === selectedDept)?.name || '院系'
+    const gradeName = grades.find((g) => g.id === selectedGradeId)?.name || '年级'
+    const majorName = selectedMajor?.name || '专业'
+    link.download = `教学计划清单_${deptName}_${gradeName}_${majorName}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
+    toast.success('教学计划清单已导出')
+  }
+
+  // ---- 提交教务确认 ----
+  const handleSubmitConfirm = () => {
+    setSubmitDialogOpen(false)
+    toast.success('已将当前二级学院的教学计划提交教务办公室进行整体评估')
+  }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧筛选 */}
-      <div className="w-60 shrink-0">
-        <Card className="h-full flex flex-col py-0">
-          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
-            <div className="text-sm font-semibold">筛选条件</div>
-            {/* 院系 */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant={selectedDeptId === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
-                >全部</Badge>
-                {departments.map((d) => (
-                  <Badge
-                    key={d.id}
-                    variant={selectedDeptId === d.id ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}
-                  >{d.name}</Badge>
-                ))}
+    <div className="space-y-6">
+      {/* 页面头部 */}
+      <div>
+        <h1 className="text-2xl font-bold">教学计划管理</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          基于人培方案灵活配置课程/场景的学分、学时与学期安排
+        </p>
+      </div>
+
+      {/* 四级联动选择器：院系 + 年级 + 专业 + 学期 */}
+      <Card>
+        <CardContent className="pt-5 pb-5">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="space-y-1">
+              <Label className="text-xs">选择院系</Label>
+              <Select
+                value={selectedDept}
+                onValueChange={(v) => {
+                  setSelectedDept(v)
+                  setSelectedGradeId('')
+                  setSelectedMajorId('')
+                  setSelectedSemester('all')
+                }}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue placeholder="请选择院系" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">选择年级</Label>
+              <Select
+                value={selectedGradeId}
+                onValueChange={(v) => {
+                  setSelectedGradeId(v)
+                  setSelectedMajorId('')
+                  setSelectedSemester('all')
+                }}
+                disabled={!selectedDept}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue
+                    placeholder={selectedDept ? '请选择年级' : '先选院系'}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {grades.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      {g.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">选择专业</Label>
+              <Select
+                value={selectedMajorId}
+                onValueChange={(v) => {
+                  setSelectedMajorId(v)
+                  setSelectedSemester('all')
+                }}
+                disabled={!selectedGradeId || matchedMajors.length === 0}
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue
+                    placeholder={
+                      !selectedGradeId
+                        ? '先选年级'
+                        : matchedMajors.length === 0
+                          ? '无可用专业'
+                          : '请选择专业'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {matchedMajors.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">人培方案</Label>
+              <div className="h-10 px-3 flex items-center rounded-md border border-input bg-muted/40 text-sm w-[280px]">
+                {matchedProgram ? matchedProgram.name : '请先选择专业'}
               </div>
             </div>
-            {/* 年级 */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant={selectedYear === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedYear('all')}
-                >全部</Badge>
-                {grades.map((g) => (
-                  <Badge
-                    key={g.id}
-                    variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => setSelectedYear(String(g.entryYear))}
-                  >{g.entryYear}级</Badge>
-                ))}
-              </div>
-            </div>
-            {/* 人培方案 — 筛选结果 */}
-            <div className="border-t pt-2 mt-0.5">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
-                <span className="text-[10px] text-muted-foreground">
-                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
+
+
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 主内容区 */}
+      {localPlan && selectedMajorId ? (
+        <div className="space-y-4">
+          {/* 标题栏 */}
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* 标题 */}
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-semibold whitespace-nowrap">
+                  {selectedMajor?.name || '教学计划'}
+                </h2>
+                <span className="text-muted-foreground text-sm">
+                  {selectedDept && departments.find((d) => d.id === selectedDept)?.name}
+                  {' · '}
+                  {selectedGradeId && grades.find((g) => g.id === selectedGradeId)?.name}
                 </span>
               </div>
-              <div className="space-y-0.5">
-                <button
-                  className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                  onClick={() => setSelectedProgramId('all')}
-                >全部方案</button>
-                {deptPrograms.map((p) => (
-                  <button
-                    key={p.id}
-                    className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                    onClick={() => setSelectedProgramId(p.id)}
-                  >{p.name}</button>
-                ))}
+
+              {/* 学时指标 */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card shadow-sm">
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[10px] text-muted-foreground">人培总学时</span>
+                    <span className="text-sm font-bold tabular-nums">
+                      {programHoursStats.sceneHours + programHoursStats.courseHours}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground border-l pl-2">
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                      场景 {programHoursStats.sceneHours}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                      课程 {programHoursStats.courseHours}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card shadow-sm">
+                  <div className="flex flex-col leading-none">
+                    <span className="text-[10px] text-muted-foreground">实际总学时</span>
+                    <span className="text-sm font-bold tabular-nums">
+                      {actualHoursStats.sceneHours + actualHoursStats.courseHours}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground border-l pl-2">
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                      场景 {actualHoursStats.sceneHours}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                      课程 {actualHoursStats.courseHours}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* 主内容 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <CalendarDays className="h-6 w-6 text-primary" />
-              教学计划管理
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {currentProgram ? currentProgram.name : '全部方案'}
-              {currentPlan && ` · ${currentPlan.totalSemesters}个学期 · ${stats.total}门课程/场景`}
-            </p>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" onClick={openAddDialog}>
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                从人培方案导入
+              </Button>
+              <Button size="sm" onClick={() => setSubmitDialogOpen(true)}>
+                <Send className="mr-1.5 h-3.5 w-3.5" />
+                提交教务
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportToCSV}>
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                导出教学计划
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {currentProgram && (
-              <Button variant="outline" onClick={() => router.push(`/admin/operations/syllabus?programId=${currentProgram.id}`)}>
-                <BookOpen className="mr-2 h-4 w-4" />
-                查看大纲
-              </Button>
-            )}
-            {currentProgram && (
-              <Button variant="outline" onClick={() => router.push(`/admin/operations/scheduling?programId=${currentProgram.id}`)}>
-                <ArrowRight className="mr-2 h-4 w-4" />
-                前往排课
-              </Button>
-            )}
-            {currentProgram && (
-              <Button onClick={() => openGenerate(currentProgram)}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                生成教学计划
-              </Button>
-            )}
-          </div>
-        </div>
 
-        {/* 统计 */}
-        {currentPlan && (
-          <div className="grid grid-cols-5 gap-4">
-            <Card className="bg-blue-50/50">
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm text-muted-foreground">课程总数</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{stats.total}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-fuchsia-50/50">
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <Beaker className="h-4 w-4 text-fuchsia-600" />
-                  <span className="text-sm text-muted-foreground">场景课程</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{stats.scene}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-amber-50/50">
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-amber-600" />
-                  <span className="text-sm text-muted-foreground">待确认</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{stats.pending}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-emerald-50/50">
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <span className="text-sm text-muted-foreground">已确认</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{stats.confirmed}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-purple-50/50">
-              <CardContent className="pt-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm text-muted-foreground">已排课</span>
-                </div>
-                <p className="text-2xl font-bold mt-1">{stats.scheduled}</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* 计划内容 */}
-        {currentPlan ? (
-          <div className="space-y-6">
-            {semesterGroups.map(([semester, entries]) => (
-              <Card key={semester}>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-primary" />
-                    第{semester}学期
-                    <Badge variant="outline" className="text-xs">{entries.length} 门</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-lg border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>课程/场景</TableHead>
-                          <TableHead>类型</TableHead>
-                          <TableHead>性质</TableHead>
-                          <TableHead>学分</TableHead>
-                          <TableHead>总学时</TableHead>
-                          <TableHead>周学时</TableHead>
-                          <TableHead>起止周</TableHead>
-                          <TableHead>周次模式</TableHead>
-                          <TableHead>场地</TableHead>
-                          <TableHead>状态</TableHead>
+          {/* 教学计划表格 */}
+          <Card>
+            <CardContent className="p-0">
+              {/* 学期切换 Tabs */}
+              <div className="px-4 pt-4 pb-0">
+                <Tabs value={selectedSemester} onValueChange={setSelectedSemester}>
+                  <TabsList className="h-8">
+                    {semesterOptions.map((s) => (
+                      <TabsTrigger key={s} value={String(s)} className="text-xs px-3">
+                        第{s}学期
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </div>
+              <div className="rounded-lg border mt-4 mx-4 mb-4">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>课程/场景</TableHead>
+                      <TableHead>代码</TableHead>
+                      <TableHead>课程类型</TableHead>
+                      <TableHead className="w-[100px]">学分</TableHead>
+                      <TableHead className="w-[100px]">总学时</TableHead>
+                      <TableHead className="w-[120px]">学期</TableHead>
+                      <TableHead className="w-[80px]">操作</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {displayedEntries.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={7}
+                          className="text-center text-muted-foreground py-8"
+                        >
+                          该学期暂无教学计划条目
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      displayedEntries.map((entry) => (
+                        <TableRow
+                          key={entry.id}
+                          className={
+                            entry.type === 'scene' ? 'bg-purple-50/50' : undefined
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {entry.type === 'scene' && (
+                                <Beaker className="h-4 w-4 text-purple-600" />
+                              )}
+                              {entry.courseName}
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  'text-[10px] h-4 px-1',
+                                  entry.type === 'scene'
+                                    ? 'text-purple-600 border-purple-300'
+                                    : 'text-blue-600 border-blue-300'
+                                )}
+                              >
+                                {entry.type === 'scene' ? '场景' : '课程'}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {entry.courseCode}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-xs text-muted-foreground">
+                              {entry.type === 'scene' ? '' : (entry.courseTypeLabel || '')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={0.5}
+                              value={entry.credits}
+                              onChange={(e) =>
+                                updateEntry(entry.id, {
+                                  credits: parseFloat(e.target.value) || 0,
+                                })
+                              }
+                              className="h-8 w-20"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min={0}
+                              value={entry.totalHours}
+                              onChange={(e) =>
+                                updateEntry(entry.id, {
+                                  totalHours: parseInt(e.target.value) || 0,
+                                })
+                              }
+                              className="h-8 w-20"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={String(entry.semester)}
+                              onValueChange={(v) =>
+                                updateEntry(entry.id, {
+                                  semester: parseInt(v),
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-8 w-24">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {semesterOptions.map((s) => (
+                                  <SelectItem key={s} value={String(s)}>
+                                    第{s}学期
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive"
+                              onClick={() => removeEntry(entry.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
                         </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {entries.map((entry) => (
-                          <TableRow key={entry.id} className={entry.type === 'scene' ? 'bg-purple-50/50' : undefined}>
-                            <TableCell className="font-medium">
-                              <div className="flex items-center gap-2">
-                                {entry.type === 'scene' && <Beaker className="h-4 w-4 text-purple-600" />}
-                                {entry.courseName}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn('text-xs',
-                                entry.type === 'scene' ? 'text-purple-600 border-purple-300' :
-                                entry.type === 'practice' ? 'text-amber-600 border-amber-300' : 'text-blue-600 border-blue-300'
-                              )}>
-                                {entry.type === 'scene' ? '场景' : entry.type === 'practice' ? '实践' : '理论'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={entry.nature === '必修' ? 'default' : 'secondary'} className="text-xs">{entry.nature}</Badge>
-                            </TableCell>
-                            <TableCell>{entry.credits}</TableCell>
-                            <TableCell>{entry.totalHours}</TableCell>
-                            <TableCell>{entry.weekHours}</TableCell>
-                            <TableCell>{entry.startWeek}-{entry.endWeek}周</TableCell>
-                            <TableCell>
-                              {entry.weekPattern === 'all' && '全周'}
-                              {entry.weekPattern === 'odd' && '单周'}
-                              {entry.weekPattern === 'even' && '双周'}
-                              {entry.weekPattern === 'intensive' && '集中'}
-                            </TableCell>
-                            <TableCell>{entry.venueTypeRequired}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className={cn('text-xs', entry.status === 'scheduled' ? 'text-emerald-600' : 'text-amber-600')}>
-                                {entry.status === 'scheduled' ? '已排课' : entry.status === 'confirmed' ? '已确认' : '计划中'}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+          <BookOpen className="h-12 w-12 mb-3 opacity-30" />
+          <p>请先选择院系、年级、专业和学期</p>
+        </div>
+      )}
 
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <CalendarDays className="h-12 w-12 mb-3 opacity-30" />
-            <p>请选择人培方案并生成教学计划</p>
-          </div>
-        )}
-      </div>
-
-      {/* 生成弹窗 */}
-      <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
+      {/* 添加课程弹窗 */}
+      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              生成教学计划
-            </DialogTitle>
+            <DialogTitle>添加课程/场景到教学计划</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              为「{generatingProgram?.name}」基于课程与能力目标自动生成教学计划
-            </p>
-            {isGenerating ? (
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>正在生成教学计划...</span>
-                  <span className="text-muted-foreground">{generateProgress.toFixed(0)}%</span>
+            <div className="space-y-2">
+              <Label>选择课程/场景</Label>
+              <Select
+                value={selectedCourseToAdd?.id || ''}
+                onValueChange={handleCourseSelect}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="请选择" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableCourses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} ({c.code}) — {c.credits}学分/{c.hours}学时
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {selectedCourseToAdd && (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>学分</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={newEntryCredits}
+                    onChange={(e) =>
+                      setNewEntryCredits(parseFloat(e.target.value) || 0)
+                    }
+                  />
                 </div>
-                <Progress value={generateProgress} className="h-2" />
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p>• 根据学分自动计算总学时...</p>
-                  <p>• 按学期分配课程...</p>
-                  <p>• 分配周学时与起止周次...</p>
-                  <p>• 配置场地类型需求...</p>
+                <div className="space-y-2">
+                  <Label>学时</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newEntryHours}
+                    onChange={(e) =>
+                      setNewEntryHours(parseInt(e.target.value) || 0)
+                    }
+                  />
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
-                <p className="font-medium">生成规则说明：</p>
-                <ul className="text-muted-foreground space-y-1 list-disc list-inside">
-                  <li>学分 × 16周 = 总学时（默认）</li>
-                  <li>理论课每周 2-4 学时，均匀分布</li>
-                  <li>实践/场景课集中安排在学期末</li>
-                  <li>自动匹配场地类型需求</li>
-                </ul>
+                <div className="space-y-2">
+                  <Label>学期</Label>
+                  <Select
+                    value={String(newEntrySemester)}
+                    onValueChange={(v) => setNewEntrySemester(parseInt(v))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {semesterOptions.map((s) => (
+                        <SelectItem key={s} value={String(s)}>
+                          第{s}学期
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
           </div>
           <DialogFooter>
-            {!isGenerating && (
-              <>
-                <Button variant="outline" onClick={() => setGenerateOpen(false)}>取消</Button>
-                <Button onClick={startGenerate}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  开始生成
-                </Button>
-              </>
-            )}
+            <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={confirmAdd} disabled={!selectedCourseToAdd}>
+              确认添加
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 提交教务确认弹窗 */}
+      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>提交教务</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-sm text-muted-foreground">
+            <p className="mb-2">
+              您即将提交当前二级学院的教学计划至教务办公室进行整体评估。
+            </p>
+            <p>
+              提交后，教学计划将进入审核流程，暂时无法继续编辑。请确认所有课程/场景的学分、学时和学期安排均已核对无误。
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubmitDialogOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={handleSubmitConfirm}>
+              <Send className="mr-2 h-4 w-4" />
+              确认提交
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -443,10 +804,17 @@ function TeachingPlansPageInner() {
   )
 }
 
+// ============================================
+// 导出：包裹 Suspense
+// ============================================
 export default function TeachingPlansPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">加载中...</div>}>
-      <TeachingPlansPageInner />
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-muted-foreground">加载中...</div>
+      }
+    >
+      <PlanPage />
     </Suspense>
   )
 }

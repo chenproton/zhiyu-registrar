@@ -37,7 +37,7 @@ echo "[1/3] 本地构建中..."
 rm -rf "$STANDALONE_DIR"
 
 # 编译
-npm install
+npm install --legacy-peer-deps
 npm run build
 
 # 组装产物

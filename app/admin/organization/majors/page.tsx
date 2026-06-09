@@ -79,7 +79,7 @@ export default function MajorsPage() {
                 label: '全部层次',
                 options: [
                   { value: '中专', label: '中专' },
-                  { value: '大专', label: '大专' },
+                  { value: '高职高专', label: '高职高专' },
                   { value: '本科', label: '本科' },
                 ],
               },
@@ -151,7 +151,7 @@ export default function MajorsPage() {
                 <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
               </div>
               <div className="space-y-2"><Label>培养层次</Label>
-                <Select defaultValue="大专"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+                <Select defaultValue="高职高专"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="高职高专">高职高专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -183,7 +183,7 @@ export default function MajorsPage() {
                   <Select defaultValue={selectedMajor.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
                 </div>
                 <div className="space-y-2"><Label>培养层次</Label>
-                  <Select defaultValue={selectedMajor.level}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+                  <Select defaultValue={selectedMajor.level}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="高职高专">高职高专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

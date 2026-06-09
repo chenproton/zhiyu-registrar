@@ -32,7 +32,7 @@ export interface Major {
   code: string
   name: string
   departmentId: string
-  level: '中专' | '大专' | '本科'
+  level: '中专' | '高职高专' | '本科'
   duration: number
   status: 'active' | 'inactive'
 }
@@ -40,23 +40,23 @@ export interface Major {
 export const majors: Major[] = [
   { id: 'm1', code: 'SE', name: '软件工程', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
   { id: 'm2', code: 'AI', name: '人工智能', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
-  { id: 'm3', code: 'CN', name: '计算机网络技术', departmentId: 'd1', level: '大专', duration: 3, status: 'active' },
-  { id: 'm4', code: 'MECH', name: '机械设计与制造', departmentId: 'd2', level: '大专', duration: 3, status: 'active' },
-  { id: 'm5', code: 'ACM', name: '会计', departmentId: 'd3', level: '大专', duration: 3, status: 'active' },
-  { id: 'm6', code: 'MK', name: '市场营销', departmentId: 'd3', level: '大专', duration: 3, status: 'active' },
+  { id: 'm3', code: 'CN', name: '计算机网络技术', departmentId: 'd1', level: '高职高专', duration: 3, status: 'active' },
+  { id: 'm4', code: 'MECH', name: '机械设计与制造', departmentId: 'd2', level: '高职高专', duration: 3, status: 'active' },
+  { id: 'm5', code: 'ACM', name: '会计', departmentId: 'd3', level: '高职高专', duration: 3, status: 'active' },
+  { id: 'm6', code: 'MK', name: '市场营销', departmentId: 'd3', level: '高职高专', duration: 3, status: 'active' },
   { id: 'm7', code: 'VD', name: '视觉传达设计', departmentId: 'd4', level: '本科', duration: 4, status: 'active' },
-  { id: 'm8', code: 'AUTO-R', name: '汽车检测与维修', departmentId: 'd5', level: '大专', duration: 3, status: 'active' },
+  { id: 'm8', code: 'AUTO-R', name: '汽车检测与维修', departmentId: 'd5', level: '高职高专', duration: 3, status: 'active' },
   { id: 'm9', code: 'CS', name: '计算机科学与技术', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
   { id: 'm10', code: 'DS', name: '数据科学与大数据技术', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
   { id: 'm11', code: 'IS', name: '信息安全', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
   { id: 'm12', code: 'IOT', name: '物联网工程', departmentId: 'd1', level: '本科', duration: 4, status: 'active' },
-  { id: 'm13', code: 'CE', name: '云计算技术应用', departmentId: 'd1', level: '大专', duration: 3, status: 'active' },
+  { id: 'm13', code: 'CE', name: '云计算技术应用', departmentId: 'd1', level: '高职高专', duration: 3, status: 'active' },
   { id: 'm14', code: 'EN', name: '英语', departmentId: 'd6', level: '本科', duration: 4, status: 'active' },
   { id: 'm15', code: 'JP', name: '日语', departmentId: 'd6', level: '本科', duration: 4, status: 'active' },
   { id: 'm16', code: 'CIV', name: '土木工程', departmentId: 'd7', level: '本科', duration: 4, status: 'active' },
-  { id: 'm17', code: 'BIM', name: '建筑信息模型技术', departmentId: 'd7', level: '大专', duration: 3, status: 'active' },
+  { id: 'm17', code: 'BIM', name: '建筑信息模型技术', departmentId: 'd7', level: '高职高专', duration: 3, status: 'active' },
   { id: 'm18', code: 'NUR', name: '护理学', departmentId: 'd8', level: '本科', duration: 4, status: 'active' },
-  { id: 'm19', code: 'PHA', name: '药学', departmentId: 'd8', level: '大专', duration: 3, status: 'active' },
+  { id: 'm19', code: 'PHA', name: '药学', departmentId: 'd8', level: '高职高专', duration: 3, status: 'active' },
   { id: 'm20', code: 'MU-P', name: '音乐表演', departmentId: 'd9', level: '本科', duration: 4, status: 'active' },
   { id: 'm21', code: 'PE-E', name: '体育教育', departmentId: 'd10', level: '本科', duration: 4, status: 'active' },
 ]
@@ -120,17 +120,21 @@ export interface Faculty {
   teachingQualifications: string[]
   isEnterpriseMentor: boolean
   enterpriseInfo?: { company: string; position: string; years: number; field: string }
+  agreements?: { id: string; name: string; company: string; startDate: string; endDate: string; status: '有效' | '过期' }[]
   status: '在职' | '离职' | '外聘'
+  roles?: string[]
 }
 
+export const facultyRoles = ['系统管理员', '教学秘书', '教师', '企业导师', '质量管理员']
+
 export const faculty: Faculty[] = [
-  { id: 'f1', employeeId: 'T2021001', name: '周建国', gender: '男', departmentId: 'd1', title: '教授', education: '博士', teachingQualifications: ['程序设计', '数据结构'], isEnterpriseMentor: false, status: '在职' },
-  { id: 'f2', employeeId: 'T2021002', name: '吴晓敏', gender: '女', departmentId: 'd1', title: '副教授', education: '硕士', teachingQualifications: ['人工智能', '机器学习'], isEnterpriseMentor: false, status: '在职' },
-  { id: 'f3', employeeId: 'T2021003', name: '王志强', gender: '男', departmentId: 'd1', title: '讲师', education: '硕士', teachingQualifications: ['网络技术', '网络安全'], isEnterpriseMentor: true, enterpriseInfo: { company: '华为', position: '高级工程师', years: 8, field: '网络工程' }, status: '在职' },
+  { id: 'f1', employeeId: 'T2021001', name: '周建国', gender: '男', departmentId: 'd1', title: '教授', education: '博士', teachingQualifications: ['程序设计', '数据结构'], isEnterpriseMentor: false, status: '在职', roles: ['系统管理员', '教师'] },
+  { id: 'f2', employeeId: 'T2021002', name: '吴晓敏', gender: '女', departmentId: 'd1', title: '副教授', education: '硕士', teachingQualifications: ['人工智能', '机器学习'], isEnterpriseMentor: false, status: '在职', roles: ['教学秘书', '教师'] },
+  { id: 'f3', employeeId: 'T2021003', name: '王志强', gender: '男', departmentId: 'd1', title: '讲师', education: '硕士', teachingQualifications: ['网络技术', '网络安全'], isEnterpriseMentor: true, enterpriseInfo: { company: '华为', position: '高级工程师', years: 8, field: '网络工程' }, agreements: [{ id: 'a1', name: '华为-网络工程实践教学合作协议', company: '华为技术有限公司', startDate: '2024-09-01', endDate: '2026-08-31', status: '有效' }, { id: 'a2', name: '华为-校企联合培养补充协议', company: '华为技术有限公司', startDate: '2023-03-01', endDate: '2025-02-28', status: '过期' }], status: '在职', roles: ['企业导师', '教师'] },
   { id: 'f4', employeeId: 'T2021004', name: '李红梅', gender: '女', departmentId: 'd2', title: '教授', education: '博士', teachingQualifications: ['机械设计', 'CAD/CAM'], isEnterpriseMentor: false, status: '在职' },
   { id: 'f5', employeeId: 'T2021005', name: '张大伟', gender: '男', departmentId: 'd3', title: '副教授', education: '硕士', teachingQualifications: ['会计学', '财务管理'], isEnterpriseMentor: false, status: '在职' },
-  { id: 'f6', employeeId: 'T2021006', name: '赵丽华', gender: '女', departmentId: 'd4', title: '讲师', education: '硕士', teachingQualifications: ['平面设计', 'UI设计'], isEnterpriseMentor: true, enterpriseInfo: { company: '字节跳动', position: '设计总监', years: 6, field: '视觉设计' }, status: '在职' },
-  { id: 'f7', employeeId: 'T2021007', name: '刘建国', gender: '男', departmentId: 'd5', title: '高级工程师', education: '本科', teachingQualifications: ['汽车维修', '新能源汽车'], isEnterpriseMentor: true, enterpriseInfo: { company: '比亚迪', position: '技术专家', years: 12, field: '汽车工程' }, status: '在职' },
+  { id: 'f6', employeeId: 'T2021006', name: '赵丽华', gender: '女', departmentId: 'd4', title: '讲师', education: '硕士', teachingQualifications: ['平面设计', 'UI设计'], isEnterpriseMentor: true, enterpriseInfo: { company: '字节跳动', position: '设计总监', years: 6, field: '视觉设计' }, agreements: [{ id: 'a3', name: '字节跳动-UI设计实践合作协议', company: '字节跳动', startDate: '2025-01-01', endDate: '2027-12-31', status: '有效' }], status: '在职' },
+  { id: 'f7', employeeId: 'T2021007', name: '刘建国', gender: '男', departmentId: 'd5', title: '高级工程师', education: '本科', teachingQualifications: ['汽车维修', '新能源汽车'], isEnterpriseMentor: true, enterpriseInfo: { company: '比亚迪', position: '技术专家', years: 12, field: '汽车工程' }, agreements: [{ id: 'a4', name: '比亚迪-新能源汽车技术合作协议', company: '比亚迪股份有限公司', startDate: '2024-06-01', endDate: '2026-05-31', status: '有效' }], status: '在职' },
   { id: 'f8', employeeId: 'T2021008', name: '陈秀英', gender: '女', departmentId: 'd3', title: '讲师', education: '硕士', teachingQualifications: ['市场营销', '电子商务'], isEnterpriseMentor: false, status: '在职' },
   { id: 'f9', employeeId: 'T2021009', name: '孙伟', gender: '男', departmentId: 'd2', title: '讲师', education: '硕士', teachingQualifications: ['数控技术', '3D打印'], isEnterpriseMentor: false, status: '在职' },
   { id: 'f10', employeeId: 'T2021010', name: '郑雅琴', gender: '女', departmentId: 'd1', title: '助教', education: '硕士', teachingQualifications: ['前端开发', 'Web设计'], isEnterpriseMentor: false, status: '在职' },
@@ -291,6 +295,8 @@ export interface Venue {
   }
 }
 
+export const venueTypes = ['教室', '实验室', '实训基地', '机房', '多媒体教室', '其他']
+
 export const venues: Venue[] = [
   { id: 'v1', name: 'A101 多媒体教室', type: '多媒体教室', capacity: 60, location: 'A栋1层', facilities: '投影仪、音响、空调', status: 'available',
     digitalInfo: { floorPlanUrl: '#', smartDeviceCount: 3, iotSensors: ['温湿度', ' occupancy'] } },
@@ -376,7 +382,26 @@ export interface CoursePlan {
   typicalTasks?: string
   /** 新增：教学内容与要求 */
   contentRequirements?: string
+  /** 新增：类型（课程/场景） */
+  courseType?: '课程' | '场景'
+  /** 新增：子分类（必修/限选/任选/专业基础/专业核心/专业拓展/专业实践） */
+  subCategory?: string
+  /** 新增：课程类型（如公共基础必修课程/专业核心课程等） */
+  courseTypeLabel?: string
 }
+
+/** 全局课程类型配置（可在表格顶部增删改） */
+export const defaultCourseTypes = [
+  '公共基础必修课程',
+  '公共基础限选课程',
+  '公共基础任选课程',
+  '专业基础课程',
+  '专业核心课程',
+  '专业拓展课程',
+]
+
+/** 全局课程性质配置（可在 /admin/programs 页面增删改） */
+export const courseNatures = ['必修', '选修', '实践']
 
 export interface TrainingProgram {
   // ===== 基本信息（保留旧字段兼容）=====
@@ -420,7 +445,7 @@ export interface TrainingProgram {
   careerOrientation?: {
     professionalCategory: { name: string; code: string }
     professionalSubcategory: { name: string; code: string }
-    correspondingIndustries: { name: string; code: string }[]
+    correspondingIndustries: string[]
     mainOccupations: { name: string; code: string }[]
     /** 主要岗位ID列表（关联岗位公共库） */
     mainPositions: string[]
@@ -433,20 +458,8 @@ export interface TrainingProgram {
   // -- 6. 培养规格 --
   trainingSpecifications?: { id: number; content: string }[]
 
-  // -- 7. 课程设置（更细化的结构，与 courses/practiceScenes 并存） --
-  curriculum?: {
-    publicBasic: {
-      required: CoursePlan[]
-      limitedElective: CoursePlan[]
-      freeElective: CoursePlan[]
-    }
-    professional: {
-      basic: CoursePlan[]
-      core: CoursePlan[]
-      extended: CoursePlan[]
-      practice: CoursePlan[]
-    }
-  }
+  // -- 7. 课程设置（完全扁平化大数组，与 courses/practiceScenes 并存） --
+  curriculum?: CoursePlan[]
 
   // -- 7.2 学时安排统计 --
   creditHours?: {
@@ -477,8 +490,11 @@ export interface TrainingProgram {
   // -- 9. 教学条件 --
   teachingConditions?: {
     classroomRequirements: string
+    classroomVenueIds?: string[]
     trainingVenueRequirements: string
+    trainingVenueIds?: string[]
     internshipVenueRequirements: string
+    internshipVenueIds?: string[]
     textbookRequirements: string
     libraryRequirements: string
     digitalResourceRequirements: string
@@ -502,6 +518,10 @@ export interface TrainingProgram {
       }
     }
   }
+  /** 自定义目录章节 */
+  customSections?: { id: string; title: string; content: string }[]
+  /** 每年学期数（1-5，默认2） */
+  semestersPerYear?: number
 }
 
 export const trainingPrograms: TrainingProgram[] = [
@@ -518,23 +538,76 @@ export const trainingPrograms: TrainingProgram[] = [
     electiveCredits: 24,
     practiceCredits: 20,
     courses: [
-      { id: 'co1', name: '高等数学', code: 'MATH101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.8' },
-      { id: 'co2', name: '程序设计基础', code: 'CS101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v2.1' },
-      { id: 'co3', name: '数据结构', code: 'CS102', credits: 4, hours: 64, semester: 2, nature: '必修', assessment: '考试', version: 'v2.5' },
-      { id: 'co4', name: '计算机网络', code: 'CS201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.9' },
-      { id: 'co5', name: '软件工程实践', code: 'CS301', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v3.1' },
-      { id: 'co6', name: '人工智能导论', code: 'AI101', credits: 3, hours: 48, semester: 4, nature: '选修', assessment: '考查', version: 'v1.2' },
+      { id: 'co1', name: '高等数学', code: 'MATH101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.8', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co2', name: '程序设计基础', code: 'CS101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v2.1', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-01', name: '大学英语I', code: 'ENG101', credits: 3, hours: 48, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co-se-02', name: '思想道德与法治', code: 'POL101', credits: 3, hours: 48, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co-se-03', name: '线性代数', code: 'MATH102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co3', name: '数据结构', code: 'CS102', credits: 4, hours: 64, semester: 2, nature: '必修', assessment: '考试', version: 'v2.5', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-04', name: '大学英语II', code: 'ENG102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co-se-05', name: '体育与健康', code: 'PE101', credits: 2, hours: 32, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co4', name: '计算机网络', code: 'CS201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.9', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-06', name: '离散数学', code: 'MATH201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-07', name: '数据库原理', code: 'CS202', credits: 4, hours: 64, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-08', name: '计算机组成原理', code: 'CS203', credits: 4, hours: 64, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-09', name: '操作系统', code: 'CS301', credits: 4, hours: 64, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-10', name: '软件工程导论', code: 'SE101', credits: 3, hours: 48, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co6', name: '人工智能导论', code: 'AI101', credits: 3, hours: 48, semester: 4, nature: '选修', assessment: '考查', version: 'v1.2', courseTypeLabel: '专业拓展课程' },
+      { id: 'co-se-11', name: 'Web前端开发', code: 'WEB101', credits: 3, hours: 48, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co5', name: '软件工程实践', code: 'CS302', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v3.1', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-12', name: '软件测试技术', code: 'SE201', credits: 3, hours: 48, semester: 5, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-13', name: '移动应用开发', code: 'MOB101', credits: 3, hours: 48, semester: 5, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-14', name: '系统架构设计', code: 'SE301', credits: 3, hours: 48, semester: 6, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-15', name: '大数据技术基础', code: 'BD101', credits: 3, hours: 48, semester: 6, nature: '选修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业拓展课程' },
+      { id: 'co-se-16', name: '云计算与容器技术', code: 'CLOUD101', credits: 3, hours: 48, semester: 7, nature: '选修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业拓展课程' },
     ],
     practiceScenes: [
       { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
       { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' },
+      { id: 'ps-se-04', name: '认识实习', code: 'PRAC101', credits: 2, hours: 32, semester: 3, nature: '场景', assessment: '报告', version: 'v1.0' },
+      { id: 'ps-se-05', name: '企业项目实战', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0' },
+      { id: 'ps-se-06', name: '创新创业实践', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0' },
+      { id: 'ps-se-07', name: '程序设计课程设计', code: 'PRAC102', credits: 2, hours: 32, semester: 1, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-se-08', name: '数据结构课程设计', code: 'PRAC103', credits: 2, hours: 32, semester: 2, nature: '实践', assessment: '作品', version: 'v1.0' },
+    ],
+    curriculum: [
+      { id: 'co1', name: '高等数学', code: 'MATH101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.8', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co2', name: '程序设计基础', code: 'CS101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v2.1', courseType: '课程', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-01', name: '大学英语I', code: 'ENG101', credits: 3, hours: 48, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co-se-02', name: '思想道德与法治', code: 'POL101', credits: 3, hours: 48, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
+      { id: 'ps-se-07', name: '程序设计课程设计', code: 'PRAC102', credits: 2, hours: 32, semester: 1, nature: '实践', assessment: '作品', version: 'v1.0', courseType: '场景' },
+      { id: 'co-se-03', name: '线性代数', code: 'MATH102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co3', name: '数据结构', code: 'CS102', credits: 4, hours: 64, semester: 2, nature: '必修', assessment: '考试', version: 'v2.5', courseType: '课程', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-04', name: '大学英语II', code: 'ENG102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
+      { id: 'co-se-05', name: '体育与健康', code: 'PE101', credits: 2, hours: 32, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
+      { id: 'ps-se-08', name: '数据结构课程设计', code: 'PRAC103', credits: 2, hours: 32, semester: 2, nature: '实践', assessment: '作品', version: 'v1.0', courseType: '场景' },
+      { id: 'co4', name: '计算机网络', code: 'CS201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.9', courseType: '课程', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-06', name: '离散数学', code: 'MATH201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业基础课程' },
+      { id: 'co-se-07', name: '数据库原理', code: 'CS202', credits: 4, hours: 64, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-08', name: '计算机组成原理', code: 'CS203', credits: 4, hours: 64, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业基础课程' },
+      { id: 'ps-se-04', name: '认识实习', code: 'PRAC101', credits: 2, hours: 32, semester: 3, nature: '场景', assessment: '报告', version: 'v1.0', courseType: '场景' },
+      { id: 'co-se-09', name: '操作系统', code: 'CS301', credits: 4, hours: 64, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-10', name: '软件工程导论', code: 'SE101', credits: 3, hours: 48, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co6', name: '人工智能导论', code: 'AI101', credits: 3, hours: 48, semester: 4, nature: '选修', assessment: '考查', version: 'v1.2', courseType: '课程', courseTypeLabel: '专业拓展课程' },
+      { id: 'co-se-11', name: 'Web前端开发', code: 'WEB101', credits: 3, hours: 48, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co5', name: '软件工程实践', code: 'CS302', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v3.1', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-12', name: '软件测试技术', code: 'SE201', credits: 3, hours: 48, semester: 5, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-13', name: '移动应用开发', code: 'MOB101', credits: 3, hours: 48, semester: 5, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1', courseType: '场景' },
+      { id: 'co-se-14', name: '系统架构设计', code: 'SE301', credits: 3, hours: 48, semester: 6, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
+      { id: 'co-se-15', name: '大数据技术基础', code: 'BD101', credits: 3, hours: 48, semester: 6, nature: '选修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业拓展课程' },
+      { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0', courseType: '场景' },
+      { id: 'co-se-16', name: '云计算与容器技术', code: 'CLOUD101', credits: 3, hours: 48, semester: 7, nature: '选修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业拓展课程' },
+      { id: 'ps-se-05', name: '企业项目实战', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0', courseType: '场景' },
+      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0', courseType: '场景' },
+      { id: 'ps-se-06', name: '创新创业实践', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0', courseType: '场景' },
     ],
     status: 'published',
     frozenAt: '2026-08-15',
     startDate: '2026-09-01',
     endDate: '2030-07-01',
-    creator: '张教授',
+    creator: '当前用户',
     collaborators: ['李副教授', '王讲师'],
     createdAt: '2025-06-15',
   },
@@ -565,7 +638,7 @@ export const trainingPrograms: TrainingProgram[] = [
     frozenAt: '2026-08-15',
     startDate: '2026-09-01',
     endDate: '2030-07-01',
-    creator: '张教授',
+    creator: '当前用户',
     collaborators: ['赵副教授'],
     createdAt: '2025-06-20',
   },
@@ -593,7 +666,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'draft',
     startDate: '2026-09-01',
     endDate: '2029-07-01',
-    creator: '刘教授',
+    creator: '当前用户',
     collaborators: [],
     createdAt: '2025-07-01',
   },
@@ -627,7 +700,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'pending',
     startDate: '2023-09-01',
     endDate: '2027-07-01',
-    creator: '张教授',
+    creator: '当前用户',
     collaborators: ['赵副教授'],
     createdAt: '2022-06-10',
   },
@@ -694,7 +767,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'published',
     startDate: '2023-09-01',
     endDate: '2026-07-01',
-    creator: '王讲师',
+    creator: '当前用户',
     collaborators: ['赵副教授', '刘教授'],
     createdAt: '2022-08-12',
   },
@@ -763,7 +836,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'published',
     startDate: '2023-09-01',
     endDate: '2027-07-01',
-    creator: '刘教授',
+    creator: '当前用户',
     collaborators: ['陈副教授', '孙讲师'],
     createdAt: '2022-010-14',
   },
@@ -897,7 +970,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'published',
     startDate: '2024-09-01',
     endDate: '2028-07-01',
-    creator: '张教授',
+    creator: '当前用户',
     collaborators: ['李副教授', '王讲师'],
     createdAt: '2023-06-10',
   },
@@ -964,7 +1037,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'pending',
     startDate: '2024-09-01',
     endDate: '2027-07-01',
-    creator: '王讲师',
+    creator: '当前用户',
     collaborators: ['陈副教授'],
     createdAt: '2023-08-12',
   },
@@ -1033,7 +1106,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'published',
     startDate: '2024-09-01',
     endDate: '2028-07-01',
-    creator: '刘教授',
+    creator: '当前用户',
     collaborators: ['陈副教授', '孙讲师'],
     createdAt: '2023-010-14',
   },
@@ -1167,7 +1240,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'published',
     startDate: '2025-09-01',
     endDate: '2029-07-01',
-    creator: '张教授',
+    creator: '当前用户',
     collaborators: ['李副教授', '王讲师'],
     createdAt: '2024-06-10',
   },
@@ -1234,7 +1307,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'published',
     startDate: '2025-09-01',
     endDate: '2028-07-01',
-    creator: '王讲师',
+    creator: '当前用户',
     collaborators: ['赵副教授', '刘教授'],
     createdAt: '2024-08-12',
   },
@@ -1303,7 +1376,7 @@ export const trainingPrograms: TrainingProgram[] = [
     status: 'pending',
     startDate: '2025-09-01',
     endDate: '2029-07-01',
-    creator: '刘教授',
+    creator: '当前用户',
     collaborators: ['周教授'],
     createdAt: '2024-010-14',
   },
@@ -1437,7 +1510,7 @@ export const trainingPrograms: TrainingProgram[] = [
     frozenAt: '2026-08-15',
     startDate: '2026-09-01',
     endDate: '2029-07-01',
-    creator: '王讲师',
+    creator: '当前用户',
     collaborators: ['赵副教授', '刘教授'],
     createdAt: '2025-08-12',
   },
@@ -1507,7 +1580,7 @@ export const trainingPrograms: TrainingProgram[] = [
     frozenAt: '2026-08-15',
     startDate: '2026-09-01',
     endDate: '2030-07-01',
-    creator: '刘教授',
+    creator: '当前用户',
     collaborators: ['陈副教授', '孙讲师'],
     createdAt: '2025-010-14',
   },
@@ -1810,9 +1883,9 @@ export const trainingPrograms: TrainingProgram[] = [
       professionalCategory: { name: '电子信息大类', code: '51' },
       professionalSubcategory: { name: '计算机类', code: '5102' },
       correspondingIndustries: [
-        { name: '互联网和相关服务', code: '64' },
-        { name: '软件和信息技术服务业', code: '65' },
-        { name: '电信、广播电视和卫星传输服务', code: '63' },
+        '互联网和相关服务',
+        '软件和信息技术服务业',
+        '电信、广播电视和卫星传输服务',
       ],
       mainOccupations: [
         { name: '信息通信网络运行管理员', code: '4-04-04-01' },
@@ -1848,69 +1921,51 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 13, content: '具有良好的语言表达能力、文字表达能力、沟通合作能力。' },
       { id: 14, content: '具备基本的英语阅读和专业技术文档查阅能力。' },
     ],
-    curriculum: {
-      publicBasic: {
-        required: [
-          { id: 'pb1', name: '思想道德与法治', code: 'GB101', credits: 3, hours: 48, theoryHours: 40, practiceHours: 8, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb2', name: '毛泽东思想和中国特色社会主义理论体系概论', code: 'GB102', credits: 4, hours: 64, theoryHours: 56, practiceHours: 8, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb3', name: '形势与政策', code: 'GB103', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb4', name: '军事理论', code: 'GB104', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb5', name: '军事技能', code: 'GB105', credits: 2, hours: 56, theoryHours: 0, practiceHours: 56, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb6', name: '心理健康教育', code: 'GB106', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb7', name: '体育与健康', code: 'GB107', credits: 4, hours: 64, theoryHours: 8, practiceHours: 56, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb8', name: '大学语文', code: 'GB108', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb9', name: '实用英语', code: 'GB109', credits: 4, hours: 64, theoryHours: 48, practiceHours: 16, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb10', name: '高等数学', code: 'GB110', credits: 3, hours: 48, theoryHours: 48, practiceHours: 0, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb11', name: '大学生职业发展与就业指导', code: 'GB111', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb12', name: '创新创业教育', code: 'GB112', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb13', name: '劳动教育', code: 'GB113', credits: 1, hours: 16, theoryHours: 4, practiceHours: 12, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb14', name: '国家安全教育', code: 'GB114', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb15', name: '信息技术', code: 'GB115', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-          { id: 'pb16', name: '艺术鉴赏', code: 'GB116', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' },
-        ],
-        limitedElective: [
-          { id: 'le1', name: '实用数学提高', code: 'LE101', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 2, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础限选' },
-          { id: 'le2', name: '实用英语提高', code: 'LE102', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 2, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础限选' },
-        ],
-        freeElective: [
-          { id: 'fe1', name: '信息技术拓展', code: 'FE101', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' },
-          { id: 'fe2', name: '社交礼仪', code: 'FE102', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' },
-          { id: 'fe3', name: '演讲与口才', code: 'FE103', credits: 1, hours: 16, theoryHours: 8, practiceHours: 8, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' },
-        ],
-      },
-      professional: {
-        basic: [
-          { id: 'pro-b1', name: 'Python程序设计基础', code: 'PB201', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
-          { id: 'pro-b2', name: '计算机网络基础', code: 'PB202', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
-          { id: 'pro-b3', name: '网络操作系统（Windows Server）', code: 'PB203', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
-          { id: 'pro-b4', name: '数据库技术与应用', code: 'PB204', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
-          { id: 'pro-b5', name: '网络安全技术基础', code: 'PB205', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' },
-          { id: 'pro-b6', name: '计算机组装与维护', code: 'PB206', credits: 3, hours: 48, theoryHours: 16, practiceHours: 32, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业基础课' },
-        ],
-        core: [
-          { id: 'pro-c1', name: 'Linux网络操作系统', code: 'PC301', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c2', name: '虚拟化技术与应用', code: 'PC302', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c3', name: '网络自动化运维', code: 'PC303', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 3, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c4', name: '路由交换技术', code: 'PC304', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c5', name: '网络安全设备配置与管理', code: 'PC305', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c6', name: '无线网络技术', code: 'PC306', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c7', name: '综合布线设计与实施', code: 'PC307', credits: 3, hours: 48, theoryHours: 16, practiceHours: 32, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' },
-          { id: 'pro-c8', name: '网络工程设计与实施', code: 'PC308', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' },
-        ],
-        extended: [
-          { id: 'pro-e1', name: '云计算技术与应用', code: 'PE401', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
-          { id: 'pro-e2', name: 'Web前端设计与开发', code: 'PE402', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
-          { id: 'pro-e3', name: '高级路由与交换技术', code: 'PE403', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
-          { id: 'pro-e4', name: 'SDN技术与应用', code: 'PE404', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
-          { id: 'pro-e5', name: '物联网技术基础', code: 'PE405', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' },
-        ],
-        practice: [
-          { id: 'pro-p1', name: '网络技术综合实训', code: 'PP501', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0', category: '专业实践课' },
-          { id: 'pro-p2', name: '毕业设计', code: 'PP502', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '论文', version: 'v1.0', category: '专业实践课' },
-          { id: 'pro-p3', name: '岗位实习', code: 'PP503', credits: 12, hours: 480, theoryHours: 0, practiceHours: 480, semester: 6, nature: '实践', assessment: '考查', version: 'v1.0', category: '专业实践课' },
-        ],
-      },
-    },
+    curriculum: [
+          { id: 'pb1', name: '思想道德与法治', code: 'GB101', credits: 3, hours: 48, theoryHours: 40, practiceHours: 8, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb2', name: '毛泽东思想和中国特色社会主义理论体系概论', code: 'GB102', credits: 4, hours: 64, theoryHours: 56, practiceHours: 8, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb3', name: '形势与政策', code: 'GB103', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb4', name: '军事理论', code: 'GB104', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb5', name: '军事技能', code: 'GB105', credits: 2, hours: 56, theoryHours: 0, practiceHours: 56, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb6', name: '心理健康教育', code: 'GB106', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb7', name: '体育与健康', code: 'GB107', credits: 4, hours: 64, theoryHours: 8, practiceHours: 56, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb8', name: '大学语文', code: 'GB108', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb9', name: '实用英语', code: 'GB109', credits: 4, hours: 64, theoryHours: 48, practiceHours: 16, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb10', name: '高等数学', code: 'GB110', credits: 3, hours: 48, theoryHours: 48, practiceHours: 0, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb11', name: '大学生职业发展与就业指导', code: 'GB111', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb12', name: '创新创业教育', code: 'GB112', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb13', name: '劳动教育', code: 'GB113', credits: 1, hours: 16, theoryHours: 4, practiceHours: 12, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb14', name: '国家安全教育', code: 'GB114', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb15', name: '信息技术', code: 'GB115', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'pb16', name: '艺术鉴赏', code: 'GB116', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', category: '公共基础必修' , courseType: '课程', subCategory: '必修' , courseTypeLabel: '公共基础必修课程' },
+          { id: 'le1', name: '实用数学提高', code: 'LE101', credits: 2, hours: 32, theoryHours: 32, practiceHours: 0, semester: 2, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础限选' , courseType: '课程', subCategory: '限选' , courseTypeLabel: '公共基础限选课程' },
+          { id: 'le2', name: '实用英语提高', code: 'LE102', credits: 2, hours: 32, theoryHours: 24, practiceHours: 8, semester: 2, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础限选' , courseType: '课程', subCategory: '限选' , courseTypeLabel: '公共基础限选课程' },
+          { id: 'fe1', name: '信息技术拓展', code: 'FE101', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' , courseType: '课程', subCategory: '任选' , courseTypeLabel: '公共基础任选课程' },
+          { id: 'fe2', name: '社交礼仪', code: 'FE102', credits: 1, hours: 16, theoryHours: 16, practiceHours: 0, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' , courseType: '课程', subCategory: '任选' , courseTypeLabel: '公共基础任选课程' },
+          { id: 'fe3', name: '演讲与口才', code: 'FE103', credits: 1, hours: 16, theoryHours: 8, practiceHours: 8, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0', category: '公共基础任选' , courseType: '课程', subCategory: '任选' , courseTypeLabel: '公共基础任选课程' },
+          { id: 'pro-b1', name: 'Python程序设计基础', code: 'PB201', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' , courseType: '课程', subCategory: '专业基础' , courseTypeLabel: '专业基础课程' },
+          { id: 'pro-b2', name: '计算机网络基础', code: 'PB202', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' , courseType: '课程', subCategory: '专业基础' , courseTypeLabel: '专业基础课程' },
+          { id: 'pro-b3', name: '网络操作系统（Windows Server）', code: 'PB203', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' , courseType: '课程', subCategory: '专业基础' , courseTypeLabel: '专业基础课程' },
+          { id: 'pro-b4', name: '数据库技术与应用', code: 'PB204', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' , courseType: '课程', subCategory: '专业基础' , courseTypeLabel: '专业基础课程' },
+          { id: 'pro-b5', name: '网络安全技术基础', code: 'PB205', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业基础课' , courseType: '课程', subCategory: '专业基础' , courseTypeLabel: '专业基础课程' },
+          { id: 'pro-b6', name: '计算机组装与维护', code: 'PB206', credits: 3, hours: 48, theoryHours: 16, practiceHours: 32, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业基础课' , courseType: '课程', subCategory: '专业基础' , courseTypeLabel: '专业基础课程' },
+          { id: 'pro-c1', name: 'Linux网络操作系统', code: 'PC301', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c2', name: '虚拟化技术与应用', code: 'PC302', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c3', name: '网络自动化运维', code: 'PC303', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 3, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c4', name: '路由交换技术', code: 'PC304', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c5', name: '网络安全设备配置与管理', code: 'PC305', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c6', name: '无线网络技术', code: 'PC306', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c7', name: '综合布线设计与实施', code: 'PC307', credits: 3, hours: 48, theoryHours: 16, practiceHours: 32, semester: 4, nature: '必修', assessment: '考查', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-c8', name: '网络工程设计与实施', code: 'PC308', credits: 4, hours: 64, theoryHours: 32, practiceHours: 32, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', category: '专业核心课' , courseType: '课程', subCategory: '专业核心' , courseTypeLabel: '专业核心课程' },
+          { id: 'pro-e1', name: '云计算技术与应用', code: 'PE401', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
+          { id: 'pro-e2', name: 'Web前端设计与开发', code: 'PE402', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
+          { id: 'pro-e3', name: '高级路由与交换技术', code: 'PE403', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
+          { id: 'pro-e4', name: 'SDN技术与应用', code: 'PE404', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
+          { id: 'pro-e5', name: '物联网技术基础', code: 'PE405', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
+          { id: 'pro-p1', name: '网络技术综合实训', code: 'PP501', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
+          { id: 'pro-p2', name: '毕业设计', code: 'PP502', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '论文', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
+          { id: 'pro-p3', name: '岗位实习', code: 'PP503', credits: 12, hours: 480, theoryHours: 0, practiceHours: 480, semester: 6, nature: '实践', assessment: '考查', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
+    ],
     creditHours: {
       totalCredits: 142,
       totalHours: 2688,
@@ -1935,8 +1990,11 @@ export const trainingPrograms: TrainingProgram[] = [
     },
     teachingConditions: {
       classroomRequirements: '应配备多媒体教室、计算机机房、网络实训室等专业教学场所。多媒体教室应配备投影仪、计算机、音响设备；计算机机房每人一机，网络互通。',
+      classroomVenueIds: ['v1', 'v2', 'v8'],
       trainingVenueRequirements: '应建有网络综合布线实训室、路由交换实训室、网络安全实训室、云计算实训室、虚拟化实训室等。实训设备应满足每人一台（套）或每组一台（套）的要求。',
+      trainingVenueIds: ['v3', 'v4', 'v5', 'v6', 'v7'],
       internshipVenueRequirements: '应建立稳定的校外实习基地，与网络集成企业、数据中心、运营商等建立合作关系，能提供网络运维、系统集成、技术支持等岗位实习机会。',
+      internshipVenueIds: ['v5', 'v6'],
       textbookRequirements: '优先选用高职国家规划教材、精品教材和活页式、工作手册式新型教材。鼓励与行业企业合作开发校本教材和数字化教学资源。',
       libraryRequirements: '应配备充足的纸质图书和电子图书资源，计算机类、网络技术类专业图书生均不少于30册。应订阅相关专业期刊和数据库。',
       digitalResourceRequirements: '应建设专业教学资源库，包含课程标准、教学设计、教学课件、实训指导书、案例库、试题库等。应配备网络教学平台，支持线上线下混合式教学。',
@@ -1999,8 +2057,8 @@ export const trainingPrograms: TrainingProgram[] = [
       professionalCategory: { name: '电子与信息大类', code: '51' },
       professionalSubcategory: { name: '计算机类', code: '5102' },
       correspondingIndustries: [
-        { name: '互联网和相关服务', code: '64' },
-        { name: '软件和信息技术服务', code: '65' },
+        '互联网和相关服务',
+        '软件和信息技术服务',
       ],
       mainOccupations: [
         { name: '信息和通信工程技术人员', code: '2-02-10' },
@@ -5196,15 +5254,15 @@ export interface CurriculumItem {
 
 // 课程搜索库
 export const curriculumCoursePool: CurriculumItem[] = [
-  { id: 'cc-001', name: '程序设计基础', code: 'CS101', hours: 64, nature: '必修', assessment: '考试', version: 'v2.1', batch: '2026春', creator: '张教授', updatedAt: '2026-03-15' },
+  { id: 'cc-001', name: '程序设计基础', code: 'CS101', hours: 64, nature: '必修', assessment: '考试', version: 'v2.1', batch: '2026春', creator: '当前用户', updatedAt: '2026-03-15' },
   { id: 'cc-002', name: '高等数学', code: 'MATH101', hours: 64, nature: '必修', assessment: '考试', version: 'v1.8', batch: '2026春', creator: '李教授', updatedAt: '2026-02-20' },
-  { id: 'cc-003', name: '线性代数', code: 'MATH102', hours: 48, nature: '必修', assessment: '考试', version: 'v1.5', batch: '2026春', creator: '王讲师', updatedAt: '2026-03-01' },
+  { id: 'cc-003', name: '线性代数', code: 'MATH102', hours: 48, nature: '必修', assessment: '考试', version: 'v1.5', batch: '2026春', creator: '当前用户', updatedAt: '2026-03-01' },
   { id: 'cc-004', name: '概率论与数理统计', code: 'MATH103', hours: 48, nature: '必修', assessment: '考试', version: 'v2.0', batch: '2026秋', creator: '李教授', updatedAt: '2026-08-10' },
   { id: 'cc-005', name: '大学物理', code: 'PHY101', hours: 64, nature: '必修', assessment: '考试', version: 'v1.3', batch: '2026春', creator: '赵教授', updatedAt: '2026-01-18' },
   { id: 'cc-006', name: '大学英语', code: 'ENG101', hours: 64, nature: '必修', assessment: '考试', version: 'v3.0', batch: '2026春', creator: '刘老师', updatedAt: '2026-03-05' },
   { id: 'cc-007', name: '体育与健康', code: 'PE101', hours: 32, nature: '必修', assessment: '考查', version: 'v1.0', batch: '2026春', creator: '陈老师', updatedAt: '2026-02-01' },
   { id: 'cc-008', name: '思想政治', code: 'POL101', hours: 32, nature: '必修', assessment: '考查', version: 'v2.2', batch: '2026春', creator: '孙教授', updatedAt: '2026-03-12' },
-  { id: 'cc-009', name: '数据结构', code: 'CS102', hours: 64, nature: '必修', assessment: '考试', version: 'v2.5', batch: '2026秋', creator: '张教授', updatedAt: '2026-08-20' },
+  { id: 'cc-009', name: '数据结构', code: 'CS102', hours: 64, nature: '必修', assessment: '考试', version: 'v2.5', batch: '2026秋', creator: '当前用户', updatedAt: '2026-08-20' },
   { id: 'cc-010', name: '计算机网络', code: 'CS201', hours: 48, nature: '必修', assessment: '考试', version: 'v1.9', batch: '2026秋', creator: '周副教授', updatedAt: '2026-09-01' },
   { id: 'cc-011', name: '操作系统', code: 'CS202', hours: 64, nature: '必修', assessment: '考试', version: 'v2.0', batch: '2027春', creator: '吴教授', updatedAt: '2027-01-15' },
   { id: 'cc-012', name: '数据库原理', code: 'CS203', hours: 48, nature: '必修', assessment: '考试', version: 'v1.7', batch: '2026秋', creator: '郑讲师', updatedAt: '2026-08-25' },
@@ -5467,6 +5525,7 @@ export interface PlanCourseEntry {
   courseCode: string
   type: 'theory' | 'practice' | 'scene'
   nature: '必修' | '选修' | '实践' | '场景'
+  courseTypeLabel?: string
   credits: number
   totalHours: number
   semester: number

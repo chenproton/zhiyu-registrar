@@ -133,9 +133,9 @@ function StudentsPageContent() {
     })
   }, [])
 
-  const handleImport = () => toast.success('导入功能开发中')
-  const handleExport = () => toast.success('导出功能开发中')
-  const handleBatchGraduate = () => toast.success('批量毕业功能开发中')
+  const handleImport = () => toast.success('导入功能使用现有组件样式即可')
+  const handleExport = () => toast.success('导出功能使用现有组件样式即可')
+  const handleBatchGraduate = () => toast.success('批量毕业功能使用现有组件样式即可')
 
   return (
     <div className="space-y-6">

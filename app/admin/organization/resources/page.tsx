@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, MapPin, Wrench, CheckCircle2, Beaker, Upload, Download } from 'lucide-react'
-import { venues } from '@/lib/mock-data'
+import { Plus, MapPin, Wrench, CheckCircle2, Beaker, Upload, Download, Settings2, Trash2 } from 'lucide-react'
+import { venues, venueTypes as initialVenueTypes } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
 export default function ResourcesPage() {
@@ -31,6 +31,9 @@ export default function ResourcesPage() {
   const [createVenueOpen, setCreateVenueOpen] = useState(false)
   const [editVenueOpen, setEditVenueOpen] = useState(false)
   const [selectedVenue, setSelectedVenue] = useState<typeof venues[0] | null>(null)
+  const [venueTypeDialogOpen, setVenueTypeDialogOpen] = useState(false)
+  const [venueTypes, setVenueTypes] = useState<string[]>(initialVenueTypes)
+  const [newVenueType, setNewVenueType] = useState('')
 
   return (
     <div className="space-y-6">
@@ -40,11 +43,14 @@ export default function ResourcesPage() {
           <p className="text-muted-foreground">管理教学场地与实训资源</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.success('导入功能开发中')}>
+          <Button variant="outline" size="sm" onClick={() => toast.success('导入功能使用现有组件样式即可')}>
             <Upload className="h-4 w-4 mr-2" />导入
           </Button>
-          <Button variant="outline" size="sm" onClick={() => toast.success('导出功能开发中')}>
+          <Button variant="outline" size="sm" onClick={() => toast.success('导出功能使用现有组件样式即可')}>
             <Download className="h-4 w-4 mr-2" />导出
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setVenueTypeDialogOpen(true)}>
+            <Settings2 className="h-4 w-4 mr-2" />场地类型维护
           </Button>
           <Button onClick={() => setCreateVenueOpen(true)}><Plus className="h-4 w-4 mr-2" />新建场地</Button>
         </div>
@@ -107,7 +113,7 @@ export default function ResourcesPage() {
                 <TableHead>场地类型</TableHead>
                 <TableHead>容纳人数</TableHead>
                 <TableHead>所在位置</TableHead>
-                <TableHead>设施设备</TableHead>
+                <TableHead>设备要求</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -174,7 +180,7 @@ export default function ResourcesPage() {
               <div className="space-y-2"><Label>容纳人数</Label><Input type="number" placeholder="0" /></div>
             </div>
             <div className="space-y-2"><Label>所在位置</Label><Input placeholder="如 A栋1层" /></div>
-            <div className="space-y-2"><Label>设施设备</Label><Input placeholder="如 投影仪、音响、空调" /></div>
+            <div className="space-y-2"><Label>设备要求</Label><Input placeholder="如 投影仪、音响、空调" /></div>
             <div className="space-y-2"><Label>状态</Label>
               <Select>
                 <SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger>
@@ -205,19 +211,16 @@ export default function ResourcesPage() {
                   <Select defaultValue={selectedVenue.type}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="教室">教室</SelectItem>
-                      <SelectItem value="实验室">实验室</SelectItem>
-                      <SelectItem value="实训基地">实训基地</SelectItem>
-                      <SelectItem value="机房">机房</SelectItem>
-                      <SelectItem value="多媒体教室">多媒体教室</SelectItem>
-                      <SelectItem value="其他">其他</SelectItem>
+                      {venueTypes.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2"><Label>容纳人数</Label><Input type="number" defaultValue={selectedVenue.capacity} /></div>
               </div>
               <div className="space-y-2"><Label>所在位置</Label><Input defaultValue={selectedVenue.location} /></div>
-              <div className="space-y-2"><Label>设施设备</Label><Input defaultValue={selectedVenue.facilities} /></div>
+              <div className="space-y-2"><Label>设备要求</Label><Input defaultValue={selectedVenue.facilities} /></div>
               <div className="space-y-2"><Label>状态</Label>
                 <Select defaultValue={selectedVenue.status}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
@@ -233,6 +236,66 @@ export default function ResourcesPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditVenueOpen(false)}>取消</Button>
             <Button onClick={() => { toast.success('保存成功'); setEditVenueOpen(false) }}>保存</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 场地类型维护弹窗 */}
+      <Dialog open={venueTypeDialogOpen} onOpenChange={setVenueTypeDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>场地类型维护</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>新增场地类型</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newVenueType}
+                  onChange={(e) => setNewVenueType(e.target.value)}
+                  placeholder="输入新类型名称"
+                  className="flex-1"
+                />
+                <Button
+                  size="sm"
+                  disabled={!newVenueType.trim()}
+                  onClick={() => {
+                    const t = newVenueType.trim()
+                    if (venueTypes.includes(t)) {
+                      toast.warning('该类型已存在')
+                      return
+                    }
+                    setVenueTypes((prev) => [...prev, t])
+                    setNewVenueType('')
+                    toast.success(`已添加类型「${t}」`)
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />添加
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>现有类型</Label>
+              <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                {venueTypes.map((t) => (
+                  <div key={t} className="flex items-center justify-between px-3 py-2 rounded-md border">
+                    <span className="text-sm">{t}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => {
+                        setVenueTypes((prev) => prev.filter((x) => x !== t))
+                        toast.success(`已删除类型「${t}」`)
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setVenueTypeDialogOpen(false)}>关闭</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

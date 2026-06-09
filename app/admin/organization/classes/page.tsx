@@ -44,6 +44,8 @@ export default function ClassesPage() {
     major: 'all',
   })
   const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null)
+  const [treeFilter, setTreeFilter] = useState<'all' | 'teaching'>('all')
+  const [editType, setEditType] = useState<'行政班' | '教学班（如订单班）'>('行政班')
 
   // 新建弹窗
   const [typeSelectOpen, setTypeSelectOpen] = useState(false)
@@ -67,9 +69,10 @@ export default function ClassesPage() {
       if (filters.department !== 'all' && major?.departmentId !== filters.department) return false
       if (filters.major !== 'all' && c.majorId !== filters.major) return false
       if (selectedGradeId && c.gradeId !== selectedGradeId) return false
+      if (treeFilter === 'teaching' && c.type !== '教学班（如订单班）') return false
       return true
     })
-  }, [search, filters, selectedGradeId])
+  }, [search, filters, selectedGradeId, treeFilter])
 
   const majorOptions = useMemo(() => {
     if (filters.department !== 'all') {
@@ -94,6 +97,7 @@ export default function ClassesPage() {
 
   const openEdit = (c: typeof classes[0]) => {
     setSelectedClass(c)
+    setEditType(c.type)
     const major = majors.find((m) => m.id === c.majorId)
     setEditDept(major?.departmentId || '')
     setEditOpen(true)
@@ -153,13 +157,22 @@ export default function ClassesPage() {
             <ScrollArea className="h-[500px]">
               <div className="space-y-1">
                 <button
-                  onClick={() => setSelectedGradeId(null)}
+                  onClick={() => { setSelectedGradeId(null); setTreeFilter('all') }}
                   className={cn(
                     'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
-                    selectedGradeId === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                    selectedGradeId === null && treeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                   )}
                 >
                   全部班级
+                </button>
+                <button
+                  onClick={() => { setSelectedGradeId(null); setTreeFilter('teaching') }}
+                  className={cn(
+                    'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+                    selectedGradeId === null && treeFilter === 'teaching' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                  )}
+                >
+                  教学班
                 </button>
                 {treeData.map(dept => (
                   <DeptNode
@@ -305,8 +318,8 @@ export default function ClassesPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>班级编码</Label><Input placeholder="请输入班级编码" /></div>
               <div className="space-y-2"><Label>班级名称</Label><Input placeholder="请输入班级名称" /></div>
+              <div className="space-y-2"><Label>班级编码</Label><Input placeholder="请输入班级编码" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -361,8 +374,8 @@ export default function ClassesPage() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>班级编码</Label><Input placeholder="请输入班级编码" /></div>
               <div className="space-y-2"><Label>班级名称</Label><Input placeholder="请输入班级名称" /></div>
+              <div className="space-y-2"><Label>班级编码</Label><Input placeholder="请输入班级编码" /></div>
             </div>
             <div className="space-y-2">
               <Label>班级性质</Label>
@@ -385,44 +398,60 @@ export default function ClassesPage() {
           {selectedClass && (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>班级编码</Label><Input defaultValue={selectedClass.code} /></div>
                 <div className="space-y-2"><Label>班级名称</Label><Input defaultValue={selectedClass.name} /></div>
+                <div className="space-y-2"><Label>班级编码</Label><Input defaultValue={selectedClass.code} /></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>所属院系</Label>
-                  <Select value={editDept} onValueChange={(v) => { setEditDept(v) }}>
-                    <SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger>
-                    <SelectContent>
-                      {departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
+              {editType === '行政班' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>所属院系</Label>
+                    <Select value={editDept} onValueChange={(v) => { setEditDept(v) }}>
+                      <SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger>
+                      <SelectContent>
+                        {departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>所属专业</Label>
+                    <Select defaultValue={selectedClass.majorId} disabled={!editDept}>
+                      <SelectTrigger><SelectValue placeholder={editDept ? '选择专业' : '请先选择院系'} /></SelectTrigger>
+                      <SelectContent>
+                        {majors.filter((m) => m.departmentId === editDept).map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>所属专业</Label>
-                  <Select defaultValue={selectedClass.majorId} disabled={!editDept}>
-                    <SelectTrigger><SelectValue placeholder={editDept ? '选择专业' : '请先选择院系'} /></SelectTrigger>
-                    <SelectContent>
-                      {majors.filter((m) => m.departmentId === editDept).map((m) => (
-                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              )}
+              {editType === '行政班' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>所属年级</Label>
+                    <Select defaultValue={selectedClass.gradeId}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {grades.map((g) => (<SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>班级性质</Label>
+                    <Select value={editType} onValueChange={(v) => setEditType(v as '行政班' | '教学班（如订单班）')}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="行政班">行政班</SelectItem>
+                        <SelectItem value="教学班（如订单班）">教学班（如订单班）</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>所属年级</Label>
-                  <Select defaultValue={selectedClass.gradeId}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {grades.map((g) => (<SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              )}
+              {editType === '教学班（如订单班）' && (
                 <div className="space-y-2">
                   <Label>班级性质</Label>
-                  <Select defaultValue={selectedClass.type}>
+                  <Select value={editType} onValueChange={(v) => setEditType(v as '行政班' | '教学班（如订单班）')}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="行政班">行政班</SelectItem>
@@ -430,7 +459,7 @@ export default function ClassesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
+              )}
             </div>
           )}
           <DialogFooter>

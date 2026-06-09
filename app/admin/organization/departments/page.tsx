@@ -182,7 +182,6 @@ export default function DepartmentsPage() {
                 <TableHead>专业数量</TableHead>
                 <TableHead>班级数</TableHead>
                 <TableHead>学生数</TableHead>
-                <TableHead>教师数</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -201,7 +200,6 @@ export default function DepartmentsPage() {
                     <TableCell>{stats.majorCount}</TableCell>
                     <TableCell>{stats.classCount}</TableCell>
                     <TableCell>{stats.studentCount}</TableCell>
-                    <TableCell>{stats.facultyCount}</TableCell>
                     <TableCell>
                       <Badge variant={d.status === 'active' ? 'default' : 'secondary'}>
                         {d.status === 'active' ? '启用' : '禁用'}
@@ -220,7 +218,7 @@ export default function DepartmentsPage() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     暂无数据
                   </TableCell>
                 </TableRow>

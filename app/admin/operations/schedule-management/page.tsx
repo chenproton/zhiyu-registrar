@@ -93,8 +93,10 @@ import {
 // ============================================
 const steps = [
   { id: 'schedule', label: '教学节次配置', icon: Clock },
-  { id: 'orchestration', label: '导入排课结果', icon: Settings2 },
-  { id: 'export', label: '课表打印', icon: Download },
+  { id: 'courses', label: '关联课程/实践场景', icon: BookOpen },
+  { id: 'plan', label: '教学计划调整', icon: Layers },
+  { id: 'orchestration', label: '教学任务管理（导入）', icon: Settings2 },
+  { id: 'export', label: '排课课表导出', icon: Download },
 ]
 
 function StepNav({
@@ -907,7 +909,7 @@ export default function SchedulingCenterPage() {
       {/* 页面头部 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">教学任务管理</h1>
+          <h1 className="text-2xl font-bold">排课管理</h1>
           <p className="text-muted-foreground">教学任务全流程管理：从节次配置到课表导出的统一工作区</p>
         </div>
         {matchedProgram && (
@@ -1037,8 +1039,10 @@ export default function SchedulingCenterPage() {
         ) : (
           <>
             {currentStep === 0 && <ClassScheduleTab />}
-            {currentStep === 1 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
-            {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
+            {currentStep === 1 && <CourseManagementTab selectedGrade={selectedGrade} />}
+            {currentStep === 2 && <TeachingPlanTab selectedDept={selectedDept} selectedGrade={selectedGrade} />}
+            {currentStep === 3 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
+            {currentStep === 4 && <ExportTab selectedGrade={selectedGrade} />}
           </>
         )}
       </div>

@@ -29,24 +29,27 @@ export default function TabCreditHours({
 
   const autoCalculate = () => {
     const curriculum = program.curriculum
-    if (!curriculum) return
+    if (!curriculum || curriculum.length === 0) return
 
     const sumCredits = (arr: { credits: number }[]) => arr.reduce((s, c) => s + (Number(c.credits) || 0), 0)
     const sumHours = (arr: { hours: number }[]) => arr.reduce((s, c) => s + (Number(c.hours) || 0), 0)
 
-    const pb = curriculum.publicBasic
-    const prof = curriculum.professional
+    const publicBasic = curriculum.filter((c) => c.courseTypeLabel?.startsWith('公共基础'))
+    const profBasic = curriculum.filter((c) => c.courseTypeLabel === '专业基础课程')
+    const profCore = curriculum.filter((c) => c.courseTypeLabel === '专业核心课程')
+    const profExtended = curriculum.filter((c) => c.courseTypeLabel === '专业拓展课程')
+    const practice = curriculum.filter((c) => c.courseType === '场景')
 
-    const publicBasicCredits = sumCredits(pb.required) + sumCredits(pb.limitedElective) + sumCredits(pb.freeElective)
-    const publicBasicHours = sumHours(pb.required) + sumHours(pb.limitedElective) + sumHours(pb.freeElective)
-    const professionalBasicCredits = sumCredits(prof.basic)
-    const professionalBasicHours = sumHours(prof.basic)
-    const professionalCoreCredits = sumCredits(prof.core)
-    const professionalCoreHours = sumHours(prof.core)
-    const professionalExtendedCredits = sumCredits(prof.extended)
-    const professionalExtendedHours = sumHours(prof.extended)
-    const practiceCredits = sumCredits(prof.practice)
-    const practiceHours = sumHours(prof.practice)
+    const publicBasicCredits = sumCredits(publicBasic)
+    const publicBasicHours = sumHours(publicBasic)
+    const professionalBasicCredits = sumCredits(profBasic)
+    const professionalBasicHours = sumHours(profBasic)
+    const professionalCoreCredits = sumCredits(profCore)
+    const professionalCoreHours = sumHours(profCore)
+    const professionalExtendedCredits = sumCredits(profExtended)
+    const professionalExtendedHours = sumHours(profExtended)
+    const practiceCredits = sumCredits(practice)
+    const practiceHours = sumHours(practice)
 
     const totalCredits = publicBasicCredits + professionalBasicCredits + professionalCoreCredits + professionalExtendedCredits + practiceCredits
     const totalHours = publicBasicHours + professionalBasicHours + professionalCoreHours + professionalExtendedHours + practiceHours

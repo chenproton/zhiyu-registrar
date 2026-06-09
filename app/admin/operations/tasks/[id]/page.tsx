@@ -44,10 +44,8 @@ import {
   GraduationCap,
   ChevronDown,
   ChevronUp,
-  Play,
   AlertCircle,
   Rocket,
-  RotateCcw,
   Archive,
   Send,
   PenTool,
@@ -198,7 +196,7 @@ export default function TaskDetailPage() {
         <div className="text-center space-y-2">
           <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto" />
           <p className="text-lg font-medium">任务不存在</p>
-          <p className="text-sm text-muted-foreground">未找到 ID 为 {id} 的学习任务</p>
+          <p className="text-sm text-muted-foreground">未找到 ID 为 {id} 的教学任务</p>
         </div>
       </div>
     )
@@ -294,7 +292,7 @@ export default function TaskDetailPage() {
   const statusTransitions: Record<TaskStatus, { next: TaskStatus; label: string; icon: any }[]> = {
     draft: [{ next: 'ready', label: '准备就绪', icon: CheckCircle2 }],
     ready: [{ next: 'published', label: '发布任务', icon: Rocket }],
-    published: [{ next: 'in_progress', label: '开始上课', icon: Play }],
+    published: [],
     in_progress: [{ next: 'evaluating', label: '进入考核', icon: PenTool }],
     evaluating: [{ next: 'completed', label: '完成任务', icon: CheckCircle2 }],
     completed: [{ next: 'archived', label: '归档', icon: Archive }],
@@ -350,7 +348,7 @@ export default function TaskDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/admin/operations/tasks">学习任务中心</Link>
+                <Link href="/admin/operations/tasks">教学任务中心</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -387,12 +385,7 @@ export default function TaskDetailPage() {
                 </Button>
               )
             })}
-            {task.status !== 'draft' && task.status !== 'archived' && (
-              <Button variant="outline" size="sm" onClick={handleWithdraw} className="gap-1 text-amber-600 border-amber-300 hover:bg-amber-50">
-                <RotateCcw className="h-4 w-4" />
-                撤回
-              </Button>
-            )}
+
           </div>
         </div>
 

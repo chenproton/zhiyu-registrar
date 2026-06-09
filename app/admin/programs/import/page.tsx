@@ -171,9 +171,18 @@ export default function ProgramImportPage() {
   const [zipFile, setZipFile] = useState<File | null>(null)
   const zipFileInputRef = useRef<HTMLInputElement>(null)
   const [importDialogOpen, setImportDialogOpen] = useState(false)
-  const [importSyllabus, setImportSyllabus] = useState(false)
-  const [importPlan, setImportPlan] = useState(false)
-  const [importSchedule, setImportSchedule] = useState(false)
+  const [importOptions, setImportOptions] = useState<Record<string, boolean>>({
+    basicInfo: true,
+    careerOrientation: true,
+    trainingGoals: true,
+    curriculum: true,
+    facultyTeam: false,
+    teachingConditions: false,
+  })
+
+  const toggleImportOption = (key: string) => {
+    setImportOptions((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
 
   // 步骤颜色
   const stepStatus = (index: number) => {
@@ -201,7 +210,7 @@ export default function ProgramImportPage() {
 
   const confirmZipImport = () => {
     setImportDialogOpen(false)
-    toast.success('系统导出包导入成功！')
+    toast.success('标准人培方案导入成功！')
     setCurrentStep(3)
   }
 
@@ -388,15 +397,15 @@ export default function ProgramImportPage() {
           {/* ===== Step 0: 上传 ===== */}
           {currentStep === 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-6">
-              {/* 左侧：传统人培方案 */}
+              {/* 左侧：导入自定义人培方案 */}
               <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <FileText className="h-5 w-5 text-blue-600" />
-                    传统人培方案 PDF/Word
+                    导入自定义人培方案（PDF/Word）
                   </CardTitle>
                   <CardDescription>
-                    上传传统格式的人才培养方案文档，AI自动解析
+                    上传自定义格式的人才培养方案文档，AI自动解析
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col space-y-4">
@@ -471,15 +480,15 @@ export default function ProgramImportPage() {
                 </CardContent>
               </Card>
 
-              {/* 右侧：系统导出压缩包 */}
+              {/* 右侧：导入标准人培方案 */}
               <Card className="flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-base flex items-center gap-2">
                     <Archive className="h-5 w-5 text-purple-600" />
-                    系统导出压缩包
+                    导入标准人培方案（本系统导出）
                   </CardTitle>
                   <CardDescription>
-                    上传从本系统导出的压缩包，快速恢复完整数据
+                    上传从本系统导出的标准压缩包，快速恢复完整数据
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col space-y-4">
@@ -792,41 +801,67 @@ export default function ProgramImportPage() {
         </CardContent>
       </Card>
 
-      {/* 系统导出包导入选项弹窗 */}
+      {/* 标准人培方案导入选项弹窗 */}
       <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>选择要一并导入的关联数据</DialogTitle>
+            <DialogTitle>选择要导入的内容模块</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">除了人培方案主体，还可以选择导入以下关联数据：</p>
+            <p className="text-sm text-muted-foreground">请选择需要导入的人培方案内容模块（至少选1项）：</p>
             <div className="space-y-3">
               <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox checked={importSyllabus} onCheckedChange={(v) => setImportSyllabus(!!v)} />
+                <Checkbox checked={importOptions.basicInfo} onCheckedChange={() => toggleImportOption('basicInfo')} />
                 <div>
-                  <div className="text-sm font-medium">课程与能力目标</div>
-                  <div className="text-xs text-muted-foreground">复制该方案下所有课程/场景的课程与能力目标</div>
+                  <div className="text-sm font-medium">基本信息</div>
+                  <div className="text-xs text-muted-foreground">专业名称、学制、学分要求等基础信息</div>
                 </div>
               </label>
               <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox checked={importPlan} onCheckedChange={(v) => setImportPlan(!!v)} />
+                <Checkbox checked={importOptions.careerOrientation} onCheckedChange={() => toggleImportOption('careerOrientation')} />
                 <div>
-                  <div className="text-sm font-medium">教学计划</div>
-                  <div className="text-xs text-muted-foreground">复制该方案下所有学期的教学计划</div>
+                  <div className="text-sm font-medium">职业面向</div>
+                  <div className="text-xs text-muted-foreground">职业岗位、工作任务与能力要求</div>
                 </div>
               </label>
               <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
-                <Checkbox checked={importSchedule} onCheckedChange={(v) => setImportSchedule(!!v)} />
+                <Checkbox checked={importOptions.trainingGoals} onCheckedChange={() => toggleImportOption('trainingGoals')} />
                 <div>
-                  <div className="text-sm font-medium">排班排课数据</div>
-                  <div className="text-xs text-muted-foreground">复制该方案对应班级的排课任务</div>
+                  <div className="text-sm font-medium">培养目标与规格</div>
+                  <div className="text-xs text-muted-foreground">培养目标、毕业要求、能力指标</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={importOptions.curriculum} onCheckedChange={() => toggleImportOption('curriculum')} />
+                <div>
+                  <div className="text-sm font-medium">课程（场景）设置</div>
+                  <div className="text-xs text-muted-foreground">课程计划、实践场景、学时学分安排</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={importOptions.facultyTeam} onCheckedChange={() => toggleImportOption('facultyTeam')} />
+                <div>
+                  <div className="text-sm font-medium">师资队伍</div>
+                  <div className="text-xs text-muted-foreground">专业教学团队、双师型教师配置</div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 rounded-lg border p-3 cursor-pointer hover:bg-muted/50">
+                <Checkbox checked={importOptions.teachingConditions} onCheckedChange={() => toggleImportOption('teachingConditions')} />
+                <div>
+                  <div className="text-sm font-medium">教学条件</div>
+                  <div className="text-xs text-muted-foreground">实训基地、教学资源、信息化条件</div>
                 </div>
               </label>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setImportDialogOpen(false)}>取消</Button>
-            <Button onClick={confirmZipImport}>确认导入</Button>
+            <Button
+              onClick={confirmZipImport}
+              disabled={!Object.values(importOptions).some(Boolean)}
+            >
+              确认导入
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

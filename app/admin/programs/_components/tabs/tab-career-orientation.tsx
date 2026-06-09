@@ -1,13 +1,9 @@
 'use client'
 
-import { useState } from 'react'
-import { Input } from '@/components/ui/input'
+import { useMemo } from 'react'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { TrainingProgram } from '@/lib/mock-data'
-import { Plus, Trash2, X } from 'lucide-react'
-import PositionSearchSelect from '@/components/shared/position-search-select'
+import { TrainingProgram, positions } from '@/lib/mock-data'
+import MultiSelectCombobox from '@/components/shared/multi-select-combobox'
 
 export default function TabCareerOrientation({
   program,
@@ -25,69 +21,52 @@ export default function TabCareerOrientation({
     vocationalCertificates: [],
   }
 
-  const [newCert, setNewCert] = useState('')
-
   const update = (patch: Partial<typeof co>) => {
     onChange({ ...program, careerOrientation: { ...co, ...patch } })
   }
+
+  // 行业选项：从 positions 中提取唯一行业名称
+  const industryOptions = useMemo(() => {
+    const industries = Array.from(new Set(positions.map((p) => p.industry)))
+    return industries.map((name) => ({ value: name, label: name }))
+  }, [])
+
+  // 岗位选项
+  const positionOptions = useMemo(() => {
+    return positions.map((p) => ({
+      value: p.id,
+      label: p.name,
+      description: `${p.code} · ${p.industry}`,
+    }))
+  }, [])
 
   return (
     <div className="space-y-6">
       {/* 对应行业 */}
       <div className="space-y-2">
         <Label>对应行业</Label>
-        <div className="space-y-2">
-          {co.correspondingIndustries.map((ind, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Input
-                value={ind.name}
-                onChange={(e) => {
-                  const arr = [...co.correspondingIndustries]
-                  arr[i] = { ...ind, name: e.target.value }
-                  update({ correspondingIndustries: arr })
-                }}
-                placeholder="行业名称"
-                className="flex-1"
-              />
-              <Input
-                value={ind.code}
-                onChange={(e) => {
-                  const arr = [...co.correspondingIndustries]
-                  arr[i] = { ...ind, code: e.target.value }
-                  update({ correspondingIndustries: arr })
-                }}
-                placeholder="代码"
-                className="w-28"
-              />
-              <Button variant="ghost" size="icon" onClick={() => {
-                const arr = co.correspondingIndustries.filter((_, idx) => idx !== i)
-                update({ correspondingIndustries: arr })
-              }}>
-                <Trash2 className="h-4 w-4 text-red-500" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => update({ correspondingIndustries: [...co.correspondingIndustries, { name: '', code: '' }] })}
-          >
-            <Plus className="h-4 w-4 mr-1" /> 添加行业
-          </Button>
-        </div>
+        <MultiSelectCombobox
+          options={industryOptions}
+          value={co.correspondingIndustries}
+          onChange={(vals) => update({ correspondingIndustries: vals })}
+          placeholder="请选择对应行业"
+          searchPlaceholder="搜索行业..."
+          emptyText="未找到匹配的行业"
+        />
       </div>
 
       {/* 面向岗位列表 */}
       <div className="space-y-2">
         <Label>面向岗位列表</Label>
-        <PositionSearchSelect
+        <MultiSelectCombobox
+          options={positionOptions}
           value={co.mainPositions}
-          onChange={(ids) => update({ mainPositions: ids })}
-          multiple
+          onChange={(vals) => update({ mainPositions: vals })}
+          placeholder="请选择面向岗位"
+          searchPlaceholder="搜索岗位名称、代码或行业..."
+          emptyText="未找到匹配的岗位"
         />
       </div>
-
-
     </div>
   )
 }
