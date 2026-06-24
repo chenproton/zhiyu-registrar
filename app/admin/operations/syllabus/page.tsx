@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -34,6 +34,8 @@ import {
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import {
   trainingPrograms,
   departments,
@@ -75,34 +77,29 @@ const generateLogs = [
   '大纲生成完成',
 ]
 
-// 获取培养方案下所有课程（优先 curriculum，回退 courses/practiceScenes）
+// 获取培养方案下所有课程（优先 curriculum 数组，回退 courses/practiceScenes）
 function getProgramAllCourses(program: TrainingProgram) {
-  if (program.curriculum) {
-    const { publicBasic, professional } = program.curriculum
-    return [
-      ...publicBasic.required,
-      ...publicBasic.limitedElective,
-      ...publicBasic.freeElective,
-      ...professional.basic,
-      ...professional.core,
-      ...professional.extended,
-      ...professional.practice,
-    ]
+  if (Array.isArray(program.curriculum) && program.curriculum.length > 0) {
+    return program.curriculum
   }
   return [...program.courses, ...program.practiceScenes]
 }
 
-// 获取课程分类：优先从 curriculum 查找，否则基于 courseId 哈希随机分配
+// 获取课程分类：优先从 curriculum 数组的 courseTypeLabel/courseType 判断，否则基于 courseId 哈希随机分配
 function getCourseCategory(program: TrainingProgram | undefined, courseId: string) {
   if (program?.curriculum) {
-    const { publicBasic, professional } = program.curriculum
-    if (publicBasic.required.some((c) => c.id === courseId)) return { level1: 'public', level2: 'required' }
-    if (publicBasic.limitedElective.some((c) => c.id === courseId)) return { level1: 'public', level2: 'elective' }
-    if (publicBasic.freeElective.some((c) => c.id === courseId)) return { level1: 'public', level2: 'elective' }
-    if (professional.basic.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'required' }
-    if (professional.core.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'required' }
-    if (professional.extended.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'elective' }
-    if (professional.practice.some((c) => c.id === courseId)) return { level1: 'professional', level2: 'required' }
+    const allCourses = Array.isArray(program.curriculum) ? program.curriculum : []
+    const course = allCourses.find((c) => c.id === courseId)
+    if (course) {
+      const label = (course as any).courseTypeLabel || ''
+      const type = (course as any).courseType || ''
+      const isPublic = label.includes('公共基础')
+      const isElective = label.includes('选修') || label.includes('拓展') || type === '选修'
+      return {
+        level1: isPublic ? 'public' : 'professional',
+        level2: isElective ? 'elective' : 'required',
+      }
+    }
   }
   const hash = courseId.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0)
   const level1 = hash % 2 === 0 ? 'public' : 'professional'
@@ -110,12 +107,12 @@ function getCourseCategory(program: TrainingProgram | undefined, courseId: strin
   return { level1, level2 }
 }
 
-function SyllabusPageInner() {
+export default function SyllabusPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { syllabuses, sceneSyllabuses, generateSyllabusesFromProgram } = useSyllabuses()
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
   const [selectedYear, setSelectedYear] = useState<string>('all')
+  const [selectedMajorId, setSelectedMajorId] = useState<string>('all')
   const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
 
   // 二级筛选
@@ -130,9 +127,10 @@ function SyllabusPageInner() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // 从 URL 参数自动选中培养方案
+  // 从 URL 参数自动选中培养方案（使用 window.location，避免 useSearchParams 导致 SSR 降级到加载中）
   useEffect(() => {
-    const programIdFromUrl = searchParams.get('programId')
+    if (typeof window === 'undefined') return
+    const programIdFromUrl = new URLSearchParams(window.location.search).get('programId')
     if (programIdFromUrl) {
       const program = trainingPrograms.find((p) => p.id === programIdFromUrl)
       if (program) {
@@ -144,7 +142,7 @@ function SyllabusPageInner() {
         setSelectedProgramId(programIdFromUrl)
       }
     }
-  }, [searchParams])
+  }, [])
 
   // 筛选逻辑
   const deptPrograms = useMemo(() => {
@@ -153,11 +151,14 @@ function SyllabusPageInner() {
       const deptMajorIds = majors.filter((m) => m.departmentId === selectedDeptId).map((m) => m.id)
       list = list.filter((p) => deptMajorIds.includes(p.majorId))
     }
+    if (selectedMajorId !== 'all') {
+      list = list.filter((p) => p.majorId === selectedMajorId)
+    }
     if (selectedYear !== 'all') {
       list = list.filter((p) => String(p.entryYear) === selectedYear)
     }
     return list
-  }, [selectedDeptId, selectedYear])
+  }, [selectedDeptId, selectedMajorId, selectedYear])
 
   const currentProgram = useMemo(() => {
     if (selectedProgramId === 'all') return null
@@ -400,107 +401,122 @@ function SyllabusPageInner() {
   }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧筛选 */}
-      <div className="w-60 shrink-0">
-        <Card className="h-full flex flex-col py-0">
-          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
-            <div className="text-sm font-semibold">筛选条件</div>
-            {/* 院系 */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant={selectedDeptId === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
-                >全部</Badge>
-                {departments.map((d) => (
-                  <Badge
-                    key={d.id}
-                    variant={selectedDeptId === d.id ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}
-                  >{d.name}</Badge>
-                ))}
-              </div>
-            </div>
-            {/* 年级 */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant={selectedYear === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedYear('all')}
-                >全部</Badge>
-                {grades.map((g) => (
-                  <Badge
-                    key={g.id}
-                    variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => setSelectedYear(String(g.entryYear))}
-                  >{g.entryYear}级</Badge>
-                ))}
-              </div>
-            </div>
-            {/* 人培方案 — 筛选结果 */}
-            <div className="border-t pt-2 mt-0.5">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
-                <span className="text-[10px] text-muted-foreground">
-                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                <button
-                  className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                  onClick={() => setSelectedProgramId('all')}
-                >全部方案</button>
-                {deptPrograms.map((p) => (
-                  <button
-                    key={p.id}
-                    className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                    onClick={() => setSelectedProgramId(p.id)}
-                  >{p.name}</button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* 标题 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="h-6 w-6 text-primary" />
+            课程与能力目标管理
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {currentProgram ? currentProgram.name : '全部方案'} · 
+            共 {stats.total} 门课程/场景，已生成 {stats.generated} 份大纲
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {currentProgram && (
+            <Button variant="outline" onClick={() => router.push(`/admin/operations/teaching-plans?programId=${currentProgram.id}`)}>
+              <CalendarDays className="mr-2 h-4 w-4" />
+              前往制定教学计划
+            </Button>
+          )}
+          {currentProgram && ungeneratedCourses.length > 0 && (
+            <Button onClick={() => openGenerate(currentProgram)}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              生成课程与能力目标
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* 主内容 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
-        {/* 标题 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <BookOpen className="h-6 w-6 text-primary" />
-              课程与能力目标管理
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {currentProgram ? currentProgram.name : '全部方案'} · 
-              共 {stats.total} 门课程/场景，已生成 {stats.generated} 份大纲
-            </p>
+      {/* 顶部筛选栏 */}
+      <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label>院系</Label>
+            <Select
+              value={selectedDeptId}
+              onValueChange={(v) => {
+                setSelectedDeptId(v)
+                setSelectedMajorId('all')
+                setSelectedProgramId('all')
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="全部院系" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部院系</SelectItem>
+                {departments.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div className="flex items-center gap-2">
-            {currentProgram && (
-              <Button variant="outline" onClick={() => router.push(`/admin/operations/teaching-plans?programId=${currentProgram.id}`)}>
-                <CalendarDays className="mr-2 h-4 w-4" />
-                前往制定教学计划
-              </Button>
-            )}
-            {currentProgram && ungeneratedCourses.length > 0 && (
-              <Button onClick={() => openGenerate(currentProgram)}>
-                <Sparkles className="mr-2 h-4 w-4" />
-                生成课程与能力目标
-              </Button>
-            )}
+
+          <div className="space-y-2">
+            <Label>年级</Label>
+            <Select
+              value={selectedYear}
+              onValueChange={(v) => {
+                setSelectedYear(v)
+                setSelectedProgramId('all')
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="全部年级" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部年级</SelectItem>
+                {grades.map((g) => (
+                  <SelectItem key={g.id} value={String(g.entryYear)}>{g.entryYear}级</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>专业</Label>
+            <Select
+              value={selectedMajorId}
+              onValueChange={(v) => {
+                setSelectedMajorId(v)
+                setSelectedProgramId('all')
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="全部专业" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部专业</SelectItem>
+                {majors
+                  .filter((m) => selectedDeptId === 'all' || m.departmentId === selectedDeptId)
+                  .map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>人培方案</Label>
+            <Select value={selectedProgramId} onValueChange={setSelectedProgramId}>
+              <SelectTrigger>
+                <SelectValue placeholder="全部方案" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部方案</SelectItem>
+                {deptPrograms.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+      </Card>
 
-        {/* 统计卡 */}
+      {/* 统计卡 */}
         <div className="grid grid-cols-4 gap-4">
           <Card className="bg-blue-50/50">
             <CardContent className="pt-4 pb-3">
@@ -617,9 +633,7 @@ function SyllabusPageInner() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* 生成弹窗 */}
+        {/* 生成弹窗 */}
       <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -695,10 +709,4 @@ function SyllabusPageInner() {
   )
 }
 
-export default function SyllabusPage() {
-  return (
-    <Suspense fallback={<div className="p-8 text-center text-muted-foreground">加载中...</div>}>
-      <SyllabusPageInner />
-    </Suspense>
-  )
-}
+

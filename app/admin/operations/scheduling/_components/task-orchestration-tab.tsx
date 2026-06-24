@@ -75,6 +75,20 @@ function isSceneTask(task: Task) {
   return task.type === 'scene' || task.externalPlatformType === 'scene'
 }
 
+function isHybridTask(task: Task) {
+  return task.type === 'hybrid'
+}
+
+function taskBadge(task: Task) {
+  if (isHybridTask(task)) {
+    return { label: '混合式', className: 'border-purple-300 text-purple-600 bg-purple-50' }
+  }
+  if (isSceneTask(task)) {
+    return { label: '实践场景', className: 'border-orange-300 text-orange-600 bg-orange-50' }
+  }
+  return { label: '课程', className: 'border-blue-300 text-blue-600 bg-blue-50' }
+}
+
 // ==================== Conflict Detection ====================
 function periodsOverlap(a: string[], b: string[]) {
   return a.some((p) => b.includes(p))
@@ -157,9 +171,11 @@ function ScheduleGrid({
                       'w-full text-left rounded p-2 text-xs space-y-1 transition-all hover:shadow-sm hover:scale-[1.02] cursor-pointer',
                       hasConflict
                         ? 'bg-red-50 border border-red-200'
-                        : scene
-                          ? 'bg-orange-50 border border-orange-200'
-                          : 'bg-blue-50 border border-blue-200'
+                        : isHybridTask(task)
+                          ? 'bg-purple-50 border border-purple-200'
+                          : scene
+                            ? 'bg-orange-50 border border-orange-200'
+                            : 'bg-blue-50 border border-blue-200'
                     )}
                   >
                     <div className="font-medium truncate">{task.courseName}</div>
@@ -170,16 +186,16 @@ function ScheduleGrid({
                       {task.venueName}
                     </div>
                     <div className="flex items-center gap-1 flex-wrap">
-                      {scene && (
-                        <Badge variant="outline" className="text-[10px] h-4 border-orange-300 text-orange-600">
-                          实践场景
-                        </Badge>
-                      )}
-                      {!scene && (
-                        <Badge variant="outline" className="text-[10px] h-4 border-blue-300 text-blue-600">
-                          课程
-                        </Badge>
-                      )}
+                      {
+                        (() => {
+                          const badge = taskBadge(task)
+                          return (
+                            <Badge variant="outline" className={`text-[10px] h-4 ${badge.className}`}>
+                              {badge.label}
+                            </Badge>
+                          )
+                        })()
+                      }
                       {hasConflict && (
                         <Badge variant="outline" className="text-[10px] h-4 border-red-200 text-red-600">
                           <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
@@ -460,7 +476,7 @@ function SearchableSelect({
 
 // ==================== New Task Dialog ====================
 function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [taskType, setTaskType] = useState<'course' | 'practice'>('course')
+  const [taskType, setTaskType] = useState<'course' | 'practice' | 'hybrid'>('course')
   const [linkedItemId, setLinkedItemId] = useState('')
   const [selectedClassId, setSelectedClassId] = useState('')
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
@@ -477,6 +493,15 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
     []
   )
 
+  const hybridOptions = useMemo(
+    () =>
+      (trainingPrograms[0]?.courses ?? []).filter((c) => c.nature === '混合式' || c.isHybrid).map((c) => ({
+        value: c.id,
+        label: `${c.name} (${c.code})`,
+      })),
+    []
+  )
+
   const practiceOptions = useMemo(
     () =>
       curriculumPracticePool.map((p) => ({
@@ -487,7 +512,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
   )
 
   const selectedItemVersion = useMemo(() => {
-    const pool = taskType === 'course' ? curriculumCoursePool : curriculumPracticePool
+    const pool = taskType === 'course' ? curriculumCoursePool : taskType === 'hybrid' ? [] : curriculumPracticePool
     return pool.find((p) => p.id === linkedItemId)?.version
   }, [taskType, linkedItemId])
 
@@ -550,16 +575,26 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
                   />
                   <span className="text-sm">实践场景</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="taskType"
+                    checked={taskType === 'hybrid'}
+                    onChange={() => setTaskType('hybrid')}
+                    className="accent-primary h-4 w-4"
+                  />
+                  <span className="text-sm">混合式课程</span>
+                </label>
               </div>
             </div>
 
             {/* 关联课程/实践场景 */}
             <SearchableSelect
-              label={`关联${taskType === 'course' ? '课程' : '实践场景'}`}
+              label={`关联${taskType === 'course' ? '课程' : taskType === 'hybrid' ? '混合式课程' : '实践场景'}`}
               value={linkedItemId}
               onChange={setLinkedItemId}
-              options={taskType === 'course' ? courseOptions : practiceOptions}
-              placeholder={`请选择${taskType === 'course' ? '课程' : '实践场景'}`}
+              options={taskType === 'course' ? courseOptions : taskType === 'hybrid' ? hybridOptions : practiceOptions}
+              placeholder={`请选择${taskType === 'course' ? '课程' : taskType === 'hybrid' ? '混合式课程' : '实践场景'}`}
             />
             {selectedItemVersion && (
               <div className="text-xs text-muted-foreground mt-1">
@@ -666,7 +701,7 @@ function EditTaskDialog({
   onClose: () => void
   task: Task | null
 }) {
-  const [taskType, setTaskType] = useState<'course' | 'practice'>('course')
+  const [taskType, setTaskType] = useState<'course' | 'practice' | 'hybrid'>('course')
   const [linkedItemId, setLinkedItemId] = useState('')
   const [selectedClassId, setSelectedClassId] = useState('')
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
@@ -677,6 +712,15 @@ function EditTaskDialog({
   const courseOptions = useMemo(
     () =>
       (trainingPrograms[0]?.courses ?? []).map((c) => ({
+        value: c.id,
+        label: `${c.name} (${c.code})`,
+      })),
+    []
+  )
+
+  const hybridOptions = useMemo(
+    () =>
+      (trainingPrograms[0]?.courses ?? []).filter((c) => c.nature === '混合式' || c.isHybrid).map((c) => ({
         value: c.id,
         label: `${c.name} (${c.code})`,
       })),
@@ -715,7 +759,8 @@ function EditTaskDialog({
   useMemo(() => {
     if (task) {
       const isScene = isSceneTask(task)
-      setTaskType(isScene ? 'practice' : 'course')
+      const isHybrid = isHybridTask(task)
+      setTaskType(isHybrid ? 'hybrid' : isScene ? 'practice' : 'course')
       setLinkedItemId(task.externalPlatformId ?? '')
       setSelectedClassId(task.classId)
       setSelectedFacultyId(task.facultyId)
@@ -774,16 +819,26 @@ function EditTaskDialog({
                   />
                   <span className="text-sm">实践场景</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="editTaskType"
+                    checked={taskType === 'hybrid'}
+                    onChange={() => setTaskType('hybrid')}
+                    className="accent-primary h-4 w-4"
+                  />
+                  <span className="text-sm">混合式课程</span>
+                </label>
               </div>
             </div>
 
             {/* 关联课程/实践场景 */}
             <SearchableSelect
-              label={`关联${taskType === 'course' ? '课程' : '实践场景'}`}
+              label={`关联${taskType === 'course' ? '课程' : taskType === 'hybrid' ? '混合式课程' : '实践场景'}`}
               value={linkedItemId}
               onChange={setLinkedItemId}
-              options={taskType === 'course' ? courseOptions : practiceOptions}
-              placeholder={`请选择${taskType === 'course' ? '课程' : '实践场景'}`}
+              options={taskType === 'course' ? courseOptions : taskType === 'hybrid' ? hybridOptions : practiceOptions}
+              placeholder={`请选择${taskType === 'course' ? '课程' : taskType === 'hybrid' ? '混合式课程' : '实践场景'}`}
             />
 
             {/* 课程版本号 */}

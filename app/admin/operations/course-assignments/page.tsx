@@ -530,7 +530,7 @@ export default function CourseAssignmentsPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>取消</Button>
-            <Button onClick={() => setEditDialogOpen(false)}>保存</Button>
+            <Button onClick={() => { toast.success('保存成功'); setEditDialogOpen(false) }}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

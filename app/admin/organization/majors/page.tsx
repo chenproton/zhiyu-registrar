@@ -39,9 +39,26 @@ export default function MajorsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedMajor, setSelectedMajor] = useState<typeof majors[0] | null>(null)
+  const [majorList, setMajorList] = useState(majors)
+
+  // create form
+  const [cName, setCName] = useState('')
+  const [cCode, setCCode] = useState('')
+  const [cDept, setCDept] = useState('')
+  const [cLevel, setCLevel] = useState('高职高专')
+  const [cDuration, setCDuration] = useState('3')
+  const [cStatus, setCStatus] = useState('active')
+
+  // edit form
+  const [eName, setEName] = useState('')
+  const [eCode, setECode] = useState('')
+  const [eDept, setEDept] = useState('')
+  const [eLevel, setELevel] = useState('高职高专')
+  const [eDuration, setEDuration] = useState('3')
+  const [eStatus, setEStatus] = useState('active')
 
   const filtered = useMemo(() => {
-    return majors.filter((m) => {
+    return majorList.filter((m) => {
       if (search) {
         const s = search.toLowerCase()
         if (!m.name.toLowerCase().includes(s) && !m.code.toLowerCase().includes(s)) return false
@@ -50,7 +67,64 @@ export default function MajorsPage() {
       if (filters.level !== 'all' && m.level !== filters.level) return false
       return true
     })
-  }, [search, filters])
+  }, [search, filters, majorList])
+
+  const openCreate = () => {
+    setCName('')
+    setCCode('')
+    setCDept(departments[0]?.id || '')
+    setCLevel('高职高专')
+    setCDuration('3')
+    setCStatus('active')
+    setCreateOpen(true)
+  }
+
+  const handleCreate = () => {
+    if (!cName.trim() || !cCode.trim() || !cDept) {
+      toast.error('请填写完整信息')
+      return
+    }
+    setMajorList((prev) => [...prev, {
+      id: `major-${Date.now()}`,
+      name: cName.trim(),
+      code: cCode.trim(),
+      departmentId: cDept,
+      level: cLevel,
+      duration: Number(cDuration),
+      status: cStatus as 'active' | 'inactive',
+    }])
+    toast.success('新建专业成功')
+    setCreateOpen(false)
+  }
+
+  const openEdit = (m: typeof majors[0]) => {
+    setSelectedMajor(m)
+    setEName(m.name)
+    setECode(m.code)
+    setEDept(m.departmentId)
+    setELevel(m.level)
+    setEDuration(String(m.duration))
+    setEStatus(m.status)
+    setEditOpen(true)
+  }
+
+  const handleSaveEdit = () => {
+    if (!selectedMajor || !eName.trim() || !eCode.trim() || !eDept) {
+      toast.error('请填写完整信息')
+      return
+    }
+    setMajorList((prev) => prev.map((m) => m.id === selectedMajor.id ? {
+      ...m,
+      name: eName.trim(),
+      code: eCode.trim(),
+      departmentId: eDept,
+      level: eLevel,
+      duration: Number(eDuration),
+      status: eStatus as 'active' | 'inactive',
+    } : m))
+    toast.success('保存成功')
+    setEditOpen(false)
+  }
 
   return (
     <div className="space-y-6">
@@ -59,7 +133,7 @@ export default function MajorsPage() {
           <h1 className="text-2xl font-bold">专业管理</h1>
           <p className="text-muted-foreground">维护各院系下设专业信息</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建专业</Button>
+        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />新建专业</Button>
       </div>
 
       <Card>
@@ -121,7 +195,7 @@ export default function MajorsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => { setSelectedMajor(m); setEditOpen(true) }}>编辑</Button>
+                    <Button variant="ghost" size="sm" onClick={() => openEdit(m)}>编辑</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -143,27 +217,27 @@ export default function MajorsPage() {
           <DialogHeader><DialogTitle>新建专业</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>专业名称</Label><Input placeholder="请输入专业名称" /></div>
-              <div className="space-y-2"><Label>专业代码</Label><Input placeholder="请输入专业代码" /></div>
+              <div className="space-y-2"><Label>专业名称</Label><Input placeholder="请输入专业名称" value={cName} onChange={(e) => setCName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>专业代码</Label><Input placeholder="请输入专业代码" value={cCode} onChange={(e) => setCCode(e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>所属院系</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                <Select value={cDept} onValueChange={setCDept}><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
               </div>
               <div className="space-y-2"><Label>培养层次</Label>
-                <Select defaultValue="高职高专"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="高职高专">高职高专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+                <Select value={cLevel} onValueChange={setCLevel}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="高职高专">高职高专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>学制（年）</Label><Input type="number" defaultValue="3" placeholder="如 3" /></div>
+              <div className="space-y-2"><Label>学制（年）</Label><Input type="number" value={cDuration} onChange={(e) => setCDuration(e.target.value)} placeholder="如 3" /></div>
               <div className="space-y-2"><Label>状态</Label>
-                <Select defaultValue="active"><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">启用</SelectItem><SelectItem value="inactive">禁用</SelectItem></SelectContent></Select>
+                <Select value={cStatus} onValueChange={setCStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">启用</SelectItem><SelectItem value="inactive">禁用</SelectItem></SelectContent></Select>
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={() => { toast.success('新建专业成功'); setCreateOpen(false) }}>保存</Button>
+            <Button onClick={handleCreate}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -175,28 +249,28 @@ export default function MajorsPage() {
           {selectedMajor && (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>专业名称</Label><Input defaultValue={selectedMajor.name} /></div>
-                <div className="space-y-2"><Label>专业代码</Label><Input defaultValue={selectedMajor.code} /></div>
+                <div className="space-y-2"><Label>专业名称</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} /></div>
+                <div className="space-y-2"><Label>专业代码</Label><Input value={eCode} onChange={(e) => setECode(e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>所属院系</Label>
-                  <Select defaultValue={selectedMajor.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                  <Select value={eDept} onValueChange={setEDept}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
                 </div>
                 <div className="space-y-2"><Label>培养层次</Label>
-                  <Select defaultValue={selectedMajor.level}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="高职高专">高职高专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
+                  <Select value={eLevel} onValueChange={setELevel}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="高职高专">高职高专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>学制（年）</Label><Input type="number" defaultValue={selectedMajor.duration} /></div>
+                <div className="space-y-2"><Label>学制（年）</Label><Input type="number" value={eDuration} onChange={(e) => setEDuration(e.target.value)} /></div>
                 <div className="space-y-2"><Label>状态</Label>
-                  <Select defaultValue={selectedMajor.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">启用</SelectItem><SelectItem value="inactive">禁用</SelectItem></SelectContent></Select>
+                  <Select value={eStatus} onValueChange={setEStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">启用</SelectItem><SelectItem value="inactive">禁用</SelectItem></SelectContent></Select>
                 </div>
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
-            <Button onClick={() => { toast.success('保存成功'); setEditOpen(false) }}>保存</Button>
+            <Button onClick={handleSaveEdit}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

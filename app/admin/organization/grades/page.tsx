@@ -39,18 +39,71 @@ export default function GradesPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [selectedGrade, setSelectedGrade] = useState<typeof grades[0] | null>(null)
   const [activeTab, setActiveTab] = useState('在校')
+  const [gradeList, setGradeList] = useState(grades)
+
+  // create form
+  const [createName, setCreateName] = useState('')
+  const [createEntryYear, setCreateEntryYear] = useState('')
+  const [createStatus, setCreateStatus] = useState('在校')
+
+  // edit form
+  const [editName, setEditName] = useState('')
+  const [editEntryYear, setEditEntryYear] = useState('')
+  const [editStatus, setEditStatus] = useState('在校')
 
   const filteredGrades = useMemo(() => {
-    return grades.filter((g) => {
+    return gradeList.filter((g) => {
       if (searchQuery && !g.name.includes(searchQuery) && !String(g.entryYear).includes(searchQuery)) return false
       if (activeTab && g.status !== activeTab) return false
       return true
     })
-  }, [searchQuery, activeTab])
+  }, [searchQuery, activeTab, gradeList])
 
   const handleEdit = (grade: typeof grades[0]) => {
     setSelectedGrade(grade)
+    setEditName(grade.name)
+    setEditEntryYear(String(grade.entryYear))
+    setEditStatus(grade.status)
     setEditDialogOpen(true)
+  }
+
+  const handleSaveEdit = () => {
+    if (!selectedGrade || !editName.trim() || !editEntryYear.trim()) {
+      toast.error('请填写完整信息')
+      return
+    }
+    setGradeList((prev) =>
+      prev.map((g) =>
+        g.id === selectedGrade.id
+          ? { ...g, name: editName.trim(), entryYear: Number(editEntryYear), status: editStatus }
+          : g
+      )
+    )
+    toast.success('年级信息已保存')
+    setEditDialogOpen(false)
+  }
+
+  const handleCreate = () => {
+    if (!createName.trim() || !createEntryYear.trim()) {
+      toast.error('请填写完整信息')
+      return
+    }
+    setGradeList((prev) => [...prev, {
+      id: `grade-${Date.now()}`,
+      name: createName.trim(),
+      entryYear: Number(createEntryYear),
+      status: createStatus,
+    }])
+    toast.success('新增年级成功')
+    setCreateDialogOpen(false)
+    setCreateName('')
+    setCreateEntryYear('')
+    setCreateStatus('在校')
+  }
+
+  const handleDelete = (grade: typeof grades[0]) => {
+    setGradeList((prev) => prev.filter((g) => g.id !== grade.id))
+    toast.success('删除成功')
   }
 
   const getGradeStats = (gradeId: string) => {
@@ -130,7 +183,7 @@ export default function GradesPage() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             <Button size="sm" variant="ghost" className="h-7" onClick={() => handleEdit(grade)}>编辑</Button>
-                            <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => toast.success('删除成功')}>删除</Button>
+                            <Button size="sm" variant="ghost" className="h-7 text-destructive" onClick={() => handleDelete(grade)}>删除</Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -152,19 +205,27 @@ export default function GradesPage() {
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>新增年级</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>年级名称</Label><Input placeholder="如 2026级" /></div>
-              <div className="space-y-2"><Label>入学年份</Label><Input type="number" placeholder="如 2026" /></div>
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>年级名称</Label><Input placeholder="如 2026级" value={createName} onChange={(e) => setCreateName(e.target.value)} /></div>
+                <div className="space-y-2"><Label>入学年份</Label><Input type="number" placeholder="如 2026" value={createEntryYear} onChange={(e) => setCreateEntryYear(e.target.value)} /></div>
+              </div>
+              <div className="space-y-2">
+                <Label>状态</Label>
+                <Select value={createStatus} onValueChange={setCreateStatus}>
+                  <SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="在校">在校</SelectItem>
+                    <SelectItem value="毕业">毕业</SelectItem>
+                    <SelectItem value="结业">结业</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2"><Label>状态</Label>
-              <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在校">在校</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>取消</Button>
-            <Button onClick={() => { toast.success('新增年级成功'); setCreateDialogOpen(false) }}>保存</Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>取消</Button>
+              <Button onClick={handleCreate}>保存</Button>
+            </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -179,16 +240,16 @@ export default function GradesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>年级名称</Label>
-                  <Input defaultValue={selectedGrade.name} />
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label>入学年份</Label>
-                  <Input type="number" defaultValue={selectedGrade.entryYear} />
+                  <Input type="number" value={editEntryYear} onChange={(e) => setEditEntryYear(e.target.value)} />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>状态</Label>
-                <Select defaultValue={selectedGrade.status}>
+                <Select value={editStatus} onValueChange={setEditStatus}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="在校">在校</SelectItem>
@@ -201,7 +262,7 @@ export default function GradesPage() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>取消</Button>
-            <Button onClick={() => setEditDialogOpen(false)}>保存</Button>
+            <Button onClick={handleSaveEdit}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

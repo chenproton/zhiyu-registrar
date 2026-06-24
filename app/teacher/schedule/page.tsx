@@ -19,6 +19,24 @@ import type { Task } from '@/lib/mock-data'
 const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 const allPeriods = ['上午 1', '上午 2', '上午 3', '上午 4', '下午 1', '下午 2', '下午 3', '下午 4', '晚上 1', '晚上 2']
 
+function taskTypeStyle(task: Task) {
+  if (task.type === 'hybrid') return 'bg-purple-50 border border-purple-100 hover:border-purple-300'
+  if (task.type === 'scene') return 'bg-orange-50 border border-orange-100 hover:border-orange-300'
+  return 'bg-primary/5 border border-transparent hover:border-primary/30'
+}
+
+function taskTypeBadge(task: Task) {
+  if (task.type === 'hybrid') return { label: '混合式', className: 'border-purple-200 text-purple-600' }
+  if (task.type === 'scene') return { label: '场景', className: 'border-orange-200 text-orange-600' }
+  return { label: '传统', className: 'border-blue-200 text-blue-600' }
+}
+
+function taskTypeName(task: Task) {
+  if (task.type === 'hybrid') return '混合式教学'
+  if (task.type === 'scene') return '场景教学'
+  return '传统教学'
+}
+
 export default function TeacherSchedulePage() {
   const router = useRouter()
   const myTasks = getTeacherTasks()
@@ -77,9 +95,7 @@ export default function TeacherSchedulePage() {
                           onClick={() => openTaskDetail(task)}
                           className={cn(
                             'w-full text-left rounded p-2 text-xs space-y-1 transition-all hover:shadow-sm cursor-pointer',
-                            task.type === 'scene'
-                              ? 'bg-orange-50 border border-orange-100 hover:border-orange-300'
-                              : 'bg-primary/5 border border-transparent hover:border-primary/30'
+                            taskTypeStyle(task)
                           )}
                         >
                           <div className="font-medium truncate">{task.courseName}</div>
@@ -89,11 +105,14 @@ export default function TeacherSchedulePage() {
                             {task.venueName}
                           </div>
                           <div className="flex items-center gap-1 flex-wrap">
-                            {task.type === 'scene' && (
-                              <Badge variant="outline" className="text-[10px] h-4 border-orange-200 text-orange-600">
-                                场景
-                              </Badge>
-                            )}
+                            {(() => {
+                              const badge = taskTypeBadge(task)
+                              return (
+                                <Badge variant="outline" className={`text-[10px] h-4 ${badge.className}`}>
+                                  {badge.label}
+                                </Badge>
+                              )
+                            })()}
                           </div>
                         </button>
                       ) : (
@@ -137,8 +156,8 @@ export default function TeacherSchedulePage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <Badge variant="outline" className="text-xs">{task.venueName}</Badge>
-                  <Badge variant={task.type === 'scene' ? 'secondary' : 'outline'} className="text-xs">
-                    {task.type === 'scene' ? '场景教学' : '传统教学'}
+                  <Badge variant={task.type === 'scene' ? 'secondary' : 'outline'} className={`text-xs ${task.type === 'hybrid' ? 'bg-purple-50 text-purple-600 border-purple-200' : ''}`}>
+                    {taskTypeName(task)}
                   </Badge>
                 </div>
               </div>
@@ -196,7 +215,7 @@ export default function TeacherSchedulePage() {
                     教学类型
                   </div>
                   <div className="font-medium">
-                    {selectedTask.type === 'scene' ? '场景教学' : '传统教学'}
+                    {taskTypeName(selectedTask)}
                   </div>
                 </div>
               </div>

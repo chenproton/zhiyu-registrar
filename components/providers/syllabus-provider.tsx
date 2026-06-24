@@ -17,6 +17,13 @@ interface SyllabusContextType {
 const SyllabusContext = createContext<SyllabusContextType | null>(null)
 
 function generateObjectives(courseName: string, nature: string): Syllabus['objectives'] {
+  if (nature === '混合式') {
+    return [
+      { id: `obj-${Date.now()}-1`, dimension: '知识', content: `掌握${courseName}线上自主学习内容与线下核心知识点`, level: '掌握' },
+      { id: `obj-${Date.now()}-2`, dimension: '能力', content: `能够在线上完成预习与测验，在线下课堂完成项目实践`, level: '掌握' },
+      { id: `obj-${Date.now()}-3`, dimension: '素养', content: `培养自主学习能力、团队协作与职业规范意识`, level: '掌握' },
+    ]
+  }
   if (nature === '实践' || nature === '场景') {
     return [
       { id: `obj-${Date.now()}-1`, dimension: '知识', content: `了解${courseName}的基本流程和规范`, level: '了解' },
@@ -35,23 +42,29 @@ function generateChapters(course: CoursePlan): Syllabus['chapters'] {
   const chapterCount = Math.max(1, Math.ceil(course.hours / 8))
   const baseHours = Math.floor(course.hours / chapterCount)
   const remainder = course.hours % chapterCount
+  const isHybrid = course.nature === '混合式' || course.isHybrid
+  const isPractice = course.nature === '实践' || course.nature === '场景'
+  const onlineRatio = isHybrid ? (course.onlineHours ?? Math.round(course.hours * 0.4)) / course.hours : 0
 
   const chapters: Syllabus['chapters'] = []
   for (let i = 0; i < chapterCount; i++) {
     const chHours = i < remainder ? baseHours + 1 : baseHours
-    const isPractice = course.nature === '实践' || course.nature === '场景'
+    const onlineHours = isHybrid ? Math.round(chHours * onlineRatio) : 0
+    const offlineHours = chHours - onlineHours
     chapters.push({
       id: `ch-${Date.now()}-${i}`,
-      name: isPractice ? `任务${i + 1}：${course.name}实践环节${i + 1}` : `第${i + 1}章 ${course.name}核心内容`,
+      name: isPractice ? `任务${i + 1}：${course.name}实践环节${i + 1}` : isHybrid ? `单元${i + 1}：${course.name}混合教学单元${i + 1}` : `第${i + 1}章 ${course.name}核心内容`,
       hours: chHours,
-      theoryHours: isPractice ? 0 : Math.ceil(chHours * 0.6),
-      practiceHours: isPractice ? chHours : Math.floor(chHours * 0.4),
+      theoryHours: isPractice ? 0 : isHybrid ? offlineHours : Math.ceil(chHours * 0.6),
+      practiceHours: isPractice ? chHours : isHybrid ? onlineHours : Math.floor(chHours * 0.4),
       content: isPractice
         ? `完成${course.name}相关实践任务，掌握操作技能`
-        : `${course.name}理论知识讲解与案例分析`,
-      teachingMethod: isPractice ? '项目实践' : '讲授+案例',
-      keyPoints: isPractice ? '操作规范' : '核心概念',
-      difficultPoints: isPractice ? '综合运用' : '理论推导',
+        : isHybrid
+          ? `${course.name}线上自主学习与线下课堂研讨相结合的混合教学`
+          : `${course.name}理论知识讲解与案例分析`,
+      teachingMethod: isPractice ? '项目实践' : isHybrid ? '线上线下混合、微课预习、课堂研讨、项目实践' : '讲授+案例',
+      keyPoints: isPractice ? '操作规范' : isHybrid ? '线上自主学习与线下实践融合' : '核心概念',
+      difficultPoints: isPractice ? '综合运用' : isHybrid ? '知识迁移与综合应用' : '理论推导',
     })
   }
   return chapters
@@ -67,6 +80,7 @@ function generateTaskChain(courseName: string) {
 
 function buildSyllabusFromCourse(program: TrainingProgram, course: CoursePlan): Syllabus {
   const isPractice = course.nature === '实践' || course.nature === '场景'
+  const isHybrid = course.nature === '混合式' || course.isHybrid
   const now = new Date().toISOString()
 
   return {
@@ -75,19 +89,25 @@ function buildSyllabusFromCourse(program: TrainingProgram, course: CoursePlan): 
     courseId: course.id,
     courseName: course.name,
     courseCode: course.code,
-    type: isPractice ? 'practice' : 'theory',
+    type: isHybrid ? 'hybrid' : isPractice ? 'practice' : 'theory',
     credits: course.credits,
     totalHours: course.hours,
-    theoryHours: isPractice ? 0 : Math.ceil(course.hours * 0.6),
-    practiceHours: isPractice ? course.hours : Math.floor(course.hours * 0.4),
+    theoryHours: isPractice ? 0 : isHybrid ? (course.offlineHours ?? Math.ceil(course.hours * 0.6)) : Math.ceil(course.hours * 0.6),
+    practiceHours: isPractice ? course.hours : isHybrid ? (course.onlineHours ?? Math.floor(course.hours * 0.4)) : Math.floor(course.hours * 0.4),
     applicableMajorIds: [program.majorId],
     objectives: generateObjectives(course.name, course.nature),
     chapters: generateChapters(course),
-    teachingMethods: isPractice ? '项目驱动、小组协作、企业导师指导' : '讲授法、案例教学、课堂讨论、线上线下混合',
+    teachingMethods: isHybrid
+      ? '线上线下混合式教学：课前微课预习与测验、课中案例研讨与项目实训、课后作业与单元测试'
+      : isPractice
+        ? '项目驱动、小组协作、企业导师指导'
+        : '讲授法、案例教学、课堂讨论、线上线下混合',
     assessmentMethod: course.assessment,
-    assessmentWeight: isPractice
-      ? { usual: 40, midterm: 0, final: 0, practice: 60 }
-      : { usual: 30, midterm: 20, final: 50, practice: 0 },
+    assessmentWeight: isHybrid
+      ? { usual: 40, midterm: 10, final: 30, practice: 20 }
+      : isPractice
+        ? { usual: 40, midterm: 0, final: 0, practice: 60 }
+        : { usual: 30, midterm: 20, final: 50, practice: 0 },
     textbooks: ['国家规划教材（待指定）'],
     references: ['相关行业标准与技术文档'],
     status: 'generated',
@@ -140,20 +160,10 @@ export function SyllabusProvider({ children }: { children: React.ReactNode }) {
     (program: TrainingProgram, courseIds: string[]) => {
       let added = 0
       let skipped = 0
-      // 优先使用 curriculum 中的课程（如果 courses 为空但有 curriculum）
-      const allCourses = (program.courses.length > 0 || program.practiceScenes.length > 0)
-        ? [...program.courses, ...program.practiceScenes]
-        : program.curriculum
-          ? [
-              ...program.curriculum.publicBasic.required,
-              ...program.curriculum.publicBasic.limitedElective,
-              ...program.curriculum.publicBasic.freeElective,
-              ...program.curriculum.professional.basic,
-              ...program.curriculum.professional.core,
-              ...program.curriculum.professional.extended,
-              ...program.curriculum.professional.practice,
-            ]
-          : []
+      // 优先使用 curriculum 数组（实际结构），回退 courses/practiceScenes
+      const allCourses = (Array.isArray(program.curriculum) && program.curriculum.length > 0)
+        ? program.curriculum as CoursePlan[]
+        : [...program.courses, ...program.practiceScenes]
 
       for (const courseId of courseIds) {
         const course = allCourses.find((c) => c.id === courseId)

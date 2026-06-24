@@ -30,6 +30,11 @@ export function getTeacherTasks(facultyId: string = currentTeacher.id): Task[] {
   return tasks.filter((t) => t.facultyId === facultyId)
 }
 
+/** 获取当前教师负责的混合式教学任务 */
+export function getTeacherHybridTasks(facultyId: string = currentTeacher.id): Task[] {
+  return tasks.filter((t) => t.facultyId === facultyId && t.type === 'hybrid')
+}
+
 /** 获取当前教师的所有课程分配 */
 export function getTeacherCourseAssignments(facultyId: string = currentTeacher.id): CourseAssignment[] {
   return courseAssignments.filter(
@@ -74,6 +79,11 @@ export function getTeacherInfo(facultyId: string = currentTeacher.id): Faculty |
 /** 教学秘书可见：全部教学任务 */
 export function getAllTasks(): Task[] {
   return tasks
+}
+
+/** 教学秘书可见：全部混合式教学任务 */
+export function getAllHybridTasks(): Task[] {
+  return tasks.filter((t) => t.type === 'hybrid')
 }
 
 /** 教学秘书可见：全部课程分配 */

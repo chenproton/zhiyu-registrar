@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 import {
   Table,
   TableBody,
@@ -17,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { toast } from 'sonner'
 import {
   Rocket,
   BookOpen,
@@ -67,6 +67,7 @@ export default function CourseLaunchPage() {
   const router = useRouter()
   const [selectedDeptId, setSelectedDeptId] = useState<string>('all')
   const [selectedYear, setSelectedYear] = useState<string>('all')
+  const [selectedMajorId, setSelectedMajorId] = useState<string>('all')
   const [selectedProgramId, setSelectedProgramId] = useState<string>('all')
   const [activeTab, setActiveTab] = useState<string>('all')
   const [launchDialogOpen, setLaunchDialogOpen] = useState(false)
@@ -79,11 +80,14 @@ export default function CourseLaunchPage() {
       const deptMajorIds = majors.filter((m) => m.departmentId === selectedDeptId).map((m) => m.id)
       list = list.filter((p) => deptMajorIds.includes(p.majorId))
     }
+    if (selectedMajorId !== 'all') {
+      list = list.filter((p) => p.majorId === selectedMajorId)
+    }
     if (selectedYear !== 'all') {
       list = list.filter((p) => String(p.entryYear) === selectedYear)
     }
     return list
-  }, [selectedDeptId, selectedYear])
+  }, [selectedDeptId, selectedMajorId, selectedYear])
 
   const currentProgram = useMemo(() => {
     if (selectedProgramId === 'all') return null
@@ -149,92 +153,107 @@ export default function CourseLaunchPage() {
   }
 
   return (
-    <div className="flex gap-6 h-[calc(100vh-120px)]">
-      {/* 左侧方案导航 */}
-      <div className="w-60 shrink-0">
-        <Card className="h-full flex flex-col py-0">
-          <CardContent className="px-3 pb-3 pt-3 flex-1 overflow-y-auto space-y-2">
-            <div className="text-sm font-semibold">筛选条件</div>
-            {/* 院系 */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">院系</label>
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant={selectedDeptId === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => { setSelectedDeptId('all'); setSelectedProgramId('all') }}
-                >全部</Badge>
-                {departments.map((d) => (
-                  <Badge
-                    key={d.id}
-                    variant={selectedDeptId === d.id ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => { setSelectedDeptId(d.id); setSelectedProgramId('all') }}
-                  >{d.name}</Badge>
-                ))}
-              </div>
-            </div>
-            {/* 年级 */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">年级</label>
-              <div className="flex flex-wrap gap-1">
-                <Badge
-                  variant={selectedYear === 'all' ? 'default' : 'outline'}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setSelectedYear('all')}
-                >全部</Badge>
-                {grades.map((g) => (
-                  <Badge
-                    key={g.id}
-                    variant={selectedYear === String(g.entryYear) ? 'default' : 'outline'}
-                    className="cursor-pointer text-xs"
-                    onClick={() => setSelectedYear(String(g.entryYear))}
-                  >{g.entryYear}级</Badge>
-                ))}
-              </div>
-            </div>
-            {/* 人培方案 — 筛选结果 */}
-            <div className="border-t pt-2 mt-0.5">
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-muted-foreground">人培方案</label>
-                <span className="text-[10px] text-muted-foreground">
-                  {selectedDeptId !== 'all' || selectedYear !== 'all' ? `筛选结果 · ${deptPrograms.length}个` : `${deptPrograms.length}个`}
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                <button
-                  className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors', selectedProgramId === 'all' ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                  onClick={() => setSelectedProgramId('all')}
-                >全部方案</button>
-                {deptPrograms.map((p) => (
-                  <button
-                    key={p.id}
-                    className={cn('w-full text-left px-2 py-1 rounded text-xs transition-colors truncate', selectedProgramId === p.id ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-muted')}
-                    onClick={() => setSelectedProgramId(p.id)}
-                  >{p.name}</button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* 标题 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Rocket className="h-6 w-6 text-primary" />
+            开课管理
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {currentProgram ? currentProgram.name : '全部方案'} · 围绕学习任务进行开课确认、发布与监控
+          </p>
+        </div>
       </div>
 
-      {/* 主内容 */}
-      <div className="flex-1 min-w-0 space-y-4 overflow-y-auto pr-2">
-        {/* 标题 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Rocket className="h-6 w-6 text-primary" />
-              开课管理
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {currentProgram ? currentProgram.name : '全部方案'} · 围绕学习任务进行开课确认、发布与监控
-            </p>
+      {/* 顶部筛选栏 */}
+      <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="space-y-2">
+            <Label>院系</Label>
+            <Select
+              value={selectedDeptId}
+              onValueChange={(v) => {
+                setSelectedDeptId(v)
+                setSelectedMajorId('all')
+                setSelectedProgramId('all')
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="全部院系" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部院系</SelectItem>
+                {departments.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>年级</Label>
+            <Select
+              value={selectedYear}
+              onValueChange={(v) => {
+                setSelectedYear(v)
+                setSelectedProgramId('all')
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="全部年级" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部年级</SelectItem>
+                {grades.map((g) => (
+                  <SelectItem key={g.id} value={String(g.entryYear)}>{g.entryYear}级</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>专业</Label>
+            <Select
+              value={selectedMajorId}
+              onValueChange={(v) => {
+                setSelectedMajorId(v)
+                setSelectedProgramId('all')
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="全部专业" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部专业</SelectItem>
+                {majors
+                  .filter((m) => selectedDeptId === 'all' || m.departmentId === selectedDeptId)
+                  .map((m) => (
+                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>人培方案</Label>
+            <Select value={selectedProgramId} onValueChange={setSelectedProgramId}>
+              <SelectTrigger>
+                <SelectValue placeholder="全部方案" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部方案</SelectItem>
+                {deptPrograms.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
+      </Card>
 
-        {/* 统计 */}
+      {/* 统计 */}
         <div className="grid grid-cols-4 gap-4">
           <Card className="bg-blue-50/50">
             <CardContent className="pt-4 pb-3">
@@ -313,13 +332,15 @@ export default function CourseLaunchPage() {
                   <TableRow key={task.id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        {task.type === 'scene' ? <Beaker className="h-4 w-4 text-purple-600" /> : <BookOpen className="h-4 w-4 text-blue-600" />}
+                        {task.type === 'hybrid' ? <BookOpen className="h-4 w-4 text-purple-600" /> :
+                         task.type === 'scene' ? <Beaker className="h-4 w-4 text-purple-600" /> :
+                         <BookOpen className="h-4 w-4 text-blue-600" />}
                         {task.name}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {task.type === 'scene' ? '场景' : '课程'}
+                      <Badge variant="outline" className={`text-xs ${task.type === 'hybrid' ? 'bg-purple-50 text-purple-600 border-purple-200' : ''}`}>
+                        {task.type === 'hybrid' ? '混合式' : task.type === 'scene' ? '场景' : '课程'}
                       </Badge>
                     </TableCell>
                     <TableCell>{task.className}</TableCell>
@@ -401,7 +422,6 @@ export default function CourseLaunchPage() {
         </DialogContent>
       </Dialog>
     </div>
-    </div>
   )
 }
 
@@ -416,6 +436,7 @@ interface CheckItem {
 function computeLaunchChecklist(record: CourseLaunchRecord): CheckItem[] {
   const c = record.checklist
   const isScene = record.taskType === 'scene'
+  const isHybrid = record.taskType === 'hybrid'
 
   const common: CheckItem[] = [
     {
@@ -439,6 +460,22 @@ function computeLaunchChecklist(record: CourseLaunchRecord): CheckItem[] {
       icon: <BookOpen className="h-4 w-4 text-orange-600" />,
     },
   ]
+
+  if (isHybrid) {
+    return [
+      ...common,
+      {
+        label: '线上平台/课程链接已配置',
+        passed: !!c.equipmentChecked,
+        icon: <BookOpen className="h-4 w-4 text-purple-600" />,
+      },
+      {
+        label: '线下实践任务已绑定',
+        passed: !!c.equipmentChecked,
+        icon: <Beaker className="h-4 w-4 text-fuchsia-600" />,
+      },
+    ]
+  }
 
   if (isScene) {
     return [
@@ -476,14 +513,16 @@ function LaunchCheckDialogContent({
   return (
     <div className="space-y-4 py-2">
       {/* 基本信息 */}
-      <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-sm">
-        <div className="flex items-center gap-2">
-          {record.taskType === 'scene' ? <Beaker className="h-4 w-4 text-purple-600" /> : <BookOpen className="h-4 w-4 text-blue-600" />}
-          <span className="font-medium">{record.taskName}</span>
-          <Badge variant="outline" className="text-[10px] h-5">
-            {record.taskType === 'scene' ? '场景教学' : '传统教学'}
-          </Badge>
-        </div>
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-2 text-sm">
+            <div className="flex items-center gap-2">
+              {record.taskType === 'hybrid' ? <BookOpen className="h-4 w-4 text-purple-600" /> :
+               record.taskType === 'scene' ? <Beaker className="h-4 w-4 text-purple-600" /> :
+               <BookOpen className="h-4 w-4 text-blue-600" />}
+              <span className="font-medium">{record.taskName}</span>
+              <Badge variant="outline" className="text-[10px] h-5">
+                {record.taskType === 'hybrid' ? '混合式教学' : record.taskType === 'scene' ? '场景教学' : '传统教学'}
+              </Badge>
+            </div>
         <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
           <p><span className="text-muted-foreground/70">班级：</span>{record.className}</p>
           <p><span className="text-muted-foreground/70">教师：</span>{record.facultyName}</p>
@@ -533,7 +572,9 @@ function LaunchCheckDialogContent({
           <div>
             <p className="font-medium">尚有 {totalCount - passedCount} 项检查未通过</p>
             <p className="mt-0.5 opacity-80">
-              {record.taskType === 'scene'
+              {record.taskType === 'hybrid'
+                ? '混合式课程开课需要确保线上资源、线下场地与实践任务全部就绪'
+                : record.taskType === 'scene'
                 ? '场景教学开课需要确保设备、导师、场地全部就绪'
                 : '建议完成全部检查项后再开课，确保教学质量'}
             </p>

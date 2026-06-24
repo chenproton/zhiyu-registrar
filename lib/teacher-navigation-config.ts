@@ -34,14 +34,22 @@ export const teacherNavigationConfig: PlatformNavigationConfig = {
       matchers: ["/teacher$"],
     },
     {
-      id: "my-courses",
-      label: "我的教学",
+      id: "my-tasks",
+      label: "我的教学任务",
       icon: "bookOpen",
       children: [
         { id: "schedule", label: "我的课表", href: "/teacher/schedule", matchers: ["/teacher/schedule"] },
-        { id: "syllabus", label: "课程与能力目标", href: "/teacher/syllabus", matchers: ["/teacher/syllabus"] },
-        { id: "preparation", label: "备课中心", href: "/teacher/preparation", matchers: ["/teacher/preparation"] },
-        { id: "progress", label: "教学进度", href: "/teacher/progress", matchers: ["/teacher/progress"] },
+        { id: "course-assignments", label: "授课任务查询", href: "/teacher/course-assignments", matchers: ["/teacher/course-assignments"] },
+      ],
+    },
+    {
+      id: "grades-and-close",
+      label: "成绩与结课",
+      icon: "barChart3",
+      children: [
+        { id: "grade-submit", label: "成绩确认与提交", href: "/teacher/grade-submit", matchers: ["/teacher/grade-submit"] },
+        { id: "course-close", label: "结课确认", href: "/teacher/course-close", matchers: ["/teacher/course-close"] },
+        { id: "archive", label: "教学资料归档", href: "/teacher/archive", matchers: ["/teacher/archive"] },
       ],
     },
     {
@@ -53,4 +61,5 @@ export const teacherNavigationConfig: PlatformNavigationConfig = {
       ],
     },
   ],
+  defaultExpandedSideNavIds: ["my-tasks", "grades-and-close", "applications"],
 }

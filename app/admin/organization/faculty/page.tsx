@@ -41,6 +41,27 @@ export default function FacultyPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
+  const [facultyList, setFacultyList] = useState(faculty)
+
+  // create form
+  const [cEmployeeId, setCEmployeeId] = useState('')
+  const [cName, setCName] = useState('')
+  const [cGender, setCGender] = useState('男')
+  const [cDept, setCDept] = useState('')
+  const [cTitle, setCTitle] = useState('')
+  const [cEducation, setCEducation] = useState('')
+  const [cRoles, setCRoles] = useState<string[]>([])
+  const [cStatus, setCStatus] = useState('在职')
+
+  // edit form
+  const [eEmployeeId, setEEmployeeId] = useState('')
+  const [eName, setEName] = useState('')
+  const [eGender, setEGender] = useState('男')
+  const [eDept, setEDept] = useState('')
+  const [eTitle, setETitle] = useState('')
+  const [eEducation, setEEducation] = useState('')
+  const [eRoles, setERoles] = useState<string[]>([])
+  const [eStatus, setEStatus] = useState('在职')
 
   // 聘任企业导师弹窗
   const [hireMentorOpen, setHireMentorOpen] = useState(false)
@@ -62,7 +83,7 @@ export default function FacultyPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filtered = useMemo(() => {
-    return faculty.filter((f) => {
+    return facultyList.filter((f) => {
       if (search) {
         const s = search.toLowerCase()
         if (!f.name.toLowerCase().includes(s) && !f.employeeId.toLowerCase().includes(s)) return false
@@ -73,15 +94,106 @@ export default function FacultyPage() {
       if (facultyTab === 'mentor' && !f.isEnterpriseMentor) return false
       return true
     })
-  }, [search, filters, facultyTab])
+  }, [search, filters, facultyTab, facultyList])
 
   const stats = useMemo(() => {
-    const all = faculty.length
-    const mentors = faculty.filter((f) => f.isEnterpriseMentor).length
-    const active = faculty.filter((f) => f.status === '在职').length
-    const companies = new Set(faculty.filter((f) => f.isEnterpriseMentor).map((f) => f.enterpriseInfo?.company).filter(Boolean)).size
+    const all = facultyList.length
+    const mentors = facultyList.filter((f) => f.isEnterpriseMentor).length
+    const active = facultyList.filter((f) => f.status === '在职').length
+    const companies = new Set(facultyList.filter((f) => f.isEnterpriseMentor).map((f) => f.enterpriseInfo?.company).filter(Boolean)).size
     return { all, mentors, active, companies }
-  }, [])
+  }, [facultyList])
+
+  const openCreate = () => {
+    setCEmployeeId('')
+    setCName('')
+    setCGender('男')
+    setCDept(departments[0]?.id || '')
+    setCTitle('')
+    setCEducation('')
+    setCRoles([])
+    setCStatus('在职')
+    setCreateOpen(true)
+  }
+
+  const handleCreate = () => {
+    if (!cEmployeeId.trim() || !cName.trim() || !cDept) {
+      toast.error('请填写完整信息')
+      return
+    }
+    setFacultyList((prev) => [...prev, {
+      id: `faculty-${Date.now()}`,
+      employeeId: cEmployeeId.trim(),
+      name: cName.trim(),
+      gender: cGender,
+      departmentId: cDept,
+      title: cTitle.trim(),
+      education: cEducation.trim(),
+      roles: cRoles,
+      status: cStatus as any,
+      isEnterpriseMentor: false,
+    }])
+    toast.success('新建教师成功')
+    setCreateOpen(false)
+  }
+
+  const openEdit = (f: typeof faculty[0]) => {
+    setSelectedFaculty(f)
+    setEEmployeeId(f.employeeId)
+    setEName(f.name)
+    setEGender(f.gender)
+    setEDept(f.departmentId)
+    setETitle(f.title)
+    setEEducation(f.education)
+    setERoles(f.roles || [])
+    setEStatus(f.status)
+    setEditOpen(true)
+  }
+
+  const handleSaveEdit = () => {
+    if (!selectedFaculty || !eEmployeeId.trim() || !eName.trim() || !eDept) {
+      toast.error('请填写完整信息')
+      return
+    }
+    setFacultyList((prev) => prev.map((f) => f.id === selectedFaculty.id ? {
+      ...f,
+      employeeId: eEmployeeId.trim(),
+      name: eName.trim(),
+      gender: eGender,
+      departmentId: eDept,
+      title: eTitle.trim(),
+      education: eEducation.trim(),
+      roles: eRoles,
+      status: eStatus as any,
+    } : f))
+    toast.success('保存成功')
+    setEditOpen(false)
+  }
+
+  const handleHireMentor = () => {
+    if (!selectedMentorCandidate) return
+    if (!mentorCompany.trim() || !mentorPosition.trim() || !mentorYears.trim() || !mentorField.trim()) {
+      toast.error('请填写完整企业信息')
+      return
+    }
+    setFacultyList((prev) => prev.map((f) => f.id === selectedMentorCandidate.id ? {
+      ...f,
+      isEnterpriseMentor: true,
+      enterpriseInfo: {
+        company: mentorCompany.trim(),
+        position: mentorPosition.trim(),
+        years: mentorYears.trim(),
+        field: mentorField.trim(),
+      },
+    } : f))
+    toast.success(`已成功聘任 ${selectedMentorCandidate.name} 为企业导师`)
+    setHireMentorOpen(false)
+    setSelectedMentorCandidate(null)
+    setMentorCompany('')
+    setMentorPosition('')
+    setMentorYears('')
+    setMentorField('')
+  }
 
   const handleAddAgreement = () => {
     if (!agreementFaculty) return
@@ -89,11 +201,26 @@ export default function FacultyPage() {
       toast.error('请填写完整的协议信息')
       return
     }
+    setFacultyList((prev) => prev.map((f) => f.id === agreementFaculty.id ? {
+      ...f,
+      agreements: [
+        ...(f.agreements || []),
+        {
+          id: `agreement-${Date.now()}`,
+          name: newAgreementName.trim(),
+          company: newAgreementCompany.trim(),
+          startDate: newAgreementStart,
+          endDate: newAgreementEnd,
+          status: '有效' as const,
+        },
+      ],
+    } : f))
     toast.success('添加补充协议成功')
     setNewAgreementName('')
     setNewAgreementCompany('')
     setNewAgreementStart('')
     setNewAgreementEnd('')
+    setAgreementFiles([])
   }
 
   return (
@@ -124,7 +251,7 @@ export default function FacultyPage() {
           }}>
             <HardHat className="h-4 w-4 mr-2" />聘任企业导师
           </Button>
-          <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
+          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
         </div>
       </div>
 
@@ -263,7 +390,7 @@ export default function FacultyPage() {
                           <FileText className="h-3.5 w-3.5 mr-1" />补充协议管理
                         </Button>
                       )}
-                      <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}>编辑</Button>
+                      <Button variant="ghost" size="sm" onClick={() => openEdit(f)}>编辑</Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -286,27 +413,27 @@ export default function FacultyPage() {
           <DialogHeader><DialogTitle>新建教师</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>工号</Label><Input placeholder="请输入工号" /></div>
-              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" /></div>
+              <div className="space-y-2"><Label>工号</Label><Input placeholder="请输入工号" value={cEmployeeId} onChange={(e) => setCEmployeeId(e.target.value)} /></div>
+              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" value={cName} onChange={(e) => setCName(e.target.value)} /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>性别</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+                <Select value={cGender} onValueChange={setCGender}><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
               </div>
               <div className="space-y-2"><Label>所属院系</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                <Select value={cDept} onValueChange={setCDept}><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>职称</Label><Input placeholder="如 副教授" /></div>
-              <div className="space-y-2"><Label>学历</Label><Input placeholder="如 博士" /></div>
+              <div className="space-y-2"><Label>职称</Label><Input placeholder="如 副教授" value={cTitle} onChange={(e) => setCTitle(e.target.value)} /></div>
+              <div className="space-y-2"><Label>学历</Label><Input placeholder="如 博士" value={cEducation} onChange={(e) => setCEducation(e.target.value)} /></div>
             </div>
             <div className="space-y-2">
               <Label>关联角色（可多选）</Label>
               <div className="flex flex-wrap gap-2">
                 {facultyRoles.map((role) => (
                   <label key={role} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
-                    <input type="checkbox" className="h-3.5 w-3.5" />
+                    <input type="checkbox" className="h-3.5 w-3.5" checked={cRoles.includes(role)} onChange={(e) => setCRoles((prev) => e.target.checked ? [...prev, role] : prev.filter((r) => r !== role))} />
                     <span className="text-xs">{role}</span>
                   </label>
                 ))}
@@ -314,12 +441,12 @@ export default function FacultyPage() {
             </div>
             <div className="space-y-2">
               <Label>状态</Label>
-              <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
+              <Select value={cStatus} onValueChange={setCStatus}><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={() => { toast.success('新建教师成功'); setCreateOpen(false) }}>保存</Button>
+            <Button onClick={handleCreate}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -331,27 +458,27 @@ export default function FacultyPage() {
           {selectedFaculty && (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>工号</Label><Input defaultValue={selectedFaculty.employeeId} /></div>
-                <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedFaculty.name} /></div>
+                <div className="space-y-2"><Label>工号</Label><Input value={eEmployeeId} onChange={(e) => setEEmployeeId(e.target.value)} /></div>
+                <div className="space-y-2"><Label>姓名</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>性别</Label>
-                  <Select defaultValue={selectedFaculty.gender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+                  <Select value={eGender} onValueChange={setEGender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
                 </div>
                 <div className="space-y-2"><Label>所属院系</Label>
-                  <Select defaultValue={selectedFaculty.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
+                  <Select value={eDept} onValueChange={setEDept}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>职称</Label><Input defaultValue={selectedFaculty.title} /></div>
-                <div className="space-y-2"><Label>学历</Label><Input defaultValue={selectedFaculty.education} /></div>
+                <div className="space-y-2"><Label>职称</Label><Input value={eTitle} onChange={(e) => setETitle(e.target.value)} /></div>
+                <div className="space-y-2"><Label>学历</Label><Input value={eEducation} onChange={(e) => setEEducation(e.target.value)} /></div>
               </div>
               <div className="space-y-2">
                 <Label>关联角色（可多选）</Label>
                 <div className="flex flex-wrap gap-2">
                   {facultyRoles.map((role) => (
                     <label key={role} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
-                      <input type="checkbox" className="h-3.5 w-3.5" defaultChecked={selectedFaculty.roles?.includes(role)} />
+                      <input type="checkbox" className="h-3.5 w-3.5" checked={eRoles.includes(role)} onChange={(e) => setERoles((prev) => e.target.checked ? [...prev, role] : prev.filter((r) => r !== role))} />
                       <span className="text-xs">{role}</span>
                     </label>
                   ))}
@@ -359,13 +486,13 @@ export default function FacultyPage() {
               </div>
               <div className="space-y-2">
                 <Label>状态</Label>
-                <Select defaultValue={selectedFaculty.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
+                <Select value={eStatus} onValueChange={setEStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
-            <Button onClick={() => { toast.success('保存成功'); setEditOpen(false) }}>保存</Button>
+            <Button onClick={handleSaveEdit}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -478,16 +605,7 @@ export default function FacultyPage() {
             <Button variant="outline" onClick={() => setHireMentorOpen(false)}>取消</Button>
             <Button
               disabled={!selectedMentorCandidate}
-              onClick={() => {
-                if (!selectedMentorCandidate) return
-                toast.success(`已成功聘任 ${selectedMentorCandidate.name} 为企业导师`)
-                setHireMentorOpen(false)
-                setSelectedMentorCandidate(null)
-                setMentorCompany('')
-                setMentorPosition('')
-                setMentorYears('')
-                setMentorField('')
-              }}
+              onClick={handleHireMentor}
             >
               确认聘任
             </Button>

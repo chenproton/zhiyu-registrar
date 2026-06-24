@@ -567,7 +567,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
         </ScrollArea>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>取消</Button>
-          <Button onClick={onClose}>创建任务</Button>
+          <Button onClick={() => { toast.success('创建任务成功'); onClose() }}>创建任务</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

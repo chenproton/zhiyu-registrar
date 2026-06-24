@@ -51,6 +51,7 @@ import {
   PenTool,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import {
   tasks,
   classes,
@@ -280,7 +281,7 @@ export default function TaskDetailPage() {
     draft: [{ label: '基本信息完整', check: checkBasicInfo, hint: '请完善任务基本信息' }],
     ready: [
       { label: '备课已完成', check: checkPrepCompleted, hint: '请先完成备课' },
-      ...(task?.type === 'scene' ? [{ label: '子任务已就绪', check: checkSceneSubTasksReady, hint: '请确认所有子任务已非计划中状态' }] : []),
+      ...(task?.type === 'scene' || task?.type === 'hybrid' ? [{ label: '子任务已就绪', check: checkSceneSubTasksReady, hint: '请确认所有子任务已非计划中状态' }] : []),
     ],
     published: [],
     in_progress: [{ label: '全部课堂已上完', check: checkAllSessionsHeld, hint: '请先完成所有课堂记录' }],
@@ -513,15 +514,17 @@ export default function TaskDetailPage() {
                 <div>
                   <p className="text-muted-foreground text-xs">类型</p>
                   <p className="font-medium">
-                    {task.externalPlatformType === 'course'
-                      ? '课程'
-                      : task.externalPlatformType === 'scene'
-                        ? '实践场景'
-                        : task.type === 'traditional'
-                          ? '课程'
-                          : task.type === 'scene'
-                            ? '实践场景'
-                            : '—'}
+                    {task.type === 'hybrid'
+                      ? '混合式课程'
+                      : task.externalPlatformType === 'course'
+                        ? '课程'
+                        : task.externalPlatformType === 'scene'
+                          ? '实践场景'
+                          : task.type === 'traditional'
+                            ? '课程'
+                            : task.type === 'scene'
+                              ? '实践场景'
+                              : '—'}
                   </p>
                 </div>
                 <div>

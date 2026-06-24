@@ -8,9 +8,22 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Clock, MapPin, Users, Search, Filter, X } from 'lucide-react'
 import { tasks, classes, venues, faculty } from '@/lib/mock-data'
+import type { Task } from '@/lib/mock-data'
 
 const days = ['周一', '周二', '周三', '周四', '周五']
 const periods = ['上午 1', '上午 2', '上午 3', '上午 4', '下午 1', '下午 2', '下午 3', '下午 4']
+
+function taskTypeStyle(task: Task) {
+  if (task.type === 'hybrid') return 'bg-purple-50 border border-purple-100'
+  if (task.type === 'scene') return 'bg-orange-50 border border-orange-100'
+  return 'bg-blue-50 border border-blue-100'
+}
+
+function taskTypeDot(task: Task) {
+  if (task.type === 'hybrid') return 'bg-purple-400'
+  if (task.type === 'scene') return 'bg-orange-400'
+  return 'bg-blue-400'
+}
 
 export default function SecretarySchedulingPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -128,9 +141,7 @@ export default function SecretarySchedulingPage() {
                                 key={task.id}
                                 className={cn(
                                   'text-xs rounded px-2 py-1.5 space-y-0.5',
-                                  task.type === 'scene'
-                                    ? 'bg-orange-50 border border-orange-100'
-                                    : 'bg-blue-50 border border-blue-100'
+                                  taskTypeStyle(task)
                                 )}
                               >
                                 <div className="font-medium">{task.courseName}</div>
@@ -162,7 +173,7 @@ export default function SecretarySchedulingPage() {
             <div className="space-y-2">
               {filteredTasks.map((task) => (
                 <div key={task.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
-                  <div className={cn('w-2 h-2 rounded-full shrink-0', task.type === 'scene' ? 'bg-orange-400' : 'bg-blue-400')} />
+                  <div className={cn('w-2 h-2 rounded-full shrink-0', taskTypeDot(task))} />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium">{task.courseName}</div>
                     <div className="text-xs text-muted-foreground">
@@ -178,8 +189,9 @@ export default function SecretarySchedulingPage() {
       )}
 
       {/* 统计 */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-5 gap-4">
         <Card><CardContent className="p-4"><div className="text-2xl font-bold">{tasks.length}</div><div className="text-xs text-muted-foreground">总教学任务</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-2xl font-bold">{tasks.filter((t) => t.type === 'hybrid').length}</div><div className="text-xs text-muted-foreground">混合式任务</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-2xl font-bold">{classes.length}</div><div className="text-xs text-muted-foreground">班级数</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-2xl font-bold">{faculty.length}</div><div className="text-xs text-muted-foreground">任课教师</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-2xl font-bold">{venues.length}</div><div className="text-xs text-muted-foreground">教学场地</div></CardContent></Card>

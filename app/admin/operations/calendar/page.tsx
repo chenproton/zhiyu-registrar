@@ -232,7 +232,7 @@ export default function CalendarPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setScheduleDialogOpen(false)}>取消</Button>
-            <Button onClick={() => setScheduleDialogOpen(false)}>保存</Button>
+            <Button onClick={() => { toast.success('节次保存成功'); setScheduleDialogOpen(false) }}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

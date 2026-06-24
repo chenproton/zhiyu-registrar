@@ -364,8 +364,12 @@ export interface CoursePlan {
   theoryHours?: number
   /** 新增：实践学时 */
   practiceHours?: number
+  /** 新增：线上学时（混合式课程） */
+  onlineHours?: number
+  /** 新增：线下学时（混合式课程） */
+  offlineHours?: number
   semester: number
-  nature: '必修' | '选修' | '实践' | '场景'
+  nature: '必修' | '选修' | '实践' | '场景' | '混合式'
   assessment: '考试' | '考查' | '论文' | '作品' | '场景测评'
   version: string
   /** 新增：课程类别，如「公共基础必修」「专业核心」 */
@@ -382,12 +386,14 @@ export interface CoursePlan {
   typicalTasks?: string
   /** 新增：教学内容与要求 */
   contentRequirements?: string
-  /** 新增：类型（课程/场景） */
-  courseType?: '课程' | '场景'
+  /** 新增：类型（课程/场景/混合式） */
+  courseType?: '课程' | '场景' | '混合式'
   /** 新增：子分类（必修/限选/任选/专业基础/专业核心/专业拓展/专业实践） */
   subCategory?: string
   /** 新增：课程类型（如公共基础必修课程/专业核心课程等） */
   courseTypeLabel?: string
+  /** 新增：是否混合式课程 */
+  isHybrid?: boolean
 }
 
 /** 全局课程类型配置（可在表格顶部增删改） */
@@ -398,10 +404,11 @@ export const defaultCourseTypes = [
   '专业基础课程',
   '专业核心课程',
   '专业拓展课程',
+  '混合式课程',
 ]
 
 /** 全局课程性质配置（可在 /admin/programs 页面增删改） */
-export const courseNatures = ['必修', '选修', '实践']
+export const courseNatures = ['必修', '选修', '实践', '混合式']
 
 export interface TrainingProgram {
   // ===== 基本信息（保留旧字段兼容）=====
@@ -560,6 +567,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co-se-14', name: '系统架构设计', code: 'SE301', credits: 3, hours: 48, semester: 6, nature: '必修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程' },
       { id: 'co-se-15', name: '大数据技术基础', code: 'BD101', credits: 3, hours: 48, semester: 6, nature: '选修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业拓展课程' },
       { id: 'co-se-16', name: '云计算与容器技术', code: 'CLOUD101', credits: 3, hours: 48, semester: 7, nature: '选修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业拓展课程' },
+      { id: 'co-hyb-01', name: 'Web前端开发混合课程', code: 'HYB101', credits: 3, hours: 48, semester: 4, nature: '混合式', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程', onlineHours: 20, offlineHours: 28, isHybrid: true },
+      { id: 'co-hyb-02', name: '软件测试技术混合课程', code: 'HYB102', credits: 3, hours: 48, semester: 5, nature: '混合式', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业核心课程', onlineHours: 16, offlineHours: 32, isHybrid: true },
     ],
     practiceScenes: [
       { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
@@ -599,6 +608,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co-se-15', name: '大数据技术基础', code: 'BD101', credits: 3, hours: 48, semester: 6, nature: '选修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业拓展课程' },
       { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0', courseType: '场景' },
       { id: 'co-se-16', name: '云计算与容器技术', code: 'CLOUD101', credits: 3, hours: 48, semester: 7, nature: '选修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业拓展课程' },
+      { id: 'co-hyb-01', name: 'Web前端开发混合课程', code: 'HYB101', credits: 3, hours: 48, semester: 4, nature: '混合式', assessment: '考查', version: 'v1.0', courseType: '混合式', courseTypeLabel: '专业核心课程', onlineHours: 20, offlineHours: 28, isHybrid: true },
+      { id: 'co-hyb-02', name: '软件测试技术混合课程', code: 'HYB102', credits: 3, hours: 48, semester: 5, nature: '混合式', assessment: '考查', version: 'v1.0', courseType: '混合式', courseTypeLabel: '专业核心课程', onlineHours: 16, offlineHours: 32, isHybrid: true },
       { id: 'ps-se-05', name: '企业项目实战', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0', courseType: '场景' },
       { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0', courseType: '场景' },
       { id: 'ps-se-06', name: '创新创业实践', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0', courseType: '场景' },
@@ -2460,7 +2471,7 @@ export type TaskStatus =
   | 'completed'
   | 'archived'
 
-export type TaskType = 'traditional' | 'scene'
+export type TaskType = 'traditional' | 'scene' | 'hybrid'
 export type TaskSource = 'imported' | 'manual'
 
 export interface TaskResource {
@@ -2734,7 +2745,7 @@ export interface TaskStudentGrade {
     score: number
     maxScore: number
     status: 'pending' | 'published'
-    source: 'course_platform' | 'scene_platform' | 'manual'
+    source: 'course_platform' | 'scene_platform' | 'manual' | 'mixed'
     syncedAt?: string
   }[]
   totalScore?: number
@@ -3261,6 +3272,137 @@ export const tasks: Task[] = [
     createdAt: '2026-08-15',
     updatedAt: '2026-10-15',
     publishedAt: '2026-08-25',
+  },
+  // 混合式教学任务
+  {
+    id: 'task-hyb-001',
+    code: 'T-SE2026A-HYB101-001',
+    name: '软件工程2026级1班-Web前端开发混合课程',
+    type: 'hybrid',
+    source: 'imported',
+    status: 'published',
+    termId: 't1',
+    courseName: 'Web前端开发混合课程',
+    courseCode: 'HYB101',
+    courseVersion: 'v1.0',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f1',
+    facultyName: '周建国',
+    dayOfWeek: 2,
+    periods: ['下午 1', '下午 2'],
+    weeks: '1-16周',
+    venueId: 'v3',
+    venueName: 'B201 计算机机房',
+    externalPlatformId: 'hyb-1',
+    externalPlatformType: 'course',
+    resources: [],
+    syllabus: 'Web前端开发线上线下混合式课程，课前线上预习，课中线下项目实训。',
+    objectives: ['掌握HTML/CSS/JS基础', '能完成前端项目开发'],
+    progressSummary: {
+      plannedHours: 48,
+      completedHours: 24,
+      completionRate: 50,
+      studentAvgCompletion: 78,
+      studentCount: 42,
+      completedStudentCount: 30,
+      dataSource: 'mixed',
+      lastSyncAt: '2026-10-15T08:00:00Z',
+    },
+    gradeSummary: {
+      taskId: 'task-hyb-001',
+      classId: 'c1',
+      facultyId: 'f1',
+      components: [
+        { type: 'usual', typeLabel: '平时', weight: 0.4, status: 'published', recordCount: 42, totalStudents: 42 },
+        { type: 'practice', typeLabel: '实践', weight: 0.3, status: 'published', recordCount: 42, totalStudents: 42 },
+        { type: 'final', typeLabel: '期末', weight: 0.3, status: 'pending', recordCount: 0, totalStudents: 42 },
+      ],
+      overallStatus: 'evaluating',
+    },
+    classSessions: [
+      { id: 'cs-hyb-001', taskId: 'task-hyb-001', sessionNumber: 1, scheduledDate: '2026-09-02', actualDate: '2026-09-02', status: 'held', attendanceCount: 40, absentStudentIds: ['s3'], topic: '课程导论与HTML基础', notes: '线上线下混合模式导入', resourcesUsed: [], createdAt: '2026-09-02' },
+    ],
+    studentGrades: [
+      { studentId: 's1', studentName: '李明', components: [
+        { type: 'usual', typeLabel: '平时', score: 88, maxScore: 100, status: 'published', source: 'mixed', syncedAt: '2026-10-15T08:00:00Z' },
+        { type: 'practice', typeLabel: '实践', score: 85, maxScore: 100, status: 'published', source: 'mixed', syncedAt: '2026-10-15T08:00:00Z' },
+        { type: 'final', typeLabel: '期末', score: 0, maxScore: 100, status: 'pending', source: 'manual' },
+      ], totalScore: 86, totalStatus: 'pending' },
+    ],
+    createdAt: '2026-08-15',
+    updatedAt: '2026-10-15',
+    publishedAt: '2026-08-25',
+    prepContent: {
+      pre: { objectives: '预习HTML/CSS基础', guidePlan: '观看微课与完成课前测验', previewQuestions: [] },
+      in: { coursewareResources: [], quizQuestions: [], discussionTopics: ['响应式布局设计'] },
+      post: { homework: '完成个人主页项目', quizQuestions: [], extensionResources: [] },
+    },
+  },
+  {
+    id: 'task-hyb-002',
+    code: 'T-SE2026A-HYB102-001',
+    name: '软件工程2026级1班-软件测试技术混合课程',
+    type: 'hybrid',
+    source: 'imported',
+    status: 'published',
+    termId: 't1',
+    courseName: '软件测试技术混合课程',
+    courseCode: 'HYB102',
+    courseVersion: 'v1.0',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f2',
+    facultyName: '吴晓敏',
+    dayOfWeek: 3,
+    periods: ['上午 3', '上午 4'],
+    weeks: '1-16周',
+    venueId: 'v3',
+    venueName: 'B201 计算机机房',
+    externalPlatformId: 'hyb-2',
+    externalPlatformType: 'course',
+    resources: [],
+    syllabus: '软件测试技术线上线下混合式课程，结合场景任务进行实践。',
+    objectives: ['掌握测试用例设计', '能使用自动化测试工具'],
+    progressSummary: {
+      plannedHours: 48,
+      completedHours: 20,
+      completionRate: 42,
+      studentAvgCompletion: 70,
+      studentCount: 42,
+      completedStudentCount: 25,
+      dataSource: 'mixed',
+      lastSyncAt: '2026-10-15T08:00:00Z',
+    },
+    gradeSummary: {
+      taskId: 'task-hyb-002',
+      classId: 'c1',
+      facultyId: 'f2',
+      components: [
+        { type: 'usual', typeLabel: '平时', weight: 0.4, status: 'published', recordCount: 42, totalStudents: 42 },
+        { type: 'practice', typeLabel: '实践', weight: 0.3, status: 'pending', recordCount: 0, totalStudents: 42 },
+        { type: 'final', typeLabel: '期末', weight: 0.3, status: 'pending', recordCount: 0, totalStudents: 42 },
+      ],
+      overallStatus: 'evaluating',
+    },
+    classSessions: [
+      { id: 'cs-hyb-002', taskId: 'task-hyb-002', sessionNumber: 1, scheduledDate: '2026-09-03', actualDate: '2026-09-03', status: 'held', attendanceCount: 41, absentStudentIds: [], topic: '测试基础与黑盒测试', notes: '线上预习数据良好', resourcesUsed: [], createdAt: '2026-09-03' },
+    ],
+    studentGrades: [
+      { studentId: 's2', studentName: '王芳', components: [
+        { type: 'usual', typeLabel: '平时', score: 90, maxScore: 100, status: 'published', source: 'mixed', syncedAt: '2026-10-15T08:00:00Z' },
+        { type: 'practice', typeLabel: '实践', score: 0, maxScore: 100, status: 'pending', source: 'manual' },
+        { type: 'final', typeLabel: '期末', score: 0, maxScore: 100, status: 'pending', source: 'manual' },
+      ], totalStatus: 'pending' },
+    ],
+    createdAt: '2026-08-15',
+    updatedAt: '2026-10-15',
+    publishedAt: '2026-08-25',
+    prepContent: {
+      pre: { objectives: '预习黑盒测试方法', guidePlan: '观看微课', previewQuestions: [] },
+      in: { coursewareResources: [], quizQuestions: [], discussionTopics: ['等价类划分'] },
+      post: { homework: '设计测试用例', quizQuestions: [], extensionResources: [] },
+    },
   },
   // 场景教学任务（含细分安排）
   {
@@ -5461,7 +5603,7 @@ export interface SyllabusChapter {
 }
 
 export type SyllabusStatus = 'draft' | 'generated' | 'editing' | 'finalized'
-export type SyllabusType = 'theory' | 'practice' | 'scene'
+export type SyllabusType = 'theory' | 'practice' | 'scene' | 'hybrid'
 
 export interface Syllabus {
   id: string
@@ -5523,11 +5665,15 @@ export interface PlanCourseEntry {
   courseId: string
   courseName: string
   courseCode: string
-  type: 'theory' | 'practice' | 'scene'
-  nature: '必修' | '选修' | '实践' | '场景'
+  type: 'theory' | 'practice' | 'scene' | 'hybrid'
+  nature: '必修' | '选修' | '实践' | '场景' | '混合式'
   courseTypeLabel?: string
   credits: number
   totalHours: number
+  /** 新增：线上学时 */
+  onlineHours?: number
+  /** 新增：线下学时 */
+  offlineHours?: number
   semester: number
   weekHours: number
   startWeek: number
@@ -5650,7 +5796,7 @@ export interface CourseLaunchRecord {
   id: string
   taskId: string
   taskName: string
-  taskType: 'traditional' | 'scene'
+  taskType: 'traditional' | 'scene' | 'hybrid'
   courseName: string
   classId: string
   className: string
@@ -6098,6 +6244,34 @@ export const courseLaunchRecords: CourseLaunchRecord[] = [
     },
     studentVisibility: false,
     notes: '等待备课完成',
+  },
+  {
+    id: 'launch-hyb-001',
+    taskId: 'task-hyb-001',
+    taskName: 'Web前端开发混合课程-第1次课',
+    taskType: 'hybrid',
+    courseName: 'Web前端开发混合课程',
+    classId: 'c1',
+    className: '软件工程2026级1班',
+    facultyId: 'f1',
+    facultyName: '周建国',
+    venueId: 'v3',
+    venueName: 'B201 计算机机房',
+    dayOfWeek: 2,
+    periods: [7, 8],
+    weeks: '1-16',
+    launchStatus: 'launched',
+    prepStatus: 'completed',
+    checklist: {
+      prepCompleted: true,
+      venueConfirmed: true,
+      studentsNotified: true,
+      materialsReady: true,
+      equipmentChecked: true,
+    },
+    launchedAt: '2025-09-03',
+    studentVisibility: true,
+    notes: '混合式课程已开课，线上线下同步',
   },
 ]
 

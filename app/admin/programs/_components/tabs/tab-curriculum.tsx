@@ -228,6 +228,7 @@ export default function TabCurriculum({
   const filteredCourses = useMemo(() => {
     if (activeFilter === '全部') return curriculum
     if (activeFilter === '场景') return curriculum.filter((c) => c.courseType === '场景')
+    if (activeFilter === '混合式') return curriculum.filter((c) => c.courseType === '混合式')
     return curriculum.filter((c) => c.courseTypeLabel === activeFilter)
   }, [curriculum, activeFilter])
 
@@ -381,6 +382,13 @@ export default function TabCurriculum({
       >
         场景 ({curriculum.filter((c) => c.courseType === '场景').length})
       </Button>
+      <Button
+        variant={activeFilter === '混合式' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => setActiveFilter('混合式')}
+      >
+        混合式 ({curriculum.filter((c) => c.courseType === '混合式').length})
+      </Button>
       {courseTypes.map((type) => {
         const count = curriculum.filter((c) => c.courseTypeLabel === type).length
         return (
@@ -435,6 +443,7 @@ export default function TabCurriculum({
               <TableHead className="w-48">课程（场景）名称</TableHead>
               <TableHead className="w-20">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
+              <TableHead className="w-32">线上/线下学时</TableHead>
               <TableHead className="w-24">性质</TableHead>
               <TableHead className="w-32"></TableHead>
             </TableRow>
@@ -454,8 +463,10 @@ export default function TabCurriculum({
                       value={c.courseType || '课程'}
                       onValueChange={(v) => {
                         const isSceneNew = v === '场景'
+                        const isHybridNew = v === '混合式'
                         updateCourse(realIndex, {
-                          courseType: v as '课程' | '场景',
+                          courseType: v as '课程' | '场景' | '混合式',
+                          nature: isHybridNew ? '混合式' : c.nature,
                           courseTypeLabel: isSceneNew ? '' : (c.courseTypeLabel || courseTypes[0]),
                         })
                         if (isSceneNew) {
@@ -469,6 +480,7 @@ export default function TabCurriculum({
                       <SelectContent>
                         <SelectItem value="课程">课程</SelectItem>
                         <SelectItem value="场景">场景</SelectItem>
+                        <SelectItem value="混合式">混合式</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -569,11 +581,35 @@ export default function TabCurriculum({
                     />
                   </TableCell>
 
+                  {/* 线上/线下学时（混合式） */}
+                  <TableCell>
+                    {c.courseType === '混合式' ? (
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={c.onlineHours || 0}
+                          onChange={(e) => updateCourse(realIndex, { onlineHours: Number(e.target.value) })}
+                          className="h-8 text-xs w-16"
+                          placeholder="线上"
+                        />
+                        <Input
+                          type="number"
+                          value={c.offlineHours || 0}
+                          onChange={(e) => updateCourse(realIndex, { offlineHours: Number(e.target.value) })}
+                          className="h-8 text-xs w-16"
+                          placeholder="线下"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+
                   {/* 性质 */}
                   <TableCell>
                     <Select
-                      value={c.subCategory || courseNatures[0] || '必修'}
-                      onValueChange={(v) => updateCourse(realIndex, { subCategory: v })}
+                      value={c.nature || c.subCategory || courseNatures[0] || '必修'}
+                      onValueChange={(v) => updateCourse(realIndex, { nature: v as CoursePlan['nature'], subCategory: v })}
                     >
                       <SelectTrigger className="h-8 text-xs w-24">
                         <SelectValue />

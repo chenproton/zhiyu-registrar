@@ -217,9 +217,9 @@ function SceneTaskTab() {
       all = sceneStudents.length
     }
     return {
-      all,
-      pending: sceneStudents.filter((s) => s.status === 'pending').length,
-      graded: sceneStudents.filter((s) => s.status === 'graded').length,
+      allCount: all,
+      pendingCount: sceneStudents.filter((s) => s.status === 'pending').length,
+      gradedCount: sceneStudents.filter((s) => s.status === 'graded').length,
     }
   }, [searchQuery, methodFilter])
 
@@ -332,9 +332,9 @@ function OnlineClassroomTab() {
   }, [searchQuery, statusFilter])
 
   const statusCounts = useMemo(() => ({
-    all: classroomStudents.length,
-    pending: classroomStudents.filter((s) => s.status === 'pending').length,
-    graded: classroomStudents.filter((s) => s.status === 'graded').length,
+    allCount: classroomStudents.length,
+    pendingCount: classroomStudents.filter((s) => s.status === 'pending').length,
+    gradedCount: classroomStudents.filter((s) => s.status === 'graded').length,
   }), [])
 
   return (

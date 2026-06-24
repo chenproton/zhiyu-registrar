@@ -16,6 +16,7 @@ const TeachingPlanContext = createContext<TeachingPlanContextType | null>(null)
 function determineVenueType(course: CoursePlan): PlanCourseEntry['venueTypeRequired'] {
   if (course.nature === '场景') return '校外基地'
   if (course.nature === '实践') return '实训室'
+  if (course.nature === '混合式') return '机房'
   if (course.code.startsWith('CS') || course.code.startsWith('AI') || course.code.startsWith('DS')) return '机房'
   return '教室'
 }
@@ -27,6 +28,7 @@ function buildEntryFromCourse(
 ): PlanCourseEntry {
   const isScene = course.nature === '场景'
   const isPractice = course.nature === '实践' || isScene
+  const isHybrid = course.nature === '混合式' || course.isHybrid
   const weekHours = Math.max(1, Math.ceil(course.hours / 16))
   const endWeek = Math.min(16, Math.ceil(course.hours / weekHours))
 
@@ -35,10 +37,12 @@ function buildEntryFromCourse(
     courseId: course.id,
     courseName: course.name,
     courseCode: course.code,
-    type: isScene ? 'scene' : isPractice ? 'practice' : 'theory',
+    type: isHybrid ? 'hybrid' : isScene ? 'scene' : isPractice ? 'practice' : 'theory',
     nature: course.nature,
     credits: course.credits,
     totalHours: course.hours,
+    onlineHours: course.onlineHours ?? (isHybrid ? Math.round(course.hours * 0.4) : 0),
+    offlineHours: course.offlineHours ?? (isHybrid ? Math.round(course.hours * 0.6) : course.hours),
     semester: course.semester,
     weekHours,
     startWeek: 1,
@@ -73,15 +77,17 @@ export function TeachingPlanProvider({ children }: { children: React.ReactNode }
       const allCourses = (program.courses.length > 0 || program.practiceScenes.length > 0)
         ? [...program.courses, ...program.practiceScenes]
         : program.curriculum
-          ? [
-              ...program.curriculum.publicBasic.required,
-              ...program.curriculum.publicBasic.limitedElective,
-              ...program.curriculum.publicBasic.freeElective,
-              ...program.curriculum.professional.basic,
-              ...program.curriculum.professional.core,
-              ...program.curriculum.professional.extended,
-              ...program.curriculum.professional.practice,
-            ]
+          ? (Array.isArray(program.curriculum)
+              ? program.curriculum
+              : [
+                  ...((program.curriculum as unknown as Record<string, unknown>).publicBasic as { required: CoursePlan[] }).required,
+                  ...((program.curriculum as unknown as Record<string, unknown>).publicBasic as { limitedElective: CoursePlan[] }).limitedElective,
+                  ...((program.curriculum as unknown as Record<string, unknown>).publicBasic as { freeElective: CoursePlan[] }).freeElective,
+                  ...((program.curriculum as unknown as Record<string, unknown>).professional as { basic: CoursePlan[] }).basic,
+                  ...((program.curriculum as unknown as Record<string, unknown>).professional as { core: CoursePlan[] }).core,
+                  ...((program.curriculum as unknown as Record<string, unknown>).professional as { extended: CoursePlan[] }).extended,
+                  ...((program.curriculum as unknown as Record<string, unknown>).professional as { practice: CoursePlan[] }).practice,
+                ])
           : []
       const now = new Date().toISOString()
 

@@ -34,11 +34,19 @@ export const secretaryNavigationConfig: PlatformNavigationConfig = {
       matchers: ["/secretary$"],
     },
     {
-      id: "operations-view",
-      label: "教学运行查看",
-      icon: "calendar",
+      id: "teaching-plan",
+      label: "教学计划与开课",
+      icon: "layers3",
       children: [
         { id: "teaching-plans", label: "教学计划", href: "/secretary/teaching-plans", matchers: ["/secretary/teaching-plans"] },
+        { id: "course-launch", label: "开课计划申报", href: "/secretary/course-launch", matchers: ["/secretary/course-launch"] },
+      ],
+    },
+    {
+      id: "operations-view",
+      label: "排课与教学运行",
+      icon: "calendar",
+      children: [
         { id: "scheduling", label: "排课查看", href: "/secretary/scheduling", matchers: ["/secretary/scheduling"] },
         { id: "teacher-schedules", label: "教师课表", href: "/secretary/teacher-schedules", matchers: ["/secretary/teacher-schedules"] },
       ],
