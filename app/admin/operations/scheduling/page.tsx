@@ -92,7 +92,8 @@ import {
 // ============================================
 const steps = [
   { id: 'schedule', label: '教学节次配置', icon: Clock },
-  { id: 'orchestration', label: '场景排课调整', icon: Settings2 },
+  { id: 'import', label: '导入排课结果', icon: FileSpreadsheet },
+  { id: 'custom', label: '自定义排课', icon: Settings2 },
   { id: 'export', label: '课表同步推送', icon: Download },
 ]
 
@@ -574,7 +575,120 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 // ============================================
-// Step 5: 课表导出
+// Step 2: 导入排课结果
+// ============================================
+function ImportScheduleTab({ onImported }: { onImported?: () => void }) {
+  const [importOpen, setImportOpen] = useState(false)
+  const [text, setText] = useState('')
+  const [previewCount, setPreviewCount] = useState(0)
+  const [imported, setImported] = useState(false)
+
+  const handleParse = () => {
+    if (!text.trim()) {
+      toast.error('请输入数据')
+      return
+    }
+    const lines = text.trim().split('\n').filter((l) => l.trim())
+    setPreviewCount(lines.length)
+    toast.success(`解析成功，共 ${lines.length} 条记录`)
+  }
+
+  const handleConfirm = () => {
+    if (previewCount === 0) {
+      toast.error('请先解析数据')
+      return
+    }
+    setImported(true)
+    toast.success(`成功导入 ${previewCount} 条排课记录，请继续点击下一步进入自定义排课`)
+    onImported?.()
+    setImportOpen(false)
+    setText('')
+    setPreviewCount(0)
+  }
+
+  const handleClose = () => {
+    setImportOpen(false)
+    setText('')
+    setPreviewCount(0)
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileSpreadsheet className="h-5 w-5 text-green-600" />
+            导入排课结果
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            下载标准模板并填写排课数据后，导入系统即可进入自定义排课调整。
+          </p>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="gap-2" onClick={() => toast.success('模板下载中...')}>
+              <Download className="h-4 w-4" />
+              下载模板
+            </Button>
+            <Button className="gap-2" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" />
+              导入排课Excel
+            </Button>
+          </div>
+          {imported && (
+            <div className="rounded-lg border bg-green-50 p-4 text-sm text-green-700 flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">导入成功</p>
+                <p className="text-green-600 mt-1">请点击下方步骤导航的“下一步”，进入“自定义排课”继续调整。</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-green-600" />
+              导入排课Excel
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">数据格式</p>
+              <p>每行一条排课记录，字段用逗号分隔：</p>
+              <p className="font-mono bg-white border rounded px-2 py-1">班级名称, 课程名称, 教师姓名, 星期, 节次, 周次, 场地</p>
+              <p>示例：</p>
+              <p className="font-mono bg-white border rounded px-2 py-1">软件工程2026级1班, 程序设计基础, 周建国, 周一, 1-2, 1-16, 计算机楼A101</p>
+            </div>
+            <div className="space-y-2">
+              <Label>粘贴Excel数据</Label>
+              <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="在此粘贴排课数据..." rows={8} />
+              <Button variant="outline" size="sm" onClick={handleParse}>
+                <Upload className="h-3.5 w-3.5 mr-1" />
+                解析数据
+              </Button>
+            </div>
+            {previewCount > 0 && (
+              <div className="rounded-lg border bg-green-50 p-2 text-xs text-green-700">
+                已解析 {previewCount} 条记录，点击确认导入
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleClose}>取消</Button>
+            <Button onClick={handleConfirm} disabled={previewCount === 0}>确认导入</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+// ============================================
+// Step 4: 课表导出
 // ============================================
 function ExportTab({ selectedGrade }: { selectedGrade: string }) {
   const [exportType, setExportType] = useState('class')
@@ -1028,8 +1142,9 @@ export default function SchedulingCenterPage() {
         ) : (
           <>
             {currentStep === 0 && <ClassScheduleTab />}
-            {currentStep === 1 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
-            {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
+            {currentStep === 1 && <ImportScheduleTab />}
+            {currentStep === 2 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
+            {currentStep === 3 && <ExportTab selectedGrade={selectedGrade} />}
           </>
         )}
       </div>
