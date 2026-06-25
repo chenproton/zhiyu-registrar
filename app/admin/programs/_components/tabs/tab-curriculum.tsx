@@ -406,8 +406,8 @@ export default function TabCurriculum({
               <TableHead className="w-24"></TableHead>
               <TableHead className="w-44">课程课时类型</TableHead>
               <TableHead className="w-28">课时代码</TableHead>
-              <TableHead className="w-48">课时名称</TableHead>
-              <TableHead className="w-20">学分</TableHead>
+              <TableHead className="w-64">课时名称</TableHead>
+              <TableHead className="w-24">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
               <TableHead className="w-24">性质</TableHead>
               <TableHead className="w-32"></TableHead>
