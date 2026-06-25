@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -14,6 +15,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
+import { Upload } from 'lucide-react'
 import {
   tasks,
   departments,
@@ -193,7 +196,14 @@ export default function CourseTasksPage() {
 
       {/* 任务列表表格 */}
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-base">开课任务列表</CardTitle>
+          <Button className="gap-1" onClick={() => toast.success('已同步到教师教学空间')}>
+            <Upload className="h-4 w-4" />
+            同步到教师教学空间
+          </Button>
+        </CardHeader>
+        <CardContent className="pt-0">
           <Table>
             <TableHeader>
               <TableRow>
