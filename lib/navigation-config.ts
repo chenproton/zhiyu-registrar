@@ -54,7 +54,7 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       children: [
         { id: "programs", label: "人培方案管理", href: "/admin/programs", matchers: ["/admin/programs", "/admin/programs/import", "/admin/programs/new", "/admin/programs/"] },
         { id: "teaching-plans", label: "教学计划管理", href: "/admin/operations/teaching-plans", matchers: ["/admin/operations/teaching-plans"] },
-        { id: "scheduling", label: "排课课表同步", href: "/admin/operations/scheduling", matchers: ["/admin/operations/scheduling"] },
+        { id: "scheduling", label: "排课课表管理", href: "/admin/operations/scheduling", matchers: ["/admin/operations/scheduling"] },
         { id: "tasks", label: "课时中心", href: "/admin/operations/tasks", matchers: ["/admin/operations/tasks"] },
         { id: "program-progress", label: "教学进度监控", href: "/admin/operations/program-progress", matchers: ["/admin/operations/program-progress"] },
       ],
