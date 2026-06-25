@@ -406,8 +406,8 @@ export default function TabCurriculum({
               <TableHead className="w-24"></TableHead>
               <TableHead className="w-44">课程课时类型</TableHead>
               <TableHead className="w-28">课时代码</TableHead>
-              <TableHead className="w-64">课时名称</TableHead>
-              <TableHead className="w-24">学分</TableHead>
+              <TableHead className="w-96">课时名称</TableHead>
+              <TableHead className="w-32">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
               <TableHead className="w-24">性质</TableHead>
               <TableHead className="w-32"></TableHead>
@@ -470,40 +470,50 @@ export default function TabCurriculum({
 
                   {/* 课程课时（岗位课时）代码 + 名称 */}
                   {isScene ? (
-                    <TableCell colSpan={2}>
-                      {isNewSceneMode ? (
-                        <div className="flex items-center gap-2">
+                    <>
+                      <TableCell>
+                        {isNewSceneMode ? (
                           <Input
                             value={c.code}
                             onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                            className="h-8 text-xs w-28"
+                            className="h-8 text-xs w-full"
                             placeholder="岗位课时编码"
                           />
-                          <Input
-                            value={c.name}
-                            onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
-                            className="h-8 text-xs flex-1"
-                            placeholder="岗位课时名称"
+                        ) : (
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {c.code || '-'}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isNewSceneMode ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              value={c.name}
+                              onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
+                              className="h-8 text-xs flex-1"
+                              placeholder="岗位课时名称"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-xs shrink-0"
+                              onClick={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))}
+                            >
+                              取消
+                            </Button>
+                          </div>
+                        ) : (
+                          <SceneSearchSelect
+                            value={{ code: c.code, name: c.name }}
+                            onSelect={(scene) => {
+                              updateCourse(realIndex, { code: scene.code, name: scene.name })
+                            }}
+                            onNewScene={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: true }))}
                           />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs shrink-0"
-                            onClick={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))}
-                          >
-                            取消
-                          </Button>
-                        </div>
-                      ) : (
-                        <SceneSearchSelect
-                          value={{ code: c.code, name: c.name }}
-                          onSelect={(scene) => {
-                            updateCourse(realIndex, { code: scene.code, name: scene.name })
-                          }}
-                          onNewScene={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: true }))}
-                        />
-                      )}
-                    </TableCell>
+                        )}
+                      </TableCell>
+                    </>
                   ) : (
                     <>
                       <TableCell>
