@@ -51,6 +51,7 @@ import {
   ChevronRight,
   Upload,
   Download,
+  Settings2,
 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
@@ -737,6 +738,31 @@ function EditTaskDialog({
 }
 
 // ==================== Adjust Dialog ====================
+function findPositionConflict(
+  currentTask: Task,
+  allTasks: Task[],
+  venueId: string,
+  week: number,
+  dayOfWeek: number,
+  period: string
+): { type: 'venue' | 'teacher' | 'class'; with: string; taskName: string } | null {
+  return (
+    allTasks
+      .filter((t) => {
+        if (t.id === currentTask.id) return false
+        if (t.dayOfWeek !== dayOfWeek) return false
+        if (!t.periods.includes(period)) return false
+        if (!weekRangeIncludes(t.weeks, week)) return false
+        return t.venueId === venueId || t.facultyId === currentTask.facultyId || t.classId === currentTask.classId
+      })
+      .map((t) => {
+        if (t.venueId === venueId) return { type: 'venue' as const, with: t.venueName, taskName: t.courseName }
+        if (t.facultyId === currentTask.facultyId) return { type: 'teacher' as const, with: t.facultyName, taskName: t.courseName }
+        return { type: 'class' as const, with: t.className, taskName: t.courseName }
+      })[0] || null
+  )
+}
+
 function AdjustTaskDialog({
   open,
   onClose,
@@ -766,10 +792,39 @@ function AdjustTaskDialog({
 
   const selectedVenue = venues.find((v) => v.id === venueId)
 
+  const venueItems = useMemo(
+    () =>
+      venues.map((v) => ({
+        id: v.id,
+        label: v.name,
+        badge: `${allTasks.filter((t) => t.venueId === v.id && weekRangeIncludes(t.weeks, week)).length}节`,
+      })),
+    [allTasks, week]
+  )
+
+  const venueTasks = useMemo(
+    () => allTasks.filter((t) => t.venueId === venueId && weekRangeIncludes(t.weeks, week)),
+    [allTasks, venueId, week]
+  )
+
+  const conflict = useMemo(
+    () => findPositionConflict(task, allTasks, venueId, week, dayOfWeek, period),
+    [task, allTasks, venueId, week, dayOfWeek, period]
+  )
+
+  const isCurrentPosition =
+    venueId === task.venueId && dayOfWeek === task.dayOfWeek && period === task.periods[0] && weekRangeIncludes(task.weeks, week)
+
+  const handleCellClick = (d: number, p: string, occupied: boolean) => {
+    if (occupied) return
+    setDayOfWeek(d)
+    setPeriod(p)
+  }
+
   const handleConfirm = () => {
-    const conflict = findVenueConflict(task, allTasks, venueId, week, dayOfWeek, period)
     if (conflict) {
-      toast.error(`目标日期与场地已有 ${conflict.courseName} 排课安排，请重新选择`)
+      const typeLabel = { venue: '场地', teacher: '教师', class: '班级' }[conflict.type]
+      toast.error(`目标日期与${typeLabel}已有 ${conflict.taskName} 排课安排，请重新选择`)
       return
     }
     const newTask: Task = {
@@ -787,68 +842,197 @@ function AdjustTaskDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>排课调整</DialogTitle>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-2">
+          <DialogTitle className="flex items-center gap-2">
+            <Settings2 className="h-5 w-5" />
+            排课调整 — 选择目标场地与时段
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>场地名称</Label>
-            <Select value={venueId} onValueChange={setVenueId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {venues.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+        <div className="flex-1 min-h-0 flex gap-4 px-6 pb-2">
+          {/* 场地列表 */}
+          <div className="w-[220px] border rounded-lg bg-muted/20 flex flex-col shrink-0">
+            <div className="p-3 border-b font-medium text-sm">场地列表</div>
+            <ScrollArea className="flex-1">
+              {venueItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setVenueId(item.id)}
+                  className={cn(
+                    'w-full text-left px-3 py-2.5 text-sm transition-colors border-l-2',
+                    venueId === item.id
+                      ? 'bg-primary/10 text-primary border-l-primary font-medium'
+                      : 'text-muted-foreground border-l-transparent hover:bg-muted hover:text-foreground'
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate">{item.label}</span>
+                    {item.badge && <span className="text-xs text-muted-foreground shrink-0">{item.badge}</span>}
+                  </div>
+                </button>
+              ))}
+            </ScrollArea>
           </div>
-          <div className="space-y-2">
-            <Label>周次</Label>
-            <Select value={String(week)} onValueChange={(v) => setWeek(parseInt(v, 10))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 16 }, (_, i) => i + 1).map((w) => (
-                  <SelectItem key={w} value={String(w)}>第{w}周</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>周几</Label>
-            <Select value={String(dayOfWeek)} onValueChange={(v) => setDayOfWeek(parseInt(v, 10))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {days.map((d, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>{d}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>节次</Label>
-            <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+
+          {/* 场地课表 */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                <span className="font-medium text-foreground">{selectedVenue?.name}</span>
+                <span className="text-xs">({selectedVenue?.type} · 容量{selectedVenue?.capacity}人)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={week <= 1}
+                  onClick={() => setWeek((w) => Math.max(1, w - 1))}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="text-sm font-medium min-w-[72px] text-center">第{week}周</div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={week >= 16}
+                  onClick={() => setWeek((w) => Math.min(16, w + 1))}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1 border rounded-lg">
+              <div className="min-w-[640px]">
+                <div className="grid grid-cols-8 bg-muted sticky top-0 z-10">
+                  <div className="p-2 text-sm font-medium border-r">节次 / 星期</div>
+                  {days.map((d) => (
+                    <div key={d} className="p-2 text-sm font-medium text-center border-r last:border-r-0">
+                      {d}
+                    </div>
+                  ))}
+                </div>
                 {allPeriods.map((p) => (
-                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                  <div key={p} className="grid grid-cols-8 border-t">
+                    <div className="p-2 text-xs text-muted-foreground border-r bg-muted/30 flex items-center">{p}</div>
+                    {[1, 2, 3, 4, 5, 6, 7].map((d) => {
+                      const cellTask = venueTasks.find((t) => t.dayOfWeek === d && t.periods.includes(p))
+                      const isSelected = dayOfWeek === d && period === p && !cellTask
+                      const isCurrent = isCurrentPosition && task.dayOfWeek === d && task.periods.includes(p)
+                      const cellConflict = !cellTask
+                        ? findPositionConflict(task, allTasks, venueId, week, d, p)
+                        : null
+                      return (
+                        <div
+                          key={d}
+                          className={cn(
+                            'p-1.5 border-r last:border-r-0 min-h-[72px]',
+                            !cellTask && 'bg-muted/20'
+                          )}
+                        >
+                          {cellTask ? (
+                            <div
+                              className={cn(
+                                'w-full h-full rounded p-2 text-xs space-y-1',
+                                isSceneTask(cellTask)
+                                  ? 'bg-orange-50 border border-orange-200'
+                                  : 'bg-blue-50 border border-blue-200',
+                                isCurrent && 'ring-2 ring-primary'
+                              )}
+                            >
+                              <div className="font-medium truncate">{cellTask.courseName}</div>
+                              <div className="text-[10px] text-muted-foreground">{cellTask.facultyName}</div>
+                              <div className="text-[10px] text-muted-foreground">{cellTask.className}</div>
+                              {isCurrent && (
+                                <Badge variant="outline" className="text-[10px] h-4 border-primary text-primary">
+                                  当前
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleCellClick(d, p, false)}
+                              className={cn(
+                                'w-full h-full min-h-[56px] rounded border border-dashed flex flex-col items-center justify-center gap-1 transition-all',
+                                isSelected
+                                  ? 'bg-primary/10 border-primary text-primary'
+                                  : cellConflict
+                                    ? 'border-red-300 bg-red-50/50 text-red-500 hover:bg-red-50'
+                                    : 'border-muted-foreground/20 text-muted-foreground/40 hover:border-primary/40 hover:text-primary/60'
+                              )}
+                            >
+                              {isSelected ? (
+                                <>
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  <span className="text-[10px]">已选择</span>
+                                </>
+                              ) : cellConflict ? (
+                                <>
+                                  <AlertTriangle className="h-4 w-4" />
+                                  <span className="text-[10px]">冲突</span>
+                                </>
+                              ) : (
+                                <Plus className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            </ScrollArea>
+
+            <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded border border-dashed border-primary bg-primary/10" />
+                <span>已选目标位置</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded border border-dashed border-red-300 bg-red-50" />
+                <span>与教师/班级/场地冲突</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded bg-blue-50 border border-blue-200" />
+                <span>已有课程</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-3 h-3 rounded bg-orange-50 border border-orange-200" />
+                <span>已有岗位</span>
+              </div>
+            </div>
           </div>
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
-          <Button onClick={handleConfirm}>确认</Button>
-        </DialogFooter>
+
+        <div className="px-6 py-4 border-t bg-muted/20">
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-sm">
+              <span className="text-muted-foreground">已选择位置：</span>
+              <span className="font-medium">
+                第{week}周 · {days[dayOfWeek - 1]} · {period} · {selectedVenue?.name}
+              </span>
+              {conflict && (
+                <span className="ml-3 text-xs text-red-600">
+                  与{conflict.type === 'venue' ? '场地' : conflict.type === 'teacher' ? '教师' : '班级'}“{conflict.with}”的 {conflict.taskName} 冲突
+                </span>
+              )}
+              {isCurrentPosition && !conflict && (
+                <span className="ml-3 text-xs text-primary">当前课程已处于该位置</span>
+              )}
+            </div>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={onClose}>取消</Button>
+              <Button onClick={handleConfirm} disabled={!!conflict || isCurrentPosition}>
+                确认调整
+              </Button>
+            </DialogFooter>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )
