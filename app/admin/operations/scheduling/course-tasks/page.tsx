@@ -16,11 +16,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import {
-  ClipboardList,
-  BookOpen,
-  Layers,
-  Play,
-  ClipboardCheck,
   Search,
 } from 'lucide-react'
 import {
@@ -90,13 +85,6 @@ export default function CourseTasksPage() {
       return true
     })
   }, [selectedDept, selectedGradeId, selectedMajorId, selectedClassId, filterType, filterFaculty])
-
-  // 统计卡片数据
-  const totalTasks = filteredTasks.length
-  const traditionalTasks = filteredTasks.filter((t) => t.type === 'traditional').length
-  const sceneTasks = filteredTasks.filter((t) => t.type === 'scene').length
-  const inProgressTasks = filteredTasks.filter((t) => t.status === 'in_progress').length
-  const evaluatingTasks = filteredTasks.filter((t) => t.status === 'evaluating').length
 
   return (
     <div className="space-y-6">
@@ -239,65 +227,6 @@ export default function CourseTasksPage() {
             共 {filteredTasks.length} 个开课任务
           </p>
         </div>
-      </div>
-
-      {/* 统计卡片 */}
-      <div className="grid gap-4 md:grid-cols-5">
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">任务总数</p>
-              <p className="text-2xl font-bold">{totalTasks}</p>
-            </div>
-            <div className="rounded-full p-2 bg-blue-500">
-              <ClipboardList className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">体系课任务数</p>
-              <p className="text-2xl font-bold">{traditionalTasks}</p>
-            </div>
-            <div className="rounded-full p-2 bg-emerald-500">
-              <BookOpen className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">颗粒课任务数</p>
-              <p className="text-2xl font-bold">{sceneTasks}</p>
-            </div>
-            <div className="rounded-full p-2 bg-orange-500">
-              <Layers className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">进行中任务数</p>
-              <p className="text-2xl font-bold">{inProgressTasks}</p>
-            </div>
-            <div className="rounded-full p-2 bg-purple-500">
-              <Play className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">待评定任务数</p>
-              <p className="text-2xl font-bold">{evaluatingTasks}</p>
-            </div>
-            <div className="rounded-full p-2 bg-pink-500">
-              <ClipboardCheck className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* 筛选栏 */}
