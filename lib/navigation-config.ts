@@ -54,9 +54,8 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       children: [
         { id: "programs", label: "人培方案管理", href: "/admin/programs", matchers: ["/admin/programs", "/admin/programs/import", "/admin/programs/new", "/admin/programs/"] },
         { id: "teaching-plans", label: "教学计划管理", href: "/admin/operations/teaching-plans", matchers: ["/admin/operations/teaching-plans"] },
-        { id: "scheduling", label: "教学课时调整", href: "/admin/operations/scheduling", matchers: ["/admin/operations/scheduling"] },
-        { id: "approval-management", label: "教学事务审批管理", href: "/admin/operations/approval-management", matchers: ["/admin/operations/approval-management"] },
-        { id: "tasks", label: "教学任务管理", href: "/admin/operations/tasks", matchers: ["/admin/operations/tasks"] },
+        { id: "scheduling", label: "排课课表同步", href: "/admin/operations/scheduling", matchers: ["/admin/operations/scheduling"] },
+        { id: "tasks", label: "课时中心", href: "/admin/operations/tasks", matchers: ["/admin/operations/tasks"] },
         { id: "program-progress", label: "教学进度监控", href: "/admin/operations/program-progress", matchers: ["/admin/operations/program-progress"] },
       ],
     },
@@ -86,6 +85,7 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
       label: "暂不做",
       icon: "circleDashed",
       children: [
+        { id: "approval-management", label: "教学事务审批管理", href: "/admin/operations/approval-management", matchers: ["/admin/operations/approval-management"] },
         { id: "schedule-management", label: "排课管理", href: "/admin/operations/schedule-management", matchers: ["/admin/operations/schedule-management"] },
         { id: "preparation", label: "备课管理", href: "/admin/operations/preparation", matchers: ["/admin/operations/preparation"] },
         { id: "course-launch", label: "开课管理", href: "/admin/operations/course-launch", matchers: ["/admin/operations/course-launch"] },

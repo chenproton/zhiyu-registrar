@@ -36,7 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Plus,
@@ -44,7 +44,6 @@ import {
   CheckCircle2,
   MapPin,
   FileSpreadsheet,
-  Pencil,
   Eye,
   Search,
   ChevronDown,
@@ -71,56 +70,44 @@ import {
 
 const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
+function weekRangeIncludes(weeksStr: string, week: number): boolean {
+  const match = weeksStr.match(/(\d+)-(\d+)周/)
+  if (!match) return false
+  const start = parseInt(match[1], 10)
+  const end = parseInt(match[2], 10)
+  return week >= start && week <= end
+}
+
+function findVenueConflict(
+  currentTask: Task,
+  allTasks: Task[],
+  venueId: string,
+  week: number,
+  dayOfWeek: number,
+  period: string
+): Task | null {
+  return (
+    allTasks.find((t) => {
+      if (t.id === currentTask.id) return false
+      if (t.venueId !== venueId) return false
+      if (t.dayOfWeek !== dayOfWeek) return false
+      if (!t.periods.includes(period)) return false
+      return weekRangeIncludes(t.weeks, week)
+    }) || null
+  )
+}
+
 function isSceneTask(task: Task) {
   return task.type === 'scene' || task.externalPlatformType === 'scene'
-}
-
-// ==================== Conflict Detection ====================
-function periodsOverlap(a: string[], b: string[]) {
-  return a.some((p) => b.includes(p))
-}
-
-function detectConflicts(
-  task: Task,
-  allTasks: Task[],
-  newDayOfWeek?: number,
-  newPeriods?: string[],
-  newVenueId?: string,
-  newFacultyId?: string
-) {
-  const conflicts: { type: 'teacher' | 'venue' | 'class'; with: string; taskName: string }[] = []
-  const targetDay = newDayOfWeek ?? task.dayOfWeek
-  const targetPeriods = newPeriods ?? task.periods
-  const targetVenue = newVenueId ?? task.venueId
-  const targetFaculty = newFacultyId ?? task.facultyId
-  const targetClass = task.classId
-
-  for (const t of allTasks) {
-    if (t.id === task.id) continue
-    if (t.dayOfWeek !== targetDay || !periodsOverlap(t.periods, targetPeriods)) continue
-
-    if (t.facultyId === targetFaculty) {
-      conflicts.push({ type: 'teacher', with: t.facultyName, taskName: t.courseName })
-    }
-    if (t.venueId === targetVenue) {
-      conflicts.push({ type: 'venue', with: t.venueName, taskName: t.courseName })
-    }
-    if (t.classId === targetClass) {
-      conflicts.push({ type: 'class', with: t.className, taskName: t.courseName })
-    }
-  }
-  return conflicts
 }
 
 // ==================== Schedule Grid ====================
 function ScheduleGrid({
   taskList,
-  allTasks,
   onEditTask,
   onCreateTask,
 }: {
   taskList: Task[]
-  allTasks: Task[]
   onEditTask: (task: Task) => void
   onCreateTask?: () => void
 }) {
@@ -139,8 +126,6 @@ function ScheduleGrid({
           <div className="p-3 text-sm text-muted-foreground border-r bg-muted/30">{p}</div>
           {[1, 2, 3, 4, 5, 6, 7].map((d) => {
             const task = taskList.find((e) => e.dayOfWeek === d && e.periods.includes(p))
-            const conflicts = task ? detectConflicts(task, allTasks) : []
-            const hasConflict = conflicts.length > 0
             const scene = task ? isSceneTask(task) : false
             return (
               <div
@@ -155,11 +140,9 @@ function ScheduleGrid({
                     onClick={() => onEditTask(task)}
                     className={cn(
                       'w-full text-left rounded p-2 text-xs space-y-1 transition-all hover:shadow-sm hover:scale-[1.02] cursor-pointer',
-                      hasConflict
-                        ? 'bg-red-50 border border-red-200'
-                        : scene
-                          ? 'bg-orange-50 border border-orange-200'
-                          : 'bg-blue-50 border border-blue-200'
+                      scene
+                        ? 'bg-orange-50 border border-orange-200'
+                        : 'bg-blue-50 border border-blue-200'
                     )}
                   >
                     <div className="font-medium truncate">{task.courseName}</div>
@@ -178,12 +161,6 @@ function ScheduleGrid({
                       {!scene && (
                         <Badge variant="outline" className="text-[10px] h-4 border-blue-300 text-blue-600">
                           课程
-                        </Badge>
-                      )}
-                      {hasConflict && (
-                        <Badge variant="outline" className="text-[10px] h-4 border-red-200 text-red-600">
-                          <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
-                          冲突
                         </Badge>
                       )}
                     </div>
@@ -378,12 +355,14 @@ function SearchableSelect({
   options,
   placeholder,
   label,
+  disabled = false,
 }: {
   value: string
   onChange: (value: string) => void
   options: { value: string; label: string }[]
   placeholder: string
   label: string
+  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -397,63 +376,75 @@ function SearchableSelect({
     [options, search]
   )
 
+  const trigger = (
+    <Button
+      variant="outline"
+      disabled={disabled}
+      className={cn(
+        'w-full justify-between font-normal bg-background hover:bg-accent',
+        disabled && 'cursor-not-allowed opacity-60 hover:bg-background'
+      )}
+    >
+      <span className={cn('truncate', !selected && 'text-muted-foreground')}>
+        {selected ? selected.label : placeholder}
+      </span>
+      <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+    </Button>
+  )
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-between font-normal bg-background hover:bg-accent"
-          >
-            <span className={cn('truncate', !selected && 'text-muted-foreground')}>
-              {selected ? selected.label : placeholder}
-            </span>
-            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-          <div className="p-2 border-b">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="搜索..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8"
-              />
+      {disabled ? (
+        trigger
+      ) : (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            {trigger}
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <div className="p-2 border-b">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="搜索..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8 h-8"
+                />
+              </div>
             </div>
-          </div>
-          <ScrollArea className="h-[200px]">
-            {filtered.length === 0 ? (
-              <div className="px-3 py-4 text-sm text-muted-foreground text-center">
-                无匹配结果
-              </div>
-            ) : (
-              <div className="p-1">
-                {filtered.map((o) => (
-                  <button
-                    key={o.value}
-                    onClick={() => {
-                      onChange(o.value)
-                      setOpen(false)
-                      setSearch('')
-                    }}
-                    className={cn(
-                      'w-full text-left px-2 py-1.5 text-sm rounded-sm transition-colors',
-                      value === o.value
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted'
-                    )}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </PopoverContent>
-      </Popover>
+            <ScrollArea className="h-[200px]">
+              {filtered.length === 0 ? (
+                <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                  无匹配结果
+                </div>
+              ) : (
+                <div className="p-1">
+                  {filtered.map((o) => (
+                    <button
+                      key={o.value}
+                      onClick={() => {
+                        onChange(o.value)
+                        setOpen(false)
+                        setSearch('')
+                      }}
+                      className={cn(
+                        'w-full text-left px-2 py-1.5 text-sm rounded-sm transition-colors',
+                        value === o.value
+                          ? 'bg-primary text-primary-foreground'
+                          : 'hover:bg-muted'
+                      )}
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </PopoverContent>
+        </Popover>
+      )}
     </div>
   )
 }
@@ -656,253 +647,207 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
   )
 }
 
-// ==================== Edit Dialog ====================
+// ==================== View Dialog ====================
 function EditTaskDialog({
   open,
   onClose,
   task,
+  allTasks,
+  onAdjust,
 }: {
   open: boolean
   onClose: () => void
   task: Task | null
+  allTasks: Task[]
+  onAdjust: (removedTaskId: string, newTask: Task) => void
 }) {
-  const [taskType, setTaskType] = useState<'course' | 'practice'>('course')
-  const [linkedItemId, setLinkedItemId] = useState('')
-  const [selectedClassId, setSelectedClassId] = useState('')
-  const [selectedFacultyId, setSelectedFacultyId] = useState('')
-  const [selectedDay, setSelectedDay] = useState('1')
-  const [selectedPeriods, setSelectedPeriods] = useState<string[]>([])
-  const [selectedVenueId, setSelectedVenueId] = useState('')
+  const [adjustOpen, setAdjustOpen] = useState(false)
 
-  const courseOptions = useMemo(
-    () =>
-      (trainingPrograms[0]?.courses ?? []).map((c) => ({
-        value: c.id,
-        label: `${c.name} (${c.code})`,
-      })),
-    []
-  )
-
-  const practiceOptions = useMemo(
-    () =>
-      curriculumPracticePool.map((p) => ({
-        value: p.id,
-        label: `${p.name} (${p.code})`,
-      })),
-    []
-  )
-
-  const classOptions = useMemo(
-    () => classes.map((c) => ({ value: c.id, label: c.name })),
-    []
-  )
-
-  const facultyOptions = useMemo(
-    () =>
-      faculty.map((f) => ({
-        value: f.id,
-        label: `${f.name} (${f.title})`,
-      })),
-    []
-  )
-
-  const venueOptions = useMemo(
-    () => venues.map((v) => ({ value: v.id, label: v.name })),
-    []
-  )
-
-  // Reset state when task changes
-  useMemo(() => {
-    if (task) {
-      const isScene = isSceneTask(task)
-      setTaskType(isScene ? 'practice' : 'course')
-      setLinkedItemId(task.externalPlatformId ?? '')
-      setSelectedClassId(task.classId)
-      setSelectedFacultyId(task.facultyId)
-      setSelectedDay(String(task.dayOfWeek))
-      setSelectedPeriods(task.periods)
-      setSelectedVenueId(task.venueId)
-    }
-  }, [task])
-
-  const conflicts = task
-    ? detectConflicts(
-        task,
-        tasks,
-        Number(selectedDay),
-        selectedPeriods,
-        selectedVenueId,
-        selectedFacultyId
-      )
-    : []
-  const hasConflict = conflicts.length > 0
+  useEffect(() => {
+    if (!open) setAdjustOpen(false)
+  }, [open])
 
   if (!task) return null
 
+  const isScene = isSceneTask(task)
+
+  const viewRows = [
+    { label: '课时类型', value: <Badge variant={isScene ? 'outline' : 'default'} className={cn('text-xs h-5', isScene && 'border-orange-300 text-orange-600')}>{isScene ? '岗位' : '课程'}</Badge> },
+    { label: `关联${isScene ? '岗位' : '课程'}`, value: (isScene
+      ? curriculumPracticePool.find((p) => p.id === task.externalPlatformId)?.name
+      : trainingPrograms[0]?.courses.find((c) => c.id === task.externalPlatformId)?.name) ?? task.courseName },
+    { label: '参与班级', value: classes.find((c) => c.id === task.classId)?.name ?? task.className },
+    { label: '任课教师', value: (() => {
+      const f = faculty.find((x) => x.id === task.facultyId)
+      return f ? `${f.name} (${f.title})` : task.facultyName
+    })() },
+    { label: '时间', value: `${days[task.dayOfWeek - 1] ?? `周${task.dayOfWeek}`} ${task.periods.join('、')}` },
+    { label: '上课场地', value: venues.find((v) => v.id === task.venueId)?.name ?? task.venueName },
+  ]
+
+  return (
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              查看课时 — {task.courseName}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="border rounded-lg overflow-hidden text-sm">
+            {viewRows.map((row, idx) => (
+              <div
+                key={row.label}
+                className={cn(
+                  'grid grid-cols-[88px_1fr] items-center',
+                  idx < viewRows.length - 1 && 'border-b'
+                )}
+              >
+                <div className="bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground h-full flex items-center">
+                  {row.label}
+                </div>
+                <div className="px-3 py-2">{row.value}</div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setAdjustOpen(true)}>
+              排课调整
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AdjustTaskDialog
+        open={adjustOpen}
+        onClose={() => setAdjustOpen(false)}
+        task={task}
+        allTasks={allTasks}
+        onConfirm={(removedTaskId, newTask) => {
+          onAdjust(removedTaskId, newTask)
+          setAdjustOpen(false)
+          onClose()
+        }}
+      />
+    </>
+  )
+}
+
+// ==================== Adjust Dialog ====================
+function AdjustTaskDialog({
+  open,
+  onClose,
+  task,
+  allTasks,
+  onConfirm,
+}: {
+  open: boolean
+  onClose: () => void
+  task: Task
+  allTasks: Task[]
+  onConfirm: (removedTaskId: string, newTask: Task) => void
+}) {
+  const [venueId, setVenueId] = useState(task.venueId)
+  const [week, setWeek] = useState(1)
+  const [dayOfWeek, setDayOfWeek] = useState(task.dayOfWeek)
+  const [period, setPeriod] = useState(task.periods[0] || allPeriods[0])
+
+  useEffect(() => {
+    if (open) {
+      setVenueId(task.venueId)
+      setWeek(1)
+      setDayOfWeek(task.dayOfWeek)
+      setPeriod(task.periods[0] || allPeriods[0])
+    }
+  }, [open, task])
+
+  const selectedVenue = venues.find((v) => v.id === venueId)
+
+  const handleConfirm = () => {
+    const conflict = findVenueConflict(task, allTasks, venueId, week, dayOfWeek, period)
+    if (conflict) {
+      toast.error(`目标日期与场地已有 ${conflict.courseName} 排课安排，请重新选择`)
+      return
+    }
+    const newTask: Task = {
+      ...task,
+      id: `task-adjusted-${Date.now()}`,
+      venueId,
+      venueName: selectedVenue?.name || task.venueName,
+      dayOfWeek,
+      periods: [period],
+      weeks: `${week}-${week}周`,
+    }
+    onConfirm(task.id, newTask)
+    toast.success('排课调整成功')
+  }
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Pencil className="h-5 w-5" />
-            编辑任务 — {task.courseName}
-          </DialogTitle>
+          <DialogTitle>排课调整</DialogTitle>
         </DialogHeader>
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-5 py-2">
-            {/* 任务类型 */}
-            <div className="space-y-2">
-              <Label>任务类型</Label>
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="editTaskType"
-                    checked={taskType === 'course'}
-                    onChange={() => setTaskType('course')}
-                    className="accent-primary h-4 w-4"
-                  />
-                  <span className="text-sm">课程</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="editTaskType"
-                    checked={taskType === 'practice'}
-                    onChange={() => setTaskType('practice')}
-                    className="accent-primary h-4 w-4"
-                  />
-                  <span className="text-sm">岗位</span>
-                </label>
-              </div>
-            </div>
-
-            {/* 关联课程/岗位 */}
-            <SearchableSelect
-              label={`关联${taskType === 'course' ? '课程' : '岗位'}`}
-              value={linkedItemId}
-              onChange={setLinkedItemId}
-              options={taskType === 'course' ? courseOptions : practiceOptions}
-              placeholder={`请选择${taskType === 'course' ? '课程' : '岗位'}`}
-            />
-
-            {/* 课程版本号 */}
-            <div className="space-y-2">
-              <Label>课程版本号</Label>
-              <Input value={task.courseVersion || '—'} readOnly className="bg-muted text-muted-foreground" />
-            </div>
-
-            {/* 参与班级 */}
-            <SearchableSelect
-              label="参与班级"
-              value={selectedClassId}
-              onChange={setSelectedClassId}
-              options={classOptions}
-              placeholder="请选择班级"
-            />
-
-            {/* 任课教师 */}
-            <SearchableSelect
-              label="任课教师"
-              value={selectedFacultyId}
-              onChange={setSelectedFacultyId}
-              options={facultyOptions}
-              placeholder="请选择教师"
-            />
-
-            {/* 节次 - 二级联动 */}
-            <div className="space-y-2">
-              <Label>星期</Label>
-              <Select value={selectedDay} onValueChange={setSelectedDay}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">周一</SelectItem>
-                  <SelectItem value="2">周二</SelectItem>
-                  <SelectItem value="3">周三</SelectItem>
-                  <SelectItem value="4">周四</SelectItem>
-                  <SelectItem value="5">周五</SelectItem>
-                  <SelectItem value="6">周六</SelectItem>
-                  <SelectItem value="7">周日</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>节次（可多选）</Label>
-              <div className="flex flex-wrap gap-2">
-                {allPeriods.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => {
-                      setSelectedPeriods((prev) =>
-                        prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
-                      )
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 text-xs rounded-md border transition-colors',
-                      selectedPeriods.includes(p)
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-muted-foreground border-border hover:border-primary/50'
-                    )}
-                  >
-                    {p}
-                  </button>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label>场地名称</Label>
+            <Select value={venueId} onValueChange={setVenueId}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {venues.map((v) => (
+                  <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                 ))}
-              </div>
-            </div>
-
-            {/* 上课场地 */}
-            <SearchableSelect
-              label="上课场地"
-              value={selectedVenueId}
-              onChange={setSelectedVenueId}
-              options={venueOptions}
-              placeholder="请选择场地"
-            />
-
-            {/* 冲突检测 */}
-            {hasConflict ? (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
-                <div className="flex items-center gap-2 text-red-700 font-medium text-sm">
-                  <AlertTriangle className="h-4 w-4" />
-                  检测到冲突（仍可保存）
-                </div>
-                <div className="text-xs text-red-600 space-y-1">
-                  {conflicts.map((c, i) => (
-                    <div key={i} className="flex items-center gap-1">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-400" />
-                      {c.type === 'teacher' && `教师「${c.with}」在同一时段有「${c.taskName}」`}
-                      {c.type === 'venue' && `场地「${c.with}」在同一时段有「${c.taskName}」`}
-                      {c.type === 'class' && `班级「${c.with}」在同一时段有「${c.taskName}」`}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-green-600 text-sm">
-                <CheckCircle2 className="h-4 w-4" />
-                当前安排无冲突
-              </div>
-            )}
+              </SelectContent>
+            </Select>
           </div>
-        </ScrollArea>
+          <div className="space-y-2">
+            <Label>周次</Label>
+            <Select value={String(week)} onValueChange={(v) => setWeek(parseInt(v, 10))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 16 }, (_, i) => i + 1).map((w) => (
+                  <SelectItem key={w} value={String(w)}>第{w}周</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>周几</Label>
+            <Select value={String(dayOfWeek)} onValueChange={(v) => setDayOfWeek(parseInt(v, 10))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {days.map((d, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>节次</Label>
+            <Select value={period} onValueChange={setPeriod}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {allPeriods.map((p) => (
+                  <SelectItem key={p} value={p}>{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            取消
-          </Button>
-          <Button
-            onClick={() => {
-              onClose()
-              toast.success('保存成功')
-            }}
-            variant={hasConflict ? 'destructive' : 'default'}
-            className="gap-1"
-          >
-            {hasConflict && <AlertTriangle className="h-4 w-4" />}
-            {hasConflict ? '强制保存' : '保存'}
-          </Button>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button onClick={handleConfirm}>确认</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -955,8 +900,8 @@ function SidebarNav({
 
 // ==================== Main Component ====================
 export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade: string }) {
-  // subTab removed, only timetable view remains
-  const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('class')
+  // 固定按场地查看，不再切换视图
+  const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('venue')
   const [selectedClassId, setSelectedClassId] = useState('')
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
   const [selectedVenueId, setSelectedVenueId] = useState('')
@@ -965,6 +910,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
   const [importDialogOpen, setImportDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [currentWeek, setCurrentWeek] = useState(1)
+  const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
   const totalWeeks = 16
 
   const gradeData = grades.find((g) => g.id === selectedGrade)
@@ -972,10 +918,18 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
     () => (gradeData ? classes.filter((c) => c.gradeId === selectedGrade).map((c) => c.id) : []),
     [gradeData, selectedGrade]
   )
-  const filteredTasks = useMemo(
-    () => tasks.filter((t) => gradeClassIds.includes(t.classId)),
-    [gradeClassIds]
-  )
+  const filteredTasks = useMemo(() => {
+    const matched = localTasks.filter((t) => gradeClassIds.includes(t.classId))
+    // Stable pseudo-random shuffle so courses and scenes are scattered visually
+    const hash = (str: string) => {
+      let h = 0
+      for (let i = 0; i < str.length; i++) {
+        h = (h * 31 + str.charCodeAt(i)) >>> 0
+      }
+      return h
+    }
+    return [...matched].sort((a, b) => hash(a.id) - hash(b.id))
+  }, [gradeClassIds, localTasks])
 
   // Auto-select first item when grade actually changes
   const prevGradeRef = useRef(selectedGrade)
@@ -993,6 +947,10 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
   const handleEditTask = (task: Task) => {
     setSelectedTask(task)
     setEditDialogOpen(true)
+  }
+
+  const handleAdjustTask = (removedTaskId: string, newTask: Task) => {
+    setLocalTasks((prev) => [...prev.filter((t) => t.id !== removedTaskId), newTask])
   }
 
   // Sidebar items with task counts
@@ -1092,17 +1050,7 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Tabs
-          value={viewMode}
-          onValueChange={(v) => setViewMode(v as 'class' | 'teacher' | 'venue')}
-        >
-          <TabsList>
-            <TabsTrigger value="class">按班级查看</TabsTrigger>
-            <TabsTrigger value="teacher">按教师查看</TabsTrigger>
-            <TabsTrigger value="venue">按场地查看</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           <Button variant="outline" className="gap-1" onClick={() => toast.success('模板下载中...')}>
             <Download className="h-4 w-4" />
@@ -1152,7 +1100,6 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
 
           <ScheduleGrid
             taskList={currentTasks}
-            allTasks={filteredTasks}
             onEditTask={handleEditTask}
             onCreateTask={() => setNewTaskDialogOpen(true)}
           />
@@ -1168,6 +1115,8 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
         open={editDialogOpen}
         onClose={() => setEditDialogOpen(false)}
         task={selectedTask}
+        allTasks={localTasks}
+        onAdjust={handleAdjustTask}
       />
     </div>
   )

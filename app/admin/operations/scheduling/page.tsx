@@ -66,7 +66,6 @@ import {
   Download,
   Search,
   X,
-  Save,
 } from 'lucide-react'
 import {
   classSchedules,
@@ -93,8 +92,8 @@ import {
 // ============================================
 const steps = [
   { id: 'schedule', label: '教学节次配置', icon: Clock },
-  { id: 'orchestration', label: '导入排课结果', icon: Settings2 },
-  { id: 'export', label: '课表打印', icon: Download },
+  { id: 'orchestration', label: '场景排课调整', icon: Settings2 },
+  { id: 'export', label: '课表同步推送', icon: Download },
 ]
 
 function StepNav({
@@ -846,9 +845,9 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Input placeholder="输入名称查询" className="w-[200px]" />
-            <Button className="gap-1" onClick={() => toast('导出Excel成功')}>
+            <Button className="gap-1" onClick={() => toast('已下发到教师工作台')}>
               <Download className="h-4 w-4" />
-              导出Excel
+              下发到教师工作台
             </Button>
           </div>
         </CardHeader>
@@ -907,21 +906,13 @@ export default function SchedulingCenterPage() {
       {/* 页面头部 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">教学课时管理</h1>
-          <p className="text-muted-foreground">教学课时全流程管理：从节次配置到课表导出的统一工作区</p>
+          <h1 className="text-2xl font-bold">排课课表管理</h1>
+          <p className="text-muted-foreground">排课课表管理：从节次配置到课表同步推送的统一工作区</p>
         </div>
         {matchedProgram && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => toast.info('外部排课系统对接功能正在开发中')}>
               外部排课系统对接
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => toast.success('已暂存为草稿')}>
-              <Save className="h-4 w-4 mr-1" />
-              暂存草稿
-            </Button>
-            <Button size="sm" onClick={() => toast.success('培养方案排课已保存')}>
-              <CheckCircle2 className="h-4 w-4 mr-1" />
-              保存培养方案排课
             </Button>
           </div>
         )}

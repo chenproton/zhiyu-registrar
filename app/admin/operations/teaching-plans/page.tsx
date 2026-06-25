@@ -68,36 +68,65 @@ function buildPlanFromProgram(program: TrainingProgram): TeachingPlan {
     allCourses.push(...program.curriculum)
   }
 
-  const entries: PlanCourseEntry[] = allCourses.map((course, idx) => {
+  const entries: PlanCourseEntry[] = []
+  allCourses.forEach((course, idx) => {
     const isScene = course.courseType === '场景' || course.nature === '场景' || course.nature === '实践'
     const isPractice = course.nature === '实践' || isScene
-    const weekHours = Math.max(1, Math.ceil(course.hours / 16))
-    const endWeek = Math.min(16, Math.ceil(course.hours / weekHours))
+    const baseVenue = isScene ? '校外基地' : isPractice ? '实训室' : '教室'
 
-    return {
-      id: `pe-${program.id}-${idx}`,
-      courseId: course.id,
-      courseName: course.name,
-      courseCode: course.code,
-      type: isScene ? 'scene' : 'theory',
-      nature: (isScene ? '场景' : course.nature) as PlanCourseEntry['nature'],
-      courseTypeLabel: isScene ? undefined : (course.courseTypeLabel || ''),
-      credits: course.credits,
-      totalHours: course.hours,
-      semester: course.semester || 1,
-      weekHours,
-      startWeek: 1,
-      endWeek,
-      weekPattern: 'all',
-      assignedClassIds: [],
-      preferredFacultyIds: [],
-      venueTypeRequired: isScene
-        ? '校外基地'
-        : isPractice
-          ? '实训室'
-          : '教室',
-      syllabusId: `syl-placeholder-${course.id}`,
-      status: 'planned',
+    if (isScene) {
+      const sceneCount = 3 + ((course.code?.length ?? 0) % 3)
+      const creditsPerScene = Math.round((course.credits / sceneCount) * 2) / 2
+      const hoursPerScene = Math.max(1, Math.round(course.hours / sceneCount))
+
+      for (let i = 0; i < sceneCount; i++) {
+        const weekHours = Math.max(1, Math.ceil(hoursPerScene / 16))
+        const endWeek = Math.min(16, Math.ceil(hoursPerScene / weekHours))
+        entries.push({
+          id: `pe-${program.id}-${idx}-${i}`,
+          courseId: course.id,
+          courseName: `${course.name}-相关实践场景名称${i + 1}`,
+          courseCode: course.code,
+          type: 'scene',
+          nature: '场景' as PlanCourseEntry['nature'],
+          credits: creditsPerScene,
+          totalHours: hoursPerScene,
+          semester: course.semester || 1,
+          weekHours,
+          startWeek: 1,
+          endWeek,
+          weekPattern: 'all',
+          assignedClassIds: [],
+          preferredFacultyIds: [],
+          venueTypeRequired: baseVenue,
+          syllabusId: `syl-placeholder-${course.id}`,
+          status: 'planned',
+        })
+      }
+    } else {
+      const weekHours = Math.max(1, Math.ceil(course.hours / 16))
+      const endWeek = Math.min(16, Math.ceil(course.hours / weekHours))
+      entries.push({
+        id: `pe-${program.id}-${idx}`,
+        courseId: course.id,
+        courseName: course.name,
+        courseCode: course.code,
+        type: isPractice ? 'practice' : 'theory',
+        nature: course.nature as PlanCourseEntry['nature'],
+        courseTypeLabel: course.courseTypeLabel || '',
+        credits: course.credits,
+        totalHours: course.hours,
+        semester: course.semester || 1,
+        weekHours,
+        startWeek: 1,
+        endWeek,
+        weekPattern: 'all',
+        assignedClassIds: [],
+        preferredFacultyIds: [],
+        venueTypeRequired: baseVenue,
+        syllabusId: `syl-placeholder-${course.id}`,
+        status: 'planned',
+      })
     }
   })
 
@@ -299,35 +328,64 @@ function PlanPage() {
     const course = selectedCourseToAdd
     const isScene = course.courseType === '场景' || course.nature === '场景'
     const isPractice = course.nature === '实践' || isScene
-    const weekHours = Math.max(1, Math.ceil(course.hours / 16))
-    const endWeek = Math.min(16, Math.ceil(course.hours / weekHours))
+    const baseVenue = isScene ? '校外基地' : isPractice ? '实训室' : '教室'
 
-    const newEntry: PlanCourseEntry = {
-      id: `pe-fixed-${Date.now()}`,
-      courseId: course.id,
-      courseName: course.name,
-      courseCode: course.code,
-      type: isScene ? 'scene' : isPractice ? 'practice' : 'theory',
-      nature: (isScene ? '场景' : course.nature) as PlanCourseEntry['nature'],
-      credits: newEntryCredits,
-      totalHours: newEntryHours,
-      semester: newEntrySemester,
-      weekHours,
-      startWeek: 1,
-      endWeek,
-      weekPattern: 'all',
-      assignedClassIds: [],
-      preferredFacultyIds: [],
-      venueTypeRequired: isScene
-        ? '校外基地'
-        : isPractice
-          ? '实训室'
-          : '教室',
-      syllabusId: `syl-placeholder-${course.id}`,
-      status: 'planned',
+    if (isScene) {
+      const sceneCount = 3 + ((course.code?.length ?? 0) % 3)
+      const creditsPerScene = Math.round((newEntryCredits / sceneCount) * 2) / 2
+      const hoursPerScene = Math.max(1, Math.round(newEntryHours / sceneCount))
+      const now = Date.now()
+      const newEntries: PlanCourseEntry[] = Array.from({ length: sceneCount }, (_, i) => {
+        const weekHours = Math.max(1, Math.ceil(hoursPerScene / 16))
+        const endWeek = Math.min(16, Math.ceil(hoursPerScene / weekHours))
+        return {
+          id: `pe-fixed-${now}-${i}`,
+          courseId: course.id,
+          courseName: `${course.name}-相关实践场景名称${i + 1}`,
+          courseCode: course.code,
+          type: 'scene',
+          nature: '场景' as PlanCourseEntry['nature'],
+          credits: creditsPerScene,
+          totalHours: hoursPerScene,
+          semester: newEntrySemester,
+          weekHours,
+          startWeek: 1,
+          endWeek,
+          weekPattern: 'all',
+          assignedClassIds: [],
+          preferredFacultyIds: [],
+          venueTypeRequired: baseVenue,
+          syllabusId: `syl-placeholder-${course.id}`,
+          status: 'planned',
+        }
+      })
+      commitPlanUpdate({ ...localPlan, entries: [...localPlan.entries, ...newEntries] })
+    } else {
+      const weekHours = Math.max(1, Math.ceil(newEntryHours / 16))
+      const endWeek = Math.min(16, Math.ceil(newEntryHours / weekHours))
+      const newEntry: PlanCourseEntry = {
+        id: `pe-fixed-${Date.now()}`,
+        courseId: course.id,
+        courseName: course.name,
+        courseCode: course.code,
+        type: isPractice ? 'practice' : 'theory',
+        nature: course.nature as PlanCourseEntry['nature'],
+        credits: newEntryCredits,
+        totalHours: newEntryHours,
+        semester: newEntrySemester,
+        weekHours,
+        startWeek: 1,
+        endWeek,
+        weekPattern: 'all',
+        assignedClassIds: [],
+        preferredFacultyIds: [],
+        venueTypeRequired: baseVenue,
+        syllabusId: `syl-placeholder-${course.id}`,
+        status: 'planned',
+      }
+      commitPlanUpdate({ ...localPlan, entries: [...localPlan.entries, newEntry] })
     }
 
-    commitPlanUpdate({ ...localPlan, entries: [...localPlan.entries, newEntry] })
     setAddDialogOpen(false)
     toast.success(`已添加「${course.name}」到教学计划`)
   }

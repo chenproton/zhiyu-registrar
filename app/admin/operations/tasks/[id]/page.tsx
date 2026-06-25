@@ -195,8 +195,8 @@ export default function TaskDetailPage() {
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center space-y-2">
           <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto" />
-          <p className="text-lg font-medium">任务不存在</p>
-          <p className="text-sm text-muted-foreground">未找到 ID 为 {id} 的教学任务</p>
+          <p className="text-lg font-medium">课时不存在</p>
+          <p className="text-sm text-muted-foreground">未找到 ID 为 {id} 的课时</p>
         </div>
       </div>
     )
@@ -277,7 +277,7 @@ export default function TaskDetailPage() {
   }
 
   const statusChecks: Record<TaskStatus, { label: string; check: () => boolean; hint: string }[]> = {
-    draft: [{ label: '基本信息完整', check: checkBasicInfo, hint: '请完善任务基本信息' }],
+    draft: [{ label: '基本信息完整', check: checkBasicInfo, hint: '请完善课时基本信息' }],
     ready: [
       { label: '备课已完成', check: checkPrepCompleted, hint: '请先完成备课' },
       ...(task?.type === 'scene' ? [{ label: '子任务已就绪', check: checkSceneSubTasksReady, hint: '请确认所有子任务已非计划中状态' }] : []),
@@ -291,10 +291,10 @@ export default function TaskDetailPage() {
 
   const statusTransitions: Record<TaskStatus, { next: TaskStatus; label: string; icon: any }[]> = {
     draft: [{ next: 'ready', label: '准备就绪', icon: CheckCircle2 }],
-    ready: [{ next: 'published', label: '发布任务', icon: Rocket }],
+    ready: [{ next: 'published', label: '发布课时', icon: Rocket }],
     published: [],
     in_progress: [{ next: 'evaluating', label: '进入考核', icon: PenTool }],
-    evaluating: [{ next: 'completed', label: '完成任务', icon: CheckCircle2 }],
+    evaluating: [{ next: 'completed', label: '完成课时', icon: CheckCircle2 }],
     completed: [{ next: 'archived', label: '归档', icon: Archive }],
     archived: [],
   }
@@ -308,13 +308,13 @@ export default function TaskDetailPage() {
       return
     }
     setTask({ ...task, status: nextStatus, updatedAt: new Date().toISOString().split('T')[0] })
-    toast.success(`任务状态已更新为「${statusLabelMap[nextStatus]}」`)
+    toast.success(`课时状态已更新为「${statusLabelMap[nextStatus]}」`)
   }
 
   const handleWithdraw = () => {
     if (!task) return
     setTask({ ...task, status: 'draft', updatedAt: new Date().toISOString().split('T')[0] })
-    toast.success('任务已撤回至草稿状态')
+    toast.success('课时已撤回至草稿状态')
   }
 
   const currentChecks = task ? statusChecks[task.status] : []
@@ -348,12 +348,12 @@ export default function TaskDetailPage() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/admin/operations/tasks">教学任务中心</Link>
+                <Link href="/admin/operations/tasks">课时中心</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>任务详情</BreadcrumbPage>
+              <BreadcrumbPage>课时详情</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -412,7 +412,7 @@ export default function TaskDetailPage() {
           </div>
         )}
 
-        {/* 任务信息网格卡片 */}
+        {/* 课时信息网格卡片 */}
         <div className="grid gap-4 md:grid-cols-5">
           <Card>
             <CardContent className="flex items-center gap-3 p-4">
@@ -493,20 +493,20 @@ export default function TaskDetailPage() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="basic">任务信息</TabsTrigger>
-          <TabsTrigger value="session">任务备课</TabsTrigger>
+          <TabsTrigger value="basic">课时信息</TabsTrigger>
+          <TabsTrigger value="session">课时备课</TabsTrigger>
           <TabsTrigger value="classroom">上课管理</TabsTrigger>
           <TabsTrigger value="evaluation">测评配置</TabsTrigger>
           <TabsTrigger value="grades">学生成绩</TabsTrigger>
-          <TabsTrigger value="review">任务复盘</TabsTrigger>
+          <TabsTrigger value="review">课时复盘</TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: 任务信息 */}
+        {/* Tab 1: 课时信息 */}
         <TabsContent value="basic" className="space-y-4">
           {/* 关联课程信息 */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">关联课程/实践场景</CardTitle>
+              <CardTitle className="text-base">关联体系课/颗粒课</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-sm">
@@ -514,13 +514,13 @@ export default function TaskDetailPage() {
                   <p className="text-muted-foreground text-xs">类型</p>
                   <p className="font-medium">
                     {task.externalPlatformType === 'course'
-                      ? '课程'
+                      ? '体系课'
                       : task.externalPlatformType === 'scene'
-                        ? '实践场景'
+                        ? '颗粒课'
                         : task.type === 'traditional'
-                          ? '课程'
+                          ? '体系课'
                           : task.type === 'scene'
-                            ? '实践场景'
+                            ? '颗粒课'
                             : '—'}
                   </p>
                 </div>
@@ -547,12 +547,12 @@ export default function TaskDetailPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">任务属性</CardTitle>
+              <CardTitle className="text-base">课时属性</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-y-4 gap-x-6 text-sm">
                 <div>
-                  <p className="text-muted-foreground text-xs">任务编码</p>
+                  <p className="text-muted-foreground text-xs">课时编码</p>
                   <p className="font-medium">{task.code}</p>
                 </div>
                 <div>
@@ -641,7 +641,7 @@ export default function TaskDetailPage() {
           )}
         </TabsContent>
 
-        {/* Tab 2: 任务备课 */}
+        {/* Tab 2: 课时备课 */}
         <TabsContent value="session" className="space-y-4">
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => window.open('http://111.170.170.202:3006/teacher/schedule', '_blank')}>
@@ -931,15 +931,15 @@ export default function TaskDetailPage() {
           <StudentGradesPanel />
         </TabsContent>
 
-        {/* Tab 6: 任务复盘 */}
+        {/* Tab 6: 课时复盘 */}
         <TabsContent value="review" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">任务复盘</CardTitle>
+              <CardTitle className="text-base">课时复盘</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <RichTextEditor
-                placeholder="请在此自由输入任务复盘内容，可包括教学反思、发现问题、改进措施、学生反馈等..."
+                placeholder="请在此自由输入课时复盘内容，可包括教学反思、发现问题、改进措施、学生反馈等..."
                 value={reviewForm.teachingReflection}
                 onChange={(html) => setReviewForm((prev) => ({ ...prev, teachingReflection: html }))}
                 minHeight={280}

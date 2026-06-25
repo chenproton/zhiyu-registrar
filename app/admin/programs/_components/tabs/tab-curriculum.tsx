@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -48,6 +48,7 @@ const emptyCourse = (defaults?: Partial<CoursePlan>): CoursePlan => ({
   courseType: '课程',
   subCategory: '必修',
   courseTypeLabel: defaultCourseTypes[0],
+  scenes: [],
   ...defaults,
 })
 
@@ -213,6 +214,43 @@ export default function TabCurriculum({
     const arr = [...curriculum]
     arr[index] = { ...arr[index], ...patch }
     updateCurriculum(arr)
+  }
+
+  const ensureScenes = (index: number) => {
+    const course = curriculum[index]
+    const existing = course.scenes || []
+    if (existing.length > 0) return
+    const blankScenes = Array.from({ length: 3 }, (_, i) => ({
+      id: `scene-${course.id}-${i}-${Math.random().toString(36).slice(2, 6)}`,
+      name: '',
+    }))
+    updateCourse(index, { scenes: blankScenes })
+  }
+
+  const updateSceneName = (courseIndex: number, sceneId: string, name: string) => {
+    const course = curriculum[courseIndex]
+    const scenes = (course.scenes || []).map((s) =>
+      s.id === sceneId ? { ...s, name } : s
+    )
+    updateCourse(courseIndex, { scenes })
+  }
+
+  const addScene = (courseIndex: number) => {
+    const course = curriculum[courseIndex]
+    const scenes = [
+      ...(course.scenes || []),
+      {
+        id: `scene-${course.id}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        name: '',
+      },
+    ]
+    updateCourse(courseIndex, { scenes })
+  }
+
+  const removeScene = (courseIndex: number, sceneId: string) => {
+    const course = curriculum[courseIndex]
+    const scenes = (course.scenes || []).filter((s) => s.id !== sceneId)
+    updateCourse(courseIndex, { scenes })
   }
 
   const addCourse = () => {
@@ -407,7 +445,7 @@ export default function TabCurriculum({
               <TableHead className="w-44">课程课时类型</TableHead>
               <TableHead className="w-28">课时代码</TableHead>
               <TableHead className="w-96">课时名称</TableHead>
-              <TableHead className="w-32">学分</TableHead>
+              <TableHead className="w-24">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
               <TableHead className="w-24">性质</TableHead>
               <TableHead className="w-32"></TableHead>
@@ -420,7 +458,197 @@ export default function TabCurriculum({
               const isScene = c.courseType === '场景'
               const isNewSceneMode = sceneEditMode[c.id] || false
 
-              return (
+              return isScene ? (
+                <React.Fragment key={c.id}>
+                  {/* 岗位课时主行：所有输入框水平对齐 */}
+                  <TableRow className="align-middle">
+                    {/* 类型切换（无列名） */}
+                    <TableCell>
+                      <Select
+                        value={c.courseType || '课程'}
+                        onValueChange={(v) => {
+                          const isSceneNew = v === '场景'
+                          updateCourse(realIndex, {
+                            courseType: v as '课程' | '场景',
+                            courseTypeLabel: isSceneNew ? '' : (c.courseTypeLabel || courseTypes[0]),
+                          })
+                          if (isSceneNew) {
+                            setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="课程">课程课时</SelectItem>
+                          <SelectItem value="场景">岗位课时</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+
+                    {/* 课程课时类型 */}
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">-</span>
+                    </TableCell>
+
+                    {/* 课时代码 */}
+                    <TableCell>
+                      {isNewSceneMode ? (
+                        <Input
+                          value={c.code}
+                          onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
+                          className="h-8 text-xs w-full"
+                          placeholder="岗位课时编码"
+                        />
+                      ) : (
+                        <span className="text-xs text-muted-foreground truncate block">
+                          {c.code || '-'}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    {/* 课时名称 */}
+                    <TableCell>
+                      {isNewSceneMode ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={c.name}
+                            onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
+                            className="h-8 text-xs flex-1"
+                            placeholder="岗位课时名称"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs shrink-0"
+                            onClick={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))}
+                          >
+                            取消
+                          </Button>
+                        </div>
+                      ) : (
+                        <SceneSearchSelect
+                          value={{ code: c.code, name: c.name }}
+                          onSelect={(scene) => {
+                            updateCourse(realIndex, { code: scene.code, name: scene.name })
+                          }}
+                          onNewScene={() => {
+                            ensureScenes(realIndex)
+                            setSceneEditMode((prev) => ({ ...prev, [c.id]: true }))
+                          }}
+                        />
+                      )}
+                    </TableCell>
+
+                    {/* 学分 */}
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={c.credits}
+                        onChange={(e) => updateCourse(realIndex, { credits: Number(e.target.value) })}
+                        className="h-8 text-xs w-24"
+                      />
+                    </TableCell>
+
+                    {/* 课时（学时） */}
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={c.hours}
+                        onChange={(e) => updateCourse(realIndex, { hours: Number(e.target.value) })}
+                        className="h-8 text-xs"
+                      />
+                    </TableCell>
+
+                    {/* 性质 */}
+                    <TableCell>
+                      <Select
+                        value={c.subCategory || courseNatures[0] || '必修'}
+                        onValueChange={(v) => updateCourse(realIndex, { subCategory: v })}
+                      >
+                        <SelectTrigger className="h-8 text-xs w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {courseNatures.map((n) => (
+                            <SelectItem key={n} value={n}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+
+                    {/* 操作 */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {c.name && syllabusId ? (
+                          <a
+                            href={`/admin/operations/syllabus/${syllabusId}?edit=1`}
+                            className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                          >
+                            进入详细配置
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">进入详细配置</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => removeCourse(realIndex)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* 场景名称行：不与其他列对齐 */}
+                  <TableRow className="border-b">
+                    <TableCell colSpan={8} className="py-2">
+                      {isNewSceneMode ? (
+                        <div className="space-y-1 pl-1">
+                          {(c.scenes || []).map((scene) => (
+                            <div key={scene.id} className="flex items-center gap-2 max-w-md">
+                              <Input
+                                value={scene.name}
+                                onChange={(e) => updateSceneName(realIndex, scene.id, e.target.value)}
+                                className="h-7 text-xs flex-1"
+                                placeholder="场景名称"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 shrink-0"
+                                onClick={() => removeScene(realIndex, scene.id)}
+                              >
+                                <Trash2 className="h-3 w-3 text-red-500" />
+                              </Button>
+                            </div>
+                          ))}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs px-2 text-muted-foreground hover:text-foreground"
+                            onClick={() => addScene(realIndex)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            新增场景
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 pl-1">
+                          {Array.from({ length: 3 + ((c.code?.length ?? 0) % 3) }, (_, i) => i + 1).map((i) => (
+                            <span key={i} className="text-xs text-muted-foreground">
+                              · 相关实践场景名称{i}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ) : (
                 <TableRow key={c.id}>
                   {/* 类型切换（无列名） */}
                   <TableCell>
@@ -449,89 +677,38 @@ export default function TabCurriculum({
 
                   {/* 课程课时类型 */}
                   <TableCell>
-                    {isScene ? (
-                      <span className="text-xs text-muted-foreground">-</span>
-                    ) : (
-                      <Select
-                        value={c.courseTypeLabel || ''}
-                        onValueChange={(v) => updateCourse(realIndex, { courseTypeLabel: v })}
-                      >
-                        <SelectTrigger className="h-8 text-xs w-40">
-                          <SelectValue placeholder="-" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {courseTypes.map((t) => (
-                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <Select
+                      value={c.courseTypeLabel || ''}
+                      onValueChange={(v) => updateCourse(realIndex, { courseTypeLabel: v })}
+                    >
+                      <SelectTrigger className="h-8 text-xs w-40">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courseTypes.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
 
-                  {/* 课程课时（岗位课时）代码 + 名称 */}
-                  {isScene ? (
-                    <>
-                      <TableCell>
-                        {isNewSceneMode ? (
-                          <Input
-                            value={c.code}
-                            onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                            className="h-8 text-xs w-full"
-                            placeholder="岗位课时编码"
-                          />
-                        ) : (
-                          <span className="text-xs text-muted-foreground truncate block">
-                            {c.code || '-'}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isNewSceneMode ? (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              value={c.name}
-                              onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
-                              className="h-8 text-xs flex-1"
-                              placeholder="岗位课时名称"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 text-xs shrink-0"
-                              onClick={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))}
-                            >
-                              取消
-                            </Button>
-                          </div>
-                        ) : (
-                          <SceneSearchSelect
-                            value={{ code: c.code, name: c.name }}
-                            onSelect={(scene) => {
-                              updateCourse(realIndex, { code: scene.code, name: scene.name })
-                            }}
-                            onNewScene={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: true }))}
-                          />
-                        )}
-                      </TableCell>
-                    </>
-                  ) : (
-                    <>
-                      <TableCell>
-                        <Input
-                          value={c.code}
-                          onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={c.name}
-                          onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </TableCell>
-                    </>
-                  )}
+                  {/* 课时代码 */}
+                  <TableCell>
+                    <Input
+                      value={c.code}
+                      onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
+                      className="h-8 text-xs"
+                    />
+                  </TableCell>
+
+                  {/* 课时名称 */}
+                  <TableCell>
+                    <Input
+                      value={c.name}
+                      onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
+                      className="h-8 text-xs"
+                    />
+                  </TableCell>
 
                   {/* 学分 */}
                   <TableCell>
@@ -539,7 +716,7 @@ export default function TabCurriculum({
                       type="number"
                       value={c.credits}
                       onChange={(e) => updateCourse(realIndex, { credits: Number(e.target.value) })}
-                      className="h-8 text-xs"
+                      className="h-8 text-xs w-24"
                     />
                   </TableCell>
 
