@@ -843,16 +843,16 @@ function AdjustTaskDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6 pb-2">
+        <DialogHeader className="px-6 pt-6 pb-2 shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Settings2 className="h-5 w-5" />
             排课调整 — 选择目标场地与时段
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 flex gap-4 px-6 pb-2">
+        <div className="flex-1 min-h-0 flex gap-4 px-6 pb-2 overflow-hidden">
           {/* 场地列表 */}
-          <div className="w-[220px] border rounded-lg bg-muted/20 flex flex-col shrink-0">
+          <div className="w-[220px] border rounded-lg bg-muted/20 flex flex-col shrink-0 min-h-0">
             <div className="p-3 border-b font-medium text-sm">场地列表</div>
             <ScrollArea className="flex-1">
               {venueItems.map((item) => (
@@ -876,7 +876,7 @@ function AdjustTaskDialog({
           </div>
 
           {/* 场地课表 */}
-          <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex-1 min-w-0 min-h-0 flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
@@ -1010,10 +1010,10 @@ function AdjustTaskDialog({
         </div>
 
         <div className="px-6 py-4 border-t bg-muted/20">
-          <div className="flex items-center justify-between gap-4">
-            <div className="text-sm">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="text-sm min-w-0">
               <span className="text-muted-foreground">已选择位置：</span>
-              <span className="font-medium">
+              <span className="font-medium break-words">
                 第{week}周 · {days[dayOfWeek - 1]} · {period} · {selectedVenue?.name}
               </span>
               {conflict && (
@@ -1025,12 +1025,12 @@ function AdjustTaskDialog({
                 <span className="ml-3 text-xs text-primary">当前课程已处于该位置</span>
               )}
             </div>
-            <DialogFooter className="gap-2 sm:gap-0">
+            <div className="flex items-center gap-2 shrink-0">
               <Button variant="outline" onClick={onClose}>取消</Button>
               <Button onClick={handleConfirm} disabled={!!conflict || isCurrentPosition}>
                 确认调整
               </Button>
-            </DialogFooter>
+            </div>
           </div>
         </div>
       </DialogContent>
