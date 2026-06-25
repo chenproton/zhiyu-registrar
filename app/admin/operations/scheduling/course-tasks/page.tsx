@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -14,7 +13,6 @@ import {
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import {
@@ -23,7 +21,6 @@ import {
   Layers,
   Play,
   ClipboardCheck,
-  ChevronRight,
   Search,
 } from 'lucide-react'
 import {
@@ -32,7 +29,6 @@ import {
   majors,
   classes,
   grades,
-  type Task,
 } from '@/lib/mock-data'
 
 export default function CourseTasksPage() {
@@ -101,10 +97,6 @@ export default function CourseTasksPage() {
   const sceneTasks = filteredTasks.filter((t) => t.type === 'scene').length
   const inProgressTasks = filteredTasks.filter((t) => t.status === 'in_progress').length
   const evaluatingTasks = filteredTasks.filter((t) => t.status === 'evaluating').length
-
-  const handleViewDetail = (taskId: string) => {
-    window.location.href = `/admin/operations/tasks/${taskId}`
-  }
 
   return (
     <div className="space-y-6">
@@ -338,84 +330,55 @@ export default function CourseTasksPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>任务/编码</TableHead>
-                <TableHead>类型</TableHead>
+                <TableHead>课时/编码</TableHead>
                 <TableHead>班级</TableHead>
                 <TableHead>教师</TableHead>
-                <TableHead>学时进度</TableHead>
                 <TableHead>预计学时</TableHead>
-                <TableHead>成绩状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
+                <TableHead>是否已开课</TableHead>
+                <TableHead>开课时间</TableHead>
+                <TableHead>关联混合课名称</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTasks.map((task) => {
+              {filteredTasks.map((task, index) => {
                 const ps = task.progressSummary
+                const isOpened = ['published', 'in_progress', 'evaluating', 'completed'].includes(task.status)
+                const openDate = isOpened
+                  ? `2025 年 3 月 ${3 + (index % 28)} 日`
+                  : '—'
+                const mixedCourseName = `${task.courseName}混合课程`
                 return (
                   <TableRow key={task.id}>
                     <TableCell>
-                      <div
-                        className="font-medium text-sm cursor-pointer hover:underline hover:text-primary transition-colors"
-                        onClick={() => handleViewDetail(task.id)}
-                      >
-                        {task.courseName}
-                      </div>
+                      <div className="font-medium text-sm">{task.courseName}</div>
                       <div className="text-xs text-muted-foreground">{task.code}</div>
+                    </TableCell>
+                    <TableCell className="text-sm">{task.className}</TableCell>
+                    <TableCell className="text-sm">{task.facultyName}</TableCell>
+                    <TableCell className="text-sm">
+                      {ps ? `${ps.plannedHours ?? 0}` : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={
-                          task.type === 'scene'
-                            ? 'border-orange-300 text-orange-600 text-xs'
-                            : 'text-xs'
-                        }
+                        className={cn(
+                          'text-xs',
+                          isOpened
+                            ? 'border-green-300 text-green-600'
+                            : 'border-gray-300 text-gray-500'
+                        )}
                       >
-                        {task.type === 'scene' ? '颗粒课' : '体系课'}
+                        {isOpened ? '是' : '否'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{task.className}</TableCell>
-                    <TableCell className="text-sm">{task.facultyName}</TableCell>
-                    <TableCell>
-                      {ps ? (
-                        <div className="flex items-center gap-2 w-[140px]">
-                          <Progress value={ps.completionRate} className="h-2 flex-1" />
-                          <span className="text-xs w-10">{ps.completionRate}%</span>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {ps ? `${ps.completedHours ?? 0}/${ps.plannedHours ?? 0}` : '—'}
-                    </TableCell>
-                    <TableCell>
-                      {task.gradeSummary?.overallStatus === 'published' ? (
-                        <Badge variant="default" className="text-xs bg-green-600 hover:bg-green-700">已评定</Badge>
-                      ) : task.gradeSummary?.overallStatus === 'evaluating' ? (
-                        <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 hover:bg-amber-200">评定中</Badge>
-                      ) : task.gradeSummary?.overallStatus === 'pending' ? (
-                        <Badge variant="outline" className="text-xs text-gray-500">未评定</Badge>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 gap-1"
-                        onClick={() => handleViewDetail(task.id)}
-                      >
-                        查看详情 <ChevronRight className="h-3 w-3" />
-                      </Button>
-                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{openDate}</TableCell>
+                    <TableCell className="text-sm">{mixedCourseName}</TableCell>
                   </TableRow>
                 )
               })}
               {filteredTasks.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-12">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
                     暂无开课任务数据
                   </TableCell>
                 </TableRow>
