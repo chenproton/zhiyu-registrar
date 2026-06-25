@@ -274,7 +274,7 @@ function PlanPage() {
 
   const openAddDialog = () => {
     if (availableCourses.length === 0) {
-      toast.info('人培方案中所有课程/场景已加入教学计划')
+      toast.info('人培方案中所有课程/岗位已加入教学计划')
       return
     }
     const first = availableCourses[0]
@@ -335,12 +335,12 @@ function PlanPage() {
   // ---- 导出教学计划为 CSV ----
   const exportToCSV = () => {
     if (!localPlan) return
-    const headers = ['课程/场景名称', '课程代码', '类型', '性质', '学分', '总学时', '学期']
+    const headers = ['课程/岗位名称', '课程代码', '类型', '性质', '学分', '总学时', '学期']
     const rows = localPlan.entries.map((e) => [
       e.courseName,
       e.courseCode,
-      e.type === 'scene' ? '场景' : e.type === 'practice' ? '实践' : '理论',
-      e.nature,
+      e.type === 'scene' ? '岗位' : e.type === 'practice' ? '实践' : '理论',
+      e.nature === '场景' ? '岗位' : e.nature,
       String(e.credits),
       String(e.totalHours),
       `第${e.semester}学期`,
@@ -370,7 +370,7 @@ function PlanPage() {
       <div>
         <h1 className="text-2xl font-bold">教学计划管理</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          基于人培方案灵活配置课程/场景的学分、学时与学期安排
+          基于人培方案灵活配置课程/岗位的学分、学时与学期安排
         </p>
       </div>
 
@@ -501,7 +501,7 @@ function PlanPage() {
                   <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground border-l pl-2">
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                      场景 {programHoursStats.sceneHours}
+                      岗位 {programHoursStats.sceneHours}
                     </span>
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
@@ -519,7 +519,7 @@ function PlanPage() {
                   <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground border-l pl-2">
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                      场景 {actualHoursStats.sceneHours}
+                      岗位 {actualHoursStats.sceneHours}
                     </span>
                     <span className="flex items-center gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
@@ -565,7 +565,7 @@ function PlanPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>课程/场景</TableHead>
+                      <TableHead>课程/岗位</TableHead>
                       <TableHead>代码</TableHead>
                       <TableHead>课程类型</TableHead>
                       <TableHead className="w-[100px]">学分</TableHead>
@@ -607,7 +607,7 @@ function PlanPage() {
                                     : 'text-blue-600 border-blue-300'
                                 )}
                               >
-                                {entry.type === 'scene' ? '场景' : '课程'}
+                                {entry.type === 'scene' ? '岗位' : '课程'}
                               </Badge>
                             </div>
                           </TableCell>
@@ -697,11 +697,11 @@ function PlanPage() {
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>添加课程/场景到教学计划</DialogTitle>
+            <DialogTitle>添加课程/岗位到教学计划</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>选择课程/场景</Label>
+              <Label>选择课程/岗位</Label>
               <Select
                 value={selectedCourseToAdd?.id || ''}
                 onValueChange={handleCourseSelect}
@@ -786,7 +786,7 @@ function PlanPage() {
               您即将提交当前二级学院的教学计划至教务办公室进行整体评估。
             </p>
             <p>
-              提交后，教学计划将进入审核流程，暂时无法继续编辑。请确认所有课程/场景的学分、学时和学期安排均已核对无误。
+              提交后，教学计划将进入审核流程，暂时无法继续编辑。请确认所有课程/岗位的学分、学时和学期安排均已核对无误。
             </p>
           </div>
           <DialogFooter>

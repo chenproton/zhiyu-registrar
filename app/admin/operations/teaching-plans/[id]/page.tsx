@@ -88,7 +88,7 @@ export default function TeachingPlanDetailPage() {
               {plan.programName} · 教学计划
             </h1>
             <p className="text-sm text-muted-foreground">
-              {plan.totalSemesters}个学期 · {plan.entries.length}门课程/场景
+              {plan.totalSemesters}个学期 · {plan.entries.length}门课程/岗位
             </p>
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function TeachingPlanDetailPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>课程/场景</TableHead>
+                        <TableHead>课程/岗位</TableHead>
                         <TableHead>性质</TableHead>
                         <TableHead>学分</TableHead>
                         <TableHead>总学时</TableHead>
