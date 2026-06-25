@@ -172,7 +172,7 @@ function ScheduleGrid({
                     <div className="flex items-center gap-1 flex-wrap">
                       {scene && (
                         <Badge variant="outline" className="text-[10px] h-4 border-orange-300 text-orange-600">
-                          实践场景
+                          岗位
                         </Badge>
                       )}
                       {!scene && (
@@ -548,18 +548,18 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
                     onChange={() => setTaskType('practice')}
                     className="accent-primary h-4 w-4"
                   />
-                  <span className="text-sm">实践场景</span>
+                  <span className="text-sm">岗位</span>
                 </label>
               </div>
             </div>
 
-            {/* 关联课程/实践场景 */}
+            {/* 关联课程/岗位 */}
             <SearchableSelect
-              label={`关联${taskType === 'course' ? '课程' : '实践场景'}`}
+              label={`关联${taskType === 'course' ? '课程' : '岗位'}`}
               value={linkedItemId}
               onChange={setLinkedItemId}
               options={taskType === 'course' ? courseOptions : practiceOptions}
-              placeholder={`请选择${taskType === 'course' ? '课程' : '实践场景'}`}
+              placeholder={`请选择${taskType === 'course' ? '课程' : '岗位'}`}
             />
             {selectedItemVersion && (
               <div className="text-xs text-muted-foreground mt-1">
@@ -772,18 +772,18 @@ function EditTaskDialog({
                     onChange={() => setTaskType('practice')}
                     className="accent-primary h-4 w-4"
                   />
-                  <span className="text-sm">实践场景</span>
+                  <span className="text-sm">岗位</span>
                 </label>
               </div>
             </div>
 
-            {/* 关联课程/实践场景 */}
+            {/* 关联课程/岗位 */}
             <SearchableSelect
-              label={`关联${taskType === 'course' ? '课程' : '实践场景'}`}
+              label={`关联${taskType === 'course' ? '课程' : '岗位'}`}
               value={linkedItemId}
               onChange={setLinkedItemId}
               options={taskType === 'course' ? courseOptions : practiceOptions}
-              placeholder={`请选择${taskType === 'course' ? '课程' : '实践场景'}`}
+              placeholder={`请选择${taskType === 'course' ? '课程' : '岗位'}`}
             />
 
             {/* 课程版本号 */}

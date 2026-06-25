@@ -249,7 +249,7 @@ function ScheduleGrid({
                     <div className="flex items-center gap-1 flex-wrap">
                       {task.type === 'scene' && (
                         <Badge variant="outline" className="text-[10px] h-4 border-orange-200 text-orange-600">
-                          场景
+                          岗位
                         </Badge>
                       )}
                       {hasConflict && (
@@ -480,7 +480,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="traditional">传统教学</SelectItem>
-                    <SelectItem value="scene">场景教学</SelectItem>
+                    <SelectItem value="scene">岗位教学</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -907,8 +907,8 @@ export default function SchedulingCenterPage() {
       {/* 页面头部 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">教学任务管理</h1>
-          <p className="text-muted-foreground">教学任务全流程管理：从节次配置到课表导出的统一工作区</p>
+          <h1 className="text-2xl font-bold">教学课时管理</h1>
+          <p className="text-muted-foreground">教学课时全流程管理：从节次配置到课表导出的统一工作区</p>
         </div>
         {matchedProgram && (
           <div className="flex items-center gap-2">

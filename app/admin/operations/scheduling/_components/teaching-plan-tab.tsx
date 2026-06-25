@@ -115,7 +115,7 @@ export default function TeachingPlanTab({
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="course">课程</TabsTrigger>
-            <TabsTrigger value="practice">实践场景</TabsTrigger>
+            <TabsTrigger value="practice">岗位</TabsTrigger>
           </TabsList>
           <div className="ml-auto flex items-center gap-2">
             <Button variant="outline" className="gap-1" onClick={() => setImportDialogOpen(true)}>
@@ -143,7 +143,7 @@ export default function TeachingPlanTab({
 
         <TabsContent value="practice" className="mt-0 space-y-4">
           <PlanTable
-            itemLabel="实践场景"
+            itemLabel="岗位"
             list={practiceList}
             filteredClasses={filteredClasses}
             planData={practicePlanData}

@@ -58,7 +58,7 @@ export default function CourseManagementTab({ selectedGrade }: { selectedGrade: 
 
   // 课程列表（从培养方案初始化 + 可新增/删除）
   const [courseList, setCourseList] = useState<CurriculumItem[]>(adaptProgramCourses)
-  // 实践场景列表（从 boundPractices 初始化 + 可新增/删除）
+  // 岗位列表（从 boundPractices 初始化 + 可新增/删除）
   const [practiceList, setPracticeList] = useState<CurriculumItem[]>([...boundPractices])
 
   // 新增对话框
@@ -93,7 +93,7 @@ export default function CourseManagementTab({ selectedGrade }: { selectedGrade: 
 
   const handleAdd = (item: CurriculumItem) => {
     setCurrentList((prev) => [...prev, item])
-    toast.success(`${activeTab === 'course' ? '课程' : '实践场景'}已绑定`)
+    toast.success(`${activeTab === 'course' ? '课程' : '岗位'}已绑定`)
   }
 
   const handleRemove = (id: string) => {
@@ -101,8 +101,8 @@ export default function CourseManagementTab({ selectedGrade }: { selectedGrade: 
     toast.success('已取消关联')
   }
 
-  const itemLabel = activeTab === 'course' ? '课程' : '实践场景'
-  const itemLabelPlural = activeTab === 'course' ? '课程' : '实践场景'
+  const itemLabel = activeTab === 'course' ? '课程' : '岗位'
+  const itemLabelPlural = activeTab === 'course' ? '课程' : '岗位'
 
   return (
     <div className="space-y-4">
@@ -110,7 +110,7 @@ export default function CourseManagementTab({ selectedGrade }: { selectedGrade: 
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="course">课程</TabsTrigger>
-            <TabsTrigger value="practice">实践场景</TabsTrigger>
+            <TabsTrigger value="practice">岗位</TabsTrigger>
           </TabsList>
           <div className="flex items-center gap-2">
             <Input
@@ -137,7 +137,7 @@ export default function CourseManagementTab({ selectedGrade }: { selectedGrade: 
         <TabsContent value="practice" className="mt-0 space-y-4">
           <ListTable
             list={filteredList}
-            itemLabel="实践场景"
+            itemLabel="岗位"
             onRemove={handleRemove}
           />
         </TabsContent>
