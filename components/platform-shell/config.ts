@@ -18,8 +18,9 @@ export interface TopNavItem {
 export interface SideNavChild {
   id: string
   label: string
-  href: string
+  href?: string
   matchers?: string[]
+  children?: SideNavChild[]
 }
 
 export interface SideNavItem {

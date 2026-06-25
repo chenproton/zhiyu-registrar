@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, ChevronLeft, ChevronRight, Building2 } from "lucide-react"
-import type { PlatformNavigationConfig, SideNavItem, TopNavItem, UserMenuItem } from "./config"
+import type { PlatformNavigationConfig, SideNavChild, SideNavItem, TopNavItem, UserMenuItem } from "./config"
 import { resolvePlatformIcon } from "./icons"
 import { cn, matchesPath } from "./utils"
 
@@ -12,9 +12,19 @@ function isTopItemActive(pathname: string, item: TopNavItem) {
   return matchesPath(pathname, item.href, item.matchers)
 }
 
+function hasActiveChild(pathname: string, children?: SideNavChild[]): boolean {
+  if (!children?.length) return false
+  return children.some((child) => {
+    if (child.children?.length) {
+      return hasActiveChild(pathname, child.children)
+    }
+    return matchesPath(pathname, child.href, child.matchers)
+  })
+}
+
 function isSideItemActive(pathname: string, item: SideNavItem) {
   if (item.children?.length) {
-    return item.children.some((child) => matchesPath(pathname, child.href, child.matchers))
+    return hasActiveChild(pathname, item.children)
   }
   return matchesPath(pathname, item.href, item.matchers)
 }
@@ -237,9 +247,30 @@ export function PlatformSideNav({ config }: { config: PlatformNavigationConfig }
   const PlatformIcon = resolvePlatformIcon(config.platformIcon || "settings")
 
   useEffect(() => {
-    const activeParents = config.sideNavItems
-      .filter((item) => item.children?.some((child) => matchesPath(pathname, child.href, child.matchers)))
-      .map((item) => item.id)
+    function collectActiveParentIds(children: SideNavChild[]): string[] {
+      const ids: string[] = []
+      children.forEach((child) => {
+        if (child.children?.length) {
+          const nestedIds = collectActiveParentIds(child.children)
+          if (nestedIds.length > 0 || hasActiveChild(pathname, child.children)) {
+            ids.push(child.id)
+          }
+          ids.push(...nestedIds)
+        }
+      })
+      return ids
+    }
+
+    const activeParents: string[] = []
+    config.sideNavItems.forEach((item) => {
+      if (item.children?.length) {
+        const nestedIds = collectActiveParentIds(item.children)
+        if (nestedIds.length > 0 || hasActiveChild(pathname, item.children)) {
+          activeParents.push(item.id)
+        }
+        activeParents.push(...nestedIds)
+      }
+    })
 
     setExpandedItems((prev) => Array.from(new Set([...defaultExpanded, ...activeParents, ...prev])))
   }, [config.sideNavItems, defaultExpanded, pathname])
@@ -247,6 +278,57 @@ export function PlatformSideNav({ config }: { config: PlatformNavigationConfig }
   const toggleExpand = (itemId: string) => {
     setExpandedItems((prev) =>
       prev.includes(itemId) ? prev.filter((entry) => entry !== itemId) : [...prev, itemId]
+    )
+  }
+
+  function renderChildItems(
+    children: SideNavChild[],
+    depth: number = 0
+  ) {
+    return (
+      <div className={cn("space-y-0.5", depth > 0 ? "ml-3 border-l-2 border-gray-100 pl-2" : "ml-4 mt-1 border-l-2 border-gray-100 pl-3")}>
+        {children.map((child) => {
+          const childHasChildren = Boolean(child.children?.length)
+          const childIsExpanded = expandedItems.includes(child.id)
+          const childActive = childHasChildren
+            ? hasActiveChild(pathname, child.children)
+            : matchesPath(pathname, child.href, child.matchers)
+
+          return (
+            <div key={child.id}>
+              {childHasChildren ? (
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(child.id)}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors",
+                    childActive ? "bg-primary/5 font-medium text-primary" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                  )}
+                >
+                  <span>{child.label}</span>
+                  {childIsExpanded ? (
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-gray-400" />
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href={child.href || "/"}
+                  className={cn(
+                    "block rounded-lg px-3 py-2 text-sm transition-colors",
+                    childActive ? "bg-primary text-white font-medium" : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
+                  )}
+                >
+                  {child.label}
+                </Link>
+              )}
+
+              {childHasChildren && childIsExpanded ? renderChildItems(child.children!, depth + 1) : null}
+            </div>
+          )
+        })}
+      </div>
     )
   }
 
@@ -308,24 +390,7 @@ export function PlatformSideNav({ config }: { config: PlatformNavigationConfig }
                 </Link>
               )}
 
-              {hasChildren && isExpanded ? (
-                <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-gray-100 pl-3">
-                  {item.children?.map((child) => (
-                    <Link
-                      key={child.id}
-                      href={child.href}
-                      className={cn(
-                        "block rounded-lg px-3 py-2 text-sm transition-colors",
-                        matchesPath(pathname, child.href, child.matchers)
-                          ? "bg-primary text-white font-medium"
-                          : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-                      )}
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
+              {hasChildren && isExpanded ? renderChildItems(item.children!) : null}
             </div>
           )
         })}
