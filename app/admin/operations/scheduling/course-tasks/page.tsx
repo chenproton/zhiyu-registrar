@@ -51,11 +51,6 @@ export default function CourseTasksPage() {
     })
   }, [selectedMajorId, selectedGradeId])
 
-  const selectedMajor = useMemo(
-    () => majors.find((m) => m.id === selectedMajorId) || null,
-    [selectedMajorId]
-  )
-
   const filteredTasks = useMemo(() => {
     return tasks.filter((t) => {
       const cls = classes.find((c) => c.id === t.classId)
@@ -212,22 +207,6 @@ export default function CourseTasksPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* 标题区 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">
-            {selectedMajor?.name || '开课任务'}
-          </h2>
-          <p className="text-muted-foreground text-sm">
-            {selectedDept && departments.find((d) => d.id === selectedDept)?.name}
-            {' · '}
-            {selectedGradeId && grades.find((g) => g.id === selectedGradeId)?.name}
-            {' · '}
-            共 {filteredTasks.length} 个开课任务
-          </p>
-        </div>
-      </div>
 
       {/* 筛选栏 */}
       <div className="flex items-center gap-2 flex-wrap">

@@ -238,6 +238,19 @@ function PlanPage() {
     return { total, credits, hours }
   }, [displayedEntries])
 
+  // ---- 学期内学时统计 ----
+  const semesterHoursStats = useMemo(() => {
+    if (!localPlan || selectedSemester === 'all')
+      return { sceneHours: 0, courseHours: 0 }
+    let sceneHours = 0
+    let courseHours = 0
+    displayedEntries.forEach((e) => {
+      if (e.type === 'scene') sceneHours += e.totalHours || 0
+      else courseHours += e.totalHours || 0
+    })
+    return { sceneHours, courseHours }
+  }, [displayedEntries, localPlan, selectedSemester])
+
   // ---- 学时统计 ----
   const programHoursStats = useMemo(() => {
     const allCourses: CoursePlan[] = []
@@ -585,6 +598,29 @@ function PlanPage() {
                     </span>
                   </div>
                 </div>
+
+                {selectedSemester !== 'all' && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card shadow-sm border-l-4 border-l-emerald-400">
+                    <div className="flex flex-col leading-none">
+                      <span className="text-[10px] text-muted-foreground">
+                        第{selectedSemester}学期学时
+                      </span>
+                      <span className="text-sm font-bold tabular-nums">
+                        {semesterHoursStats.sceneHours + semesterHoursStats.courseHours}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground border-l pl-2">
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                        岗位 {semesterHoursStats.sceneHours}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                        课程 {semesterHoursStats.courseHours}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
