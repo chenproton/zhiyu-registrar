@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -87,10 +87,9 @@ export default function TabCurriculum({
   const [librarySearch, setLibrarySearch] = useState('')
   const [libraryCategory, setLibraryCategory] = useState<string>('全部')
 
-  // 岗位课时导入弹窗
+  // 岗位导入弹窗
   const [positionSceneOpen, setPositionSceneOpen] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState<string>('')
-  const [selectedSceneIds, setSelectedSceneIds] = useState<Set<string>>(new Set())
   const [positionSearch, setPositionSearch] = useState('')
 
   // 从所有人培方案的 curriculum 中提取唯一课程课时，构建课程课时库
@@ -184,45 +183,36 @@ export default function TabCurriculum({
     return positions.filter((p) => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
   }, [positionSearch])
 
-  const scenesForPosition = useMemo(() => {
-    if (!selectedPositionId) return []
-    return sceneSyllabuses.filter((s) => s.mappedPositionId === selectedPositionId)
-  }, [selectedPositionId])
-
-  const toggleSceneSelection = (sceneId: string) => {
-    setSelectedSceneIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(sceneId)) next.delete(sceneId)
-      else next.add(sceneId)
-      return next
-    })
-  }
-
   const handleImportScenes = () => {
-    const existingNames = new Set(curriculum.map((c) => c.name))
-    const toAdd = scenesForPosition.filter((s) => selectedSceneIds.has(s.id) && !existingNames.has(s.courseName))
-    if (toAdd.length === 0) {
-      toast({ title: '所选岗位课时已存在或为空', variant: 'destructive' })
+    if (!selectedPositionId) {
+      toast({ title: '请选择岗位', variant: 'destructive' })
       return
     }
-    const newScenes: CoursePlan[] = toAdd.map((s) =>
-      emptyCourse({
-        name: s.courseName,
-        code: s.courseCode || '',
-        credits: s.credits || 0,
-        hours: s.totalHours || 0,
-        nature: '场景',
-        assessment: '考查',
-        courseType: '场景',
-        subCategory: '场景',
-        courseTypeLabel: '',
-      })
-    )
-    updateCurriculum([...curriculum, ...newScenes])
+    const position = positions.find((p) => p.id === selectedPositionId)
+    if (!position) {
+      toast({ title: '岗位不存在', variant: 'destructive' })
+      return
+    }
+    const existingNames = new Set(curriculum.map((c) => c.name))
+    if (existingNames.has(position.name)) {
+      toast({ title: '该岗位已存在', variant: 'destructive' })
+      return
+    }
+    const newScene: CoursePlan = emptyCourse({
+      name: position.name,
+      code: position.code,
+      credits: 0,
+      hours: 0,
+      nature: '场景',
+      assessment: '考查',
+      courseType: '场景',
+      subCategory: '场景',
+      courseTypeLabel: '',
+    })
+    updateCurriculum([...curriculum, newScene])
     setPositionSceneOpen(false)
-    setSelectedSceneIds(new Set())
     setSelectedPositionId('')
-    toast({ title: `成功导入 ${toAdd.length} 个岗位课时` })
+    toast({ title: `成功加入岗位：${position.name}` })
   }
 
   const filteredCourses = useMemo(() => {
@@ -399,9 +389,9 @@ export default function TabCurriculum({
 
   const toolbarButtons = (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => { setPositionSceneOpen(true); setSelectedPositionId(''); setSelectedSceneIds(new Set()); setPositionSearch('') }}>
+      <Button variant="outline" size="sm" onClick={() => { setPositionSceneOpen(true); setSelectedPositionId(''); setPositionSearch('') }}>
         <Briefcase className="h-4 w-4 mr-1" />
-        岗位课时导入
+        岗位导入
       </Button>
       <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
         <Upload className="h-4 w-4 mr-1" />
@@ -760,13 +750,13 @@ export default function TabCurriculum({
         </DialogContent>
       </Dialog>
 
-      {/* 岗位课时导入弹窗 */}
+      {/* 岗位导入弹窗 */}
       <Dialog open={positionSceneOpen} onOpenChange={setPositionSceneOpen}>
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
-              岗位课时导入
+              岗位导入
             </DialogTitle>
           </DialogHeader>
 
@@ -783,7 +773,7 @@ export default function TabCurriculum({
                   className="pl-9 h-9 text-sm"
                 />
               </div>
-              <div className="border rounded-md overflow-hidden max-h-[180px] overflow-y-auto">
+              <div className="border rounded-md overflow-hidden max-h-[360px] overflow-y-auto">
                 {filteredPositions.length === 0 && (
                   <div className="text-sm text-muted-foreground text-center py-4">未找到匹配的岗位</div>
                 )}
@@ -794,11 +784,7 @@ export default function TabCurriculum({
                       'flex items-center justify-between px-3 py-2 text-sm cursor-pointer border-b last:border-b-0 transition-colors',
                       selectedPositionId === pos.id ? 'bg-primary/10' : 'hover:bg-muted/50'
                     )}
-                    onClick={() => {
-                      setSelectedPositionId(pos.id)
-                      const scenes = sceneSyllabuses.filter((s) => s.mappedPositionId === pos.id)
-                      setSelectedSceneIds(new Set(scenes.map((s) => s.id)))
-                    }}
+                    onClick={() => setSelectedPositionId(pos.id)}
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn(
@@ -814,75 +800,12 @@ export default function TabCurriculum({
                 ))}
               </div>
             </div>
-
-            {/* 岗位课时列表 */}
-            {selectedPositionId && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm">岗位课时列表</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs"
-                    onClick={() => {
-                      if (selectedSceneIds.size === scenesForPosition.length) {
-                        setSelectedSceneIds(new Set())
-                      } else {
-                        setSelectedSceneIds(new Set(scenesForPosition.map((s) => s.id)))
-                      }
-                    }}
-                  >
-                    {selectedSceneIds.size === scenesForPosition.length ? '取消全选' : '全选'}
-                  </Button>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  已选 <span className="font-medium text-foreground">{selectedSceneIds.size}</span> 个岗位课时 ·
-                  共 <span className="font-medium text-foreground">{scenesForPosition.length}</span> 个
-                </div>
-                <div className="border rounded-md overflow-hidden max-h-[240px] overflow-y-auto">
-                  {scenesForPosition.length === 0 && (
-                    <div className="text-sm text-muted-foreground text-center py-4">该岗位暂无岗位课时</div>
-                  )}
-                  {scenesForPosition.map((scene) => {
-                    const alreadyExists = curriculum.some((c) => c.name === scene.courseName)
-                    const isSelected = selectedSceneIds.has(scene.id)
-                    return (
-                      <div
-                        key={scene.id}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 text-sm border-b last:border-b-0 transition-colors',
-                          isSelected ? 'bg-primary/5' : 'hover:bg-muted/50',
-                          alreadyExists && 'opacity-50'
-                        )}
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          disabled={alreadyExists}
-                          onCheckedChange={() => toggleSceneSelection(scene.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{scene.courseName}</span>
-                            {alreadyExists && (
-                              <Badge variant="outline" className="text-[10px] shrink-0">已添加</Badge>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {scene.courseCode || '-'} · {scene.credits || 0}学分 · {scene.totalHours || 0}学时
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={() => setPositionSceneOpen(false)}>取消</Button>
-            <Button size="sm" onClick={handleImportScenes} disabled={selectedSceneIds.size === 0}>
-              导入选中岗位课时 ({selectedSceneIds.size})
+            <Button size="sm" onClick={handleImportScenes} disabled={!selectedPositionId}>
+              加入选中岗位
             </Button>
           </DialogFooter>
         </DialogContent>
