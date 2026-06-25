@@ -421,8 +421,8 @@ export default function TabCurriculum({
             <TableRow>
               <TableHead className="w-24"></TableHead>
               <TableHead className="w-44">课程课时类型</TableHead>
-              <TableHead className="w-28">课程课时（岗位课时）代码</TableHead>
-              <TableHead className="w-48">课程课时（岗位课时）名称</TableHead>
+              <TableHead className="w-28">课时代码</TableHead>
+              <TableHead className="w-48">课时名称</TableHead>
               <TableHead className="w-20">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
               <TableHead className="w-24">性质</TableHead>
@@ -607,7 +607,7 @@ export default function TabCurriculum({
       </div>
 
       <Button variant="outline" size="sm" onClick={addCourse}>
-        <Plus className="h-4 w-4 mr-1" /> 添加课程课时
+        <Plus className="h-4 w-4 mr-1" /> 添加课时
       </Button>
 
       {/* 课程课时类型管理弹窗 */}
