@@ -959,9 +959,9 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Input placeholder="输入名称查询" className="w-[200px]" />
-            <Button className="gap-1" onClick={() => toast('已下发到教师工作台')}>
+            <Button className="gap-1" onClick={() => toast('已生成开课任务表')}>
               <Download className="h-4 w-4" />
-              下发到教师工作台
+              生成开课任务表
             </Button>
           </div>
         </CardHeader>
