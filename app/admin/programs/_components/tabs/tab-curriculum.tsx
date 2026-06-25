@@ -32,7 +32,7 @@ function findSyllabusId(courseName: string): string | null {
   return ALL_SYLLABUS_IDS[hash % ALL_SYLLABUS_IDS.length] ?? null
 }
 
-// 模拟场景库（用于下拉搜索选择）
+// 模拟岗位课时库（用于下拉搜索选择）
 const mockScenes = [
   { code: 'PRAC001', name: '企业认知实习' },
   { code: 'PRAC002', name: '专业综合实训' },
@@ -80,20 +80,20 @@ export default function TabCurriculum({
   const [activeFilter, setActiveFilter] = useState<string>('全部')
   const [typeConfigOpen, setTypeConfigOpen] = useState(false)
   const [courseTypes, setCourseTypes] = useState<string[]>(defaultCourseTypes)
-  // 跟踪哪些场景行处于"新建"输入模式（true=输入框，false=下拉选择）
+  // 跟踪哪些岗位课时行处于"新建"输入模式（true=输入框，false=下拉选择）
   const [sceneEditMode, setSceneEditMode] = useState<Record<string, boolean>>({})
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [selectedLibraryIds, setSelectedLibraryIds] = useState<Set<string>>(new Set())
   const [librarySearch, setLibrarySearch] = useState('')
   const [libraryCategory, setLibraryCategory] = useState<string>('全部')
 
-  // 岗位场景导入弹窗
+  // 岗位课时导入弹窗
   const [positionSceneOpen, setPositionSceneOpen] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState<string>('')
   const [selectedSceneIds, setSelectedSceneIds] = useState<Set<string>>(new Set())
   const [positionSearch, setPositionSearch] = useState('')
 
-  // 从所有人培方案的 curriculum 中提取唯一课程，构建课程库
+  // 从所有人培方案的 curriculum 中提取唯一课程课时，构建课程课时库
   const mockCourseLibrary = useMemo(() => {
     const map = new Map<string, { id: string; name: string; code: string; credits: number; hours: number; type: string }>()
     trainingPrograms.forEach((tp) => {
@@ -160,7 +160,7 @@ export default function TabCurriculum({
     const existingNames = new Set(curriculum.map((c) => c.name))
     const toAdd = mockCourseLibrary.filter((c) => selectedLibraryIds.has(c.id) && !existingNames.has(c.name))
     if (toAdd.length === 0) {
-      toast({ title: '所选课程已存在或为空', variant: 'destructive' })
+      toast({ title: '所选课程课时已存在或为空', variant: 'destructive' })
       return
     }
     const newCourses: CoursePlan[] = toAdd.map((c) =>
@@ -175,7 +175,7 @@ export default function TabCurriculum({
     updateCurriculum([...curriculum, ...newCourses])
     setLibraryOpen(false)
     setSelectedLibraryIds(new Set())
-    toast({ title: `成功添加 ${toAdd.length} 门课程` })
+    toast({ title: `成功添加 ${toAdd.length} 门课程课时` })
   }
 
   const filteredPositions = useMemo(() => {
@@ -202,7 +202,7 @@ export default function TabCurriculum({
     const existingNames = new Set(curriculum.map((c) => c.name))
     const toAdd = scenesForPosition.filter((s) => selectedSceneIds.has(s.id) && !existingNames.has(s.courseName))
     if (toAdd.length === 0) {
-      toast({ title: '所选场景已存在或为空', variant: 'destructive' })
+      toast({ title: '所选岗位课时已存在或为空', variant: 'destructive' })
       return
     }
     const newScenes: CoursePlan[] = toAdd.map((s) =>
@@ -222,7 +222,7 @@ export default function TabCurriculum({
     setPositionSceneOpen(false)
     setSelectedSceneIds(new Set())
     setSelectedPositionId('')
-    toast({ title: `成功导入 ${toAdd.length} 个场景` })
+    toast({ title: `成功导入 ${toAdd.length} 个岗位课时` })
   }
 
   const filteredCourses = useMemo(() => {
@@ -249,7 +249,7 @@ export default function TabCurriculum({
     updateCurriculum(curriculum.filter((_, i) => i !== index))
   }
 
-  // 课程类型管理
+  // 课程课时类型管理
   const updateTypeName = (idx: number, newName: string) => {
     const oldName = courseTypes[idx]
     const newTypes = [...courseTypes]
@@ -262,12 +262,12 @@ export default function TabCurriculum({
   }
 
   const addType = () => {
-    setCourseTypes([...courseTypes, `新课程类型${courseTypes.length + 1}`])
+    setCourseTypes([...courseTypes, `新课程课时类型${courseTypes.length + 1}`])
   }
 
   const removeType = (idx: number) => {
     if (courseTypes.length <= 1) {
-      toast({ title: '至少保留一个课程类型', variant: 'destructive' })
+      toast({ title: '至少保留一个课程课时类型', variant: 'destructive' })
       return
     }
     const removedName = courseTypes[idx]
@@ -281,7 +281,7 @@ export default function TabCurriculum({
     if (activeFilter === removedName) setActiveFilter('全部')
   }
 
-  // 场景选择器组件
+  // 岗位课时选择器组件
   function SceneSearchSelect({
     value,
     onSelect,
@@ -315,7 +315,7 @@ export default function TabCurriculum({
               className="flex-1 justify-between font-normal h-8 text-xs"
             >
               <span className={cn('truncate', !selectedScene && 'text-muted-foreground')}>
-                {selectedScene ? `${selectedScene.name} (${selectedScene.code})` : '选择场景...'}
+                {selectedScene ? `${selectedScene.name} (${selectedScene.code})` : '选择岗位课时...'}
               </span>
               <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
             </Button>
@@ -323,12 +323,12 @@ export default function TabCurriculum({
           <PopoverContent className="w-[280px] p-0" align="start">
             <Command>
               <CommandInput
-                placeholder="搜索场景名称或编码..."
+                placeholder="搜索岗位课时名称或编码..."
                 value={search}
                 onValueChange={setSearch}
               />
               <CommandList>
-                <CommandEmpty>未找到匹配的场景</CommandEmpty>
+                <CommandEmpty>未找到匹配的岗位课时</CommandEmpty>
                 <CommandGroup>
                   {filtered.map((scene) => (
                     <CommandItem
@@ -359,7 +359,7 @@ export default function TabCurriculum({
         </Popover>
         <Button variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={onNewScene}>
           <Plus className="h-3 w-3 mr-1" />
-          新建场景
+          新建岗位课时
         </Button>
       </div>
     )
@@ -379,7 +379,7 @@ export default function TabCurriculum({
         size="sm"
         onClick={() => setActiveFilter('场景')}
       >
-        场景 ({curriculum.filter((c) => c.courseType === '场景').length})
+        岗位课时 ({curriculum.filter((c) => c.courseType === '场景').length})
       </Button>
       {courseTypes.map((type) => {
         const count = curriculum.filter((c) => c.courseTypeLabel === type).length
@@ -401,7 +401,7 @@ export default function TabCurriculum({
     <div className="flex items-center gap-2">
       <Button variant="outline" size="sm" onClick={() => { setPositionSceneOpen(true); setSelectedPositionId(''); setSelectedSceneIds(new Set()); setPositionSearch('') }}>
         <Briefcase className="h-4 w-4 mr-1" />
-        岗位场景导入
+        岗位课时导入
       </Button>
       <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
         <Upload className="h-4 w-4 mr-1" />
@@ -413,11 +413,11 @@ export default function TabCurriculum({
       </Button>
       <Button variant="outline" size="sm" onClick={() => { setLibraryOpen(true); setSelectedLibraryIds(new Set()); setLibrarySearch(''); setLibraryCategory('全部') }}>
         <Library className="h-4 w-4 mr-1" />
-        课程库管理
+        课程课时库管理
       </Button>
       <Button variant="outline" size="sm" onClick={() => setTypeConfigOpen(true)}>
         <Settings className="h-4 w-4 mr-1" />
-        课程类型管理
+        课程课时类型管理
       </Button>
     </div>
   )
@@ -430,9 +430,9 @@ export default function TabCurriculum({
           <TableHeader>
             <TableRow>
               <TableHead className="w-24"></TableHead>
-              <TableHead className="w-44">课程类型</TableHead>
-              <TableHead className="w-28">课程（场景）代码</TableHead>
-              <TableHead className="w-48">课程（场景）名称</TableHead>
+              <TableHead className="w-44">课程课时类型</TableHead>
+              <TableHead className="w-28">课程课时（岗位课时）代码</TableHead>
+              <TableHead className="w-48">课程课时（岗位课时）名称</TableHead>
               <TableHead className="w-20">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
               <TableHead className="w-24">性质</TableHead>
@@ -467,13 +467,13 @@ export default function TabCurriculum({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="课程">课程</SelectItem>
-                        <SelectItem value="场景">场景</SelectItem>
+                        <SelectItem value="课程">课程课时</SelectItem>
+                        <SelectItem value="场景">岗位课时</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
 
-                  {/* 课程类型 */}
+                  {/* 课程课时类型 */}
                   <TableCell>
                     {isScene ? (
                       <span className="text-xs text-muted-foreground">-</span>
@@ -494,7 +494,7 @@ export default function TabCurriculum({
                     )}
                   </TableCell>
 
-                  {/* 课程（场景）代码 + 名称 */}
+                  {/* 课程课时（岗位课时）代码 + 名称 */}
                   {isScene ? (
                     <TableCell colSpan={2}>
                       {isNewSceneMode ? (
@@ -503,13 +503,13 @@ export default function TabCurriculum({
                             value={c.code}
                             onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
                             className="h-8 text-xs w-28"
-                            placeholder="场景编码"
+                            placeholder="岗位课时编码"
                           />
                           <Input
                             value={c.name}
                             onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
                             className="h-8 text-xs flex-1"
-                            placeholder="场景名称"
+                            placeholder="岗位课时名称"
                           />
                           <Button
                             variant="ghost"
@@ -594,10 +594,10 @@ export default function TabCurriculum({
                           href={`/admin/operations/syllabus/${syllabusId}?edit=1`}
                           className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                         >
-                          配置课程（能力）目标
+                          配置课程课时（能力）目标
                         </a>
                       ) : (
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">配置课程（能力）目标</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">配置课程课时（能力）目标</span>
                       )}
                       <Button
                         variant="ghost"
@@ -617,14 +617,14 @@ export default function TabCurriculum({
       </div>
 
       <Button variant="outline" size="sm" onClick={addCourse}>
-        <Plus className="h-4 w-4 mr-1" /> 添加课程
+        <Plus className="h-4 w-4 mr-1" /> 添加课程课时
       </Button>
 
-      {/* 课程类型管理弹窗 */}
+      {/* 课程课时类型管理弹窗 */}
       <Dialog open={typeConfigOpen} onOpenChange={setTypeConfigOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>课程类型管理</DialogTitle>
+            <DialogTitle>课程课时类型管理</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             {courseTypes.map((type, idx) => (
@@ -654,13 +654,13 @@ export default function TabCurriculum({
         </DialogContent>
       </Dialog>
 
-      {/* 课程库管理弹窗 */}
+      {/* 课程课时库管理弹窗 */}
       <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="flex items-center gap-2">
               <Library className="h-5 w-5" />
-              课程库管理
+              课程课时库管理
             </DialogTitle>
           </DialogHeader>
 
@@ -669,7 +669,7 @@ export default function TabCurriculum({
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="搜索课程名称或代码..."
+                placeholder="搜索课程课时名称或代码..."
                 value={librarySearch}
                 onChange={(e) => setLibrarySearch(e.target.value)}
                 className="pl-9 h-9 text-sm"
@@ -692,16 +692,16 @@ export default function TabCurriculum({
             </div>
 
             <div className="text-xs text-muted-foreground">
-              已选 <span className="font-medium text-foreground">{selectedLibraryIds.size}</span> 门课程 ·
+              已选 <span className="font-medium text-foreground">{selectedLibraryIds.size}</span> 门课程课时 ·
               共 <span className="font-medium text-foreground">{filteredLibrary.length}</span> 门
             </div>
           </div>
 
-          {/* 课程列表 */}
+          {/* 课程课时列表 */}
           <div className="px-6 pb-2">
             <div className="border rounded-md overflow-hidden">
               <div className="grid grid-cols-[1fr_100px_80px_80px_60px] gap-2 px-3 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b">
-                <span>课程名称</span>
+                <span>课程课时名称</span>
                 <span className="text-center">代码</span>
                 <span className="text-center">学分</span>
                 <span className="text-center">学时</span>
@@ -709,7 +709,7 @@ export default function TabCurriculum({
               </div>
               <div className="max-h-[320px] overflow-y-auto">
                 {filteredLibrary.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-8">未找到匹配的课程</div>
+                  <div className="text-sm text-muted-foreground text-center py-8">未找到匹配的课程课时</div>
                 )}
                 {filteredLibrary.map((course) => {
                   const alreadyExists = curriculum.some((c) => c.name === course.name)
@@ -754,19 +754,19 @@ export default function TabCurriculum({
               清空选择
             </Button>
             <Button size="sm" onClick={addFromLibrary} disabled={selectedLibraryIds.size === 0}>
-              添加选中课程 ({selectedLibraryIds.size})
+              添加选中课程课时 ({selectedLibraryIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 岗位场景导入弹窗 */}
+      {/* 岗位课时导入弹窗 */}
       <Dialog open={positionSceneOpen} onOpenChange={setPositionSceneOpen}>
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
-              岗位场景导入
+              岗位课时导入
             </DialogTitle>
           </DialogHeader>
 
@@ -811,11 +811,11 @@ export default function TabCurriculum({
               </div>
             </div>
 
-            {/* 场景列表 */}
+            {/* 岗位课时列表 */}
             {selectedPositionId && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm">场景列表</Label>
+                  <Label className="text-sm">岗位课时列表</Label>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -832,12 +832,12 @@ export default function TabCurriculum({
                   </Button>
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  已选 <span className="font-medium text-foreground">{selectedSceneIds.size}</span> 个场景 ·
+                  已选 <span className="font-medium text-foreground">{selectedSceneIds.size}</span> 个岗位课时 ·
                   共 <span className="font-medium text-foreground">{scenesForPosition.length}</span> 个
                 </div>
                 <div className="border rounded-md overflow-hidden max-h-[240px] overflow-y-auto">
                   {scenesForPosition.length === 0 && (
-                    <div className="text-sm text-muted-foreground text-center py-4">该岗位暂无场景</div>
+                    <div className="text-sm text-muted-foreground text-center py-4">该岗位暂无岗位课时</div>
                   )}
                   {scenesForPosition.map((scene) => {
                     const alreadyExists = curriculum.some((c) => c.name === scene.courseName)
@@ -878,7 +878,7 @@ export default function TabCurriculum({
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={() => setPositionSceneOpen(false)}>取消</Button>
             <Button size="sm" onClick={handleImportScenes} disabled={selectedSceneIds.size === 0}>
-              导入选中场景 ({selectedSceneIds.size})
+              导入选中岗位课时 ({selectedSceneIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -891,7 +891,7 @@ export default function TabCurriculum({
       <div className="flex items-center justify-between mb-4 pb-2 border-b">
         <div className="flex items-center gap-2">
           <LayoutList className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold">课程（场景）设置</h2>
+          <h2 className="text-lg font-bold">教学进程总体安排</h2>
         </div>
         {toolbarButtons}
       </div>
