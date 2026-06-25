@@ -33,23 +33,7 @@ function findSyllabusId(courseName: string): string | null {
 }
 
 // 模拟岗位课时库（用于下拉搜索选择）
-const mockScenes = [
-  { code: 'PRAC001', name: '企业认知实习' },
-  { code: 'PRAC002', name: '专业综合实训' },
-  { code: 'PRAC003', name: '企业顶岗实习' },
-  { code: 'PRAC004', name: '毕业设计（论文）' },
-  { code: 'PRAC005', name: '创新创业实践' },
-  { code: 'PRAC006', name: '开源项目实战' },
-  { code: 'PRAC007', name: '软件开发实训' },
-  { code: 'PRAC008', name: '网络工程实训' },
-  { code: 'PRAC009', name: '数据挖掘实践' },
-  { code: 'PRAC010', name: '智能系统开发' },
-  { code: 'PRAC101', name: '认识实习' },
-  { code: 'PRAC102', name: '程序设计课程设计' },
-  { code: 'PRAC103', name: '数据结构课程设计' },
-  { code: 'PRAC201', name: '企业项目实战' },
-  { code: 'PRAC301', name: '创新创业实践' },
-]
+const mockScenes = positions.map((p) => ({ code: p.code, name: p.name }))
 
 const emptyCourse = (defaults?: Partial<CoursePlan>): CoursePlan => ({
   id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,

@@ -562,31 +562,31 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co-se-16', name: '云计算与容器技术', code: 'CLOUD101', credits: 3, hours: 48, semester: 7, nature: '选修', assessment: '考查', version: 'v1.0', courseTypeLabel: '专业拓展课程' },
     ],
     practiceScenes: [
-      { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' },
-      { id: 'ps-se-04', name: '认识实习', code: 'PRAC101', credits: 2, hours: 32, semester: 3, nature: '场景', assessment: '报告', version: 'v1.0' },
-      { id: 'ps-se-05', name: '企业项目实战', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0' },
-      { id: 'ps-se-06', name: '创新创业实践', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0' },
-      { id: 'ps-se-07', name: '程序设计课程设计', code: 'PRAC102', credits: 2, hours: 32, semester: 1, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-se-08', name: '数据结构课程设计', code: 'PRAC103', credits: 2, hours: 32, semester: 2, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-se-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-se-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-se-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' },
+      { id: 'ps-se-04', name: '技术支持工程师', code: 'PRAC101', credits: 2, hours: 32, semester: 3, nature: '场景', assessment: '报告', version: 'v1.0' },
+      { id: 'ps-se-05', name: '项目经理', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0' },
+      { id: 'ps-se-06', name: '产品经理', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0' },
+      { id: 'ps-se-07', name: '软件开发工程师', code: 'PRAC102', credits: 2, hours: 32, semester: 1, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-se-08', name: '后端开发工程师', code: 'PRAC103', credits: 2, hours: 32, semester: 2, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     curriculum: [
       { id: 'co1', name: '高等数学', code: 'MATH101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v1.8', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
       { id: 'co2', name: '程序设计基础', code: 'CS101', credits: 4, hours: 64, semester: 1, nature: '必修', assessment: '考试', version: 'v2.1', courseType: '课程', courseTypeLabel: '专业基础课程' },
       { id: 'co-se-01', name: '大学英语I', code: 'ENG101', credits: 3, hours: 48, semester: 1, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
       { id: 'co-se-02', name: '思想道德与法治', code: 'POL101', credits: 3, hours: 48, semester: 1, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
-      { id: 'ps-se-07', name: '程序设计课程设计', code: 'PRAC102', credits: 2, hours: 32, semester: 1, nature: '实践', assessment: '作品', version: 'v1.0', courseType: '场景' },
+      { id: 'ps-se-07', name: '软件开发工程师', code: 'PRAC102', credits: 2, hours: 32, semester: 1, nature: '实践', assessment: '作品', version: 'v1.0', courseType: '场景' },
       { id: 'co-se-03', name: '线性代数', code: 'MATH102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
       { id: 'co3', name: '数据结构', code: 'CS102', credits: 4, hours: 64, semester: 2, nature: '必修', assessment: '考试', version: 'v2.5', courseType: '课程', courseTypeLabel: '专业基础课程' },
       { id: 'co-se-04', name: '大学英语II', code: 'ENG102', credits: 3, hours: 48, semester: 2, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
       { id: 'co-se-05', name: '体育与健康', code: 'PE101', credits: 2, hours: 32, semester: 2, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '公共基础必修课程' },
-      { id: 'ps-se-08', name: '数据结构课程设计', code: 'PRAC103', credits: 2, hours: 32, semester: 2, nature: '实践', assessment: '作品', version: 'v1.0', courseType: '场景' },
+      { id: 'ps-se-08', name: '后端开发工程师', code: 'PRAC103', credits: 2, hours: 32, semester: 2, nature: '实践', assessment: '作品', version: 'v1.0', courseType: '场景' },
       { id: 'co4', name: '计算机网络', code: 'CS201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.9', courseType: '课程', courseTypeLabel: '专业基础课程' },
       { id: 'co-se-06', name: '离散数学', code: 'MATH201', credits: 3, hours: 48, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业基础课程' },
       { id: 'co-se-07', name: '数据库原理', code: 'CS202', credits: 4, hours: 64, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
       { id: 'co-se-08', name: '计算机组成原理', code: 'CS203', credits: 4, hours: 64, semester: 3, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业基础课程' },
-      { id: 'ps-se-04', name: '认识实习', code: 'PRAC101', credits: 2, hours: 32, semester: 3, nature: '场景', assessment: '报告', version: 'v1.0', courseType: '场景' },
+      { id: 'ps-se-04', name: '技术支持工程师', code: 'PRAC101', credits: 2, hours: 32, semester: 3, nature: '场景', assessment: '报告', version: 'v1.0', courseType: '场景' },
       { id: 'co-se-09', name: '操作系统', code: 'CS301', credits: 4, hours: 64, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
       { id: 'co-se-10', name: '软件工程导论', code: 'SE101', credits: 3, hours: 48, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
       { id: 'co6', name: '人工智能导论', code: 'AI101', credits: 3, hours: 48, semester: 4, nature: '选修', assessment: '考查', version: 'v1.2', courseType: '课程', courseTypeLabel: '专业拓展课程' },
@@ -594,14 +594,14 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co5', name: '软件工程实践', code: 'CS302', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v3.1', courseType: '课程', courseTypeLabel: '专业核心课程' },
       { id: 'co-se-12', name: '软件测试技术', code: 'SE201', credits: 3, hours: 48, semester: 5, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
       { id: 'co-se-13', name: '移动应用开发', code: 'MOB101', credits: 3, hours: 48, semester: 5, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
-      { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1', courseType: '场景' },
+      { id: 'ps-se-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1', courseType: '场景' },
       { id: 'co-se-14', name: '系统架构设计', code: 'SE301', credits: 3, hours: 48, semester: 6, nature: '必修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业核心课程' },
       { id: 'co-se-15', name: '大数据技术基础', code: 'BD101', credits: 3, hours: 48, semester: 6, nature: '选修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业拓展课程' },
-      { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0', courseType: '场景' },
+      { id: 'ps-se-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0', courseType: '场景' },
       { id: 'co-se-16', name: '云计算与容器技术', code: 'CLOUD101', credits: 3, hours: 48, semester: 7, nature: '选修', assessment: '考查', version: 'v1.0', courseType: '课程', courseTypeLabel: '专业拓展课程' },
-      { id: 'ps-se-05', name: '企业项目实战', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0', courseType: '场景' },
-      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0', courseType: '场景' },
-      { id: 'ps-se-06', name: '创新创业实践', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0', courseType: '场景' },
+      { id: 'ps-se-05', name: '项目经理', code: 'PRAC201', credits: 4, hours: 96, semester: 7, nature: '场景', assessment: '答辩', version: 'v1.0', courseType: '场景' },
+      { id: 'ps-se-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0', courseType: '场景' },
+      { id: 'ps-se-06', name: '产品经理', code: 'PRAC301', credits: 2, hours: 32, semester: 8, nature: '实践', assessment: '报告', version: 'v1.0', courseType: '场景' },
     ],
     status: 'published',
     frozenAt: '2026-08-15',
@@ -630,9 +630,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co10', name: '深度学习', code: 'AI301', credits: 4, hours: 64, semester: 4, nature: '必修', assessment: '考试', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ai-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ai-002', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-ai-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ai-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ai-002', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-ai-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     frozenAt: '2026-08-15',
@@ -660,8 +660,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co13', name: '会计电算化', code: 'ACM301', credits: 3, hours: 48, semester: 3, nature: '实践', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ac-001', name: '企业认知实习', code: 'PRAC001', credits: 2, hours: 32, semester: 3, nature: '实践', assessment: '报告', version: 'v1.0' },
-      { id: 'ps-ac-002', name: '企业顶岗实习', code: 'PRAC003', credits: 4, hours: 128, semester: 7, nature: '实践', assessment: '鉴定', version: 'v1.5' }
+      { id: 'ps-ac-001', name: '软件开发工程师', code: 'PRAC001', credits: 2, hours: 32, semester: 3, nature: '实践', assessment: '报告', version: 'v1.0' },
+      { id: 'ps-ac-002', name: '项目经理', code: 'PRAC003', credits: 4, hours: 128, semester: 7, nature: '实践', assessment: '鉴定', version: 'v1.5' }
     ],
     status: 'draft',
     startDate: '2026-09-01',
@@ -693,9 +693,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co107', name: '软件工程实践', code: 'SE401', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-se-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-se-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-se-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2023-09-01',
@@ -727,9 +727,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co115', name: '人工智能综合实践', code: 'AI401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ai-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ai-002', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-ai-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ai-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ai-002', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-ai-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2023-09-01',
@@ -760,9 +760,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co122', name: '云计算基础', code: 'CN303', credits: 3, hours: 48, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-net-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-net-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-net-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-net-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-net-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-net-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2023-09-01',
@@ -795,9 +795,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co131', name: '毕业设计', code: 'CS401', credits: 8, hours: 128, semester: 7, nature: '实践', assessment: '论文', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cs-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-cs-002', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cs-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cs-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-cs-002', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cs-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2023-09-01',
@@ -830,8 +830,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co140', name: '大数据综合实践', code: 'DS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ds-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ds-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ds-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ds-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2023-09-01',
@@ -864,8 +864,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co149', name: '安全攻防实践', code: 'IS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-sec-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-sec-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-sec-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-sec-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2023-09-01',
@@ -898,8 +898,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co158', name: '物联网综合实践', code: 'IOT401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-iot-001', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-iot-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-iot-001', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-iot-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2023-09-01',
@@ -930,8 +930,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co165', name: '云计算运维实践', code: 'CE303', credits: 4, hours: 64, semester: 3, nature: '实践', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cloud-001', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cloud-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cloud-001', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cloud-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2023-09-01',
@@ -963,9 +963,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co173', name: '软件工程实践', code: 'SE401', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-se-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-se-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-se-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2024-09-01',
@@ -997,9 +997,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co181', name: '人工智能综合实践', code: 'AI401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ai-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ai-002', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-ai-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ai-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ai-002', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-ai-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2024-09-01',
@@ -1030,9 +1030,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co188', name: '云计算基础', code: 'CN303', credits: 3, hours: 48, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-net-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-net-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-net-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-net-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-net-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-net-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2024-09-01',
@@ -1065,9 +1065,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co197', name: '毕业设计', code: 'CS401', credits: 8, hours: 128, semester: 7, nature: '实践', assessment: '论文', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cs-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-cs-002', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cs-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cs-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-cs-002', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cs-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2024-09-01',
@@ -1100,8 +1100,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co206', name: '大数据综合实践', code: 'DS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ds-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ds-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ds-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ds-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2024-09-01',
@@ -1134,8 +1134,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co215', name: '安全攻防实践', code: 'IS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-sec-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-sec-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-sec-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-sec-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2024-09-01',
@@ -1168,8 +1168,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co224', name: '物联网综合实践', code: 'IOT401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-iot-001', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-iot-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-iot-001', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-iot-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2024-09-01',
@@ -1200,8 +1200,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co231', name: '云计算运维实践', code: 'CE303', credits: 4, hours: 64, semester: 3, nature: '实践', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cloud-001', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cloud-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cloud-001', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cloud-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2024-09-01',
@@ -1233,9 +1233,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co239', name: '软件工程实践', code: 'SE401', credits: 4, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-se-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-se-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-se-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-se-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-se-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-se-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2025-09-01',
@@ -1267,9 +1267,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co247', name: '人工智能综合实践', code: 'AI401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ai-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ai-002', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-ai-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ai-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ai-002', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-ai-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2025-09-01',
@@ -1300,9 +1300,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co254', name: '云计算基础', code: 'CN303', credits: 3, hours: 48, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-net-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-net-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-net-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-net-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-net-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-net-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2025-09-01',
@@ -1335,9 +1335,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co263', name: '毕业设计', code: 'CS401', credits: 8, hours: 128, semester: 7, nature: '实践', assessment: '论文', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cs-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-cs-002', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cs-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cs-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-cs-002', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cs-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2025-09-01',
@@ -1370,8 +1370,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co272', name: '大数据综合实践', code: 'DS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ds-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ds-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ds-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ds-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2025-09-01',
@@ -1404,8 +1404,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co281', name: '安全攻防实践', code: 'IS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-sec-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-sec-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-sec-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-sec-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2025-09-01',
@@ -1438,8 +1438,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co290', name: '物联网综合实践', code: 'IOT401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-iot-001', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-iot-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-iot-001', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-iot-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     startDate: '2025-09-01',
@@ -1470,8 +1470,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co297', name: '云计算运维实践', code: 'CE303', credits: 4, hours: 64, semester: 3, nature: '实践', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cloud-001', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cloud-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cloud-001', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cloud-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2025-09-01',
@@ -1502,9 +1502,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co320', name: '云计算基础', code: 'CN303', credits: 3, hours: 48, semester: 3, nature: '选修', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-net-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-net-002', name: '专业综合实训', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
-      { id: 'ps-net-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-net-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-net-002', name: '系统架构师', code: 'PRAC002', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v2.0' },
+      { id: 'ps-net-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     frozenAt: '2026-08-15',
@@ -1538,9 +1538,9 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co329', name: '毕业设计', code: 'CS401', credits: 8, hours: 128, semester: 7, nature: '实践', assessment: '论文', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cs-001', name: '软件开发实训', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
-      { id: 'ps-cs-002', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cs-003', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cs-001', name: '软件开发工程师', code: 'PRAC007', credits: 4, hours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v2.1' },
+      { id: 'ps-cs-002', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cs-003', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2026-09-01',
@@ -1573,8 +1573,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co338', name: '大数据综合实践', code: 'DS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-ds-001', name: '数据挖掘实践', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
-      { id: 'ps-ds-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-ds-001', name: '数据分析师', code: 'PRAC009', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '报告', version: 'v1.1' },
+      { id: 'ps-ds-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     frozenAt: '2026-08-15',
@@ -1608,8 +1608,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co347', name: '安全攻防实践', code: 'IS401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-sec-001', name: '网络工程实训', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
-      { id: 'ps-sec-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-sec-001', name: '网络系统集成工程师', code: 'PRAC008', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.3' },
+      { id: 'ps-sec-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     frozenAt: '2026-08-15',
@@ -1643,8 +1643,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co356', name: '物联网综合实践', code: 'IOT401', credits: 4, hours: 64, semester: 6, nature: '实践', assessment: '作品', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-iot-001', name: '智能系统开发', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
-      { id: 'ps-iot-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-iot-001', name: '人工智能工程师', code: 'PRAC010', credits: 4, hours: 96, semester: 6, nature: '实践', assessment: '答辩', version: 'v2.0' },
+      { id: 'ps-iot-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'pending',
     startDate: '2026-09-01',
@@ -1675,8 +1675,8 @@ export const trainingPrograms: TrainingProgram[] = [
       { id: 'co363', name: '云计算运维实践', code: 'CE303', credits: 4, hours: 64, semester: 3, nature: '实践', assessment: '考查', version: 'v1.0' },
     ],
     practiceScenes: [
-      { id: 'ps-cloud-001', name: '开源项目实战', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
-      { id: 'ps-cloud-002', name: '毕业设计（论文）', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
+      { id: 'ps-cloud-001', name: '软件开发工程师', code: 'PRAC006', credits: 3, hours: 64, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0' },
+      { id: 'ps-cloud-002', name: '系统架构师', code: 'PRAC004', credits: 6, hours: 192, semester: 8, nature: '实践', assessment: '答辩', version: 'v3.0' }
     ],
     status: 'published',
     frozenAt: '2026-08-15',
@@ -1962,9 +1962,9 @@ export const trainingPrograms: TrainingProgram[] = [
           { id: 'pro-e3', name: '高级路由与交换技术', code: 'PE403', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 4, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
           { id: 'pro-e4', name: 'SDN技术与应用', code: 'PE404', credits: 3, hours: 48, theoryHours: 24, practiceHours: 24, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
           { id: 'pro-e5', name: '物联网技术基础', code: 'PE405', credits: 2, hours: 32, theoryHours: 16, practiceHours: 16, semester: 5, nature: '选修', assessment: '考查', version: 'v1.0', category: '专业拓展课' , courseType: '课程', subCategory: '专业拓展' , courseTypeLabel: '专业拓展课程' },
-          { id: 'pro-p1', name: '网络技术综合实训', code: 'PP501', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
-          { id: 'pro-p2', name: '毕业设计', code: 'PP502', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '论文', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
-          { id: 'pro-p3', name: '岗位实习', code: 'PP503', credits: 12, hours: 480, theoryHours: 0, practiceHours: 480, semester: 6, nature: '实践', assessment: '考查', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
+          { id: 'pro-p1', name: '网络系统集成工程师', code: 'PP501', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '作品', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
+          { id: 'pro-p2', name: '系统架构师', code: 'PP502', credits: 4, hours: 96, theoryHours: 0, practiceHours: 96, semester: 5, nature: '实践', assessment: '论文', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
+          { id: 'pro-p3', name: '项目经理', code: 'PP503', credits: 12, hours: 480, theoryHours: 0, practiceHours: 480, semester: 6, nature: '实践', assessment: '考查', version: 'v1.0', category: '专业实践课' , courseType: '场景', subCategory: '专业实践' , courseTypeLabel: '' },
     ],
     creditHours: {
       totalCredits: 142,
@@ -3394,12 +3394,12 @@ export const tasks: Task[] = [
   {
     id: 'task-014',
     code: 'T-SE2026A-PRAC001-001',
-    name: '软件工程2026级1班-企业认知实习',
+    name: '软件开发工程师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '企业认知实习',
+    courseName: '软件开发工程师',
     courseCode: 'PRAC001',
     courseVersion: 'v1.0',
     classId: 'c1',
@@ -3446,12 +3446,12 @@ export const tasks: Task[] = [
   {
     id: 'task-016',
     code: 'T-SE2026A-PRAC002-001',
-    name: '软件工程2026级1班-专业综合实训',
+    name: '系统架构师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '专业综合实训',
+    courseName: '系统架构师',
     courseCode: 'PRAC002',
     courseVersion: 'v2.0',
     classId: 'c1',
@@ -3473,12 +3473,12 @@ export const tasks: Task[] = [
   {
     id: 'task-017',
     code: 'T-SE2026A-PRAC006-001',
-    name: '软件工程2026级1班-开源项目实战',
+    name: '软件开发工程师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '开源项目实战',
+    courseName: '软件开发工程师',
     courseCode: 'PRAC006',
     courseVersion: 'v1.0',
     classId: 'c1',
@@ -3550,12 +3550,12 @@ export const tasks: Task[] = [
   {
     id: 'task-020',
     code: 'T-SE2026A-PRAC005-001',
-    name: '软件工程2026级1班-创新创业实践',
+    name: '产品经理',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '创新创业实践',
+    courseName: '产品经理',
     courseCode: 'PRAC005',
     courseVersion: 'v1.2',
     classId: 'c1',
@@ -3577,12 +3577,12 @@ export const tasks: Task[] = [
   {
     id: 'task-021',
     code: 'T-SE2026A-PRAC009-001',
-    name: '软件工程2026级1班-数据挖掘实践',
+    name: '数据分析师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '数据挖掘实践',
+    courseName: '数据分析师',
     courseCode: 'PRAC009',
     courseVersion: 'v1.1',
     classId: 'c1',
@@ -3654,12 +3654,12 @@ export const tasks: Task[] = [
   {
     id: 'task-024',
     code: 'T-SE2026A-PRAC007-001',
-    name: '软件工程2026级1班-软件开发实训',
+    name: '软件开发工程师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '软件开发实训',
+    courseName: '软件开发工程师',
     courseCode: 'PRAC007',
     courseVersion: 'v2.1',
     classId: 'c1',
@@ -3681,12 +3681,12 @@ export const tasks: Task[] = [
   {
     id: 'task-025',
     code: 'T-SE2026A-PRAC008-001',
-    name: '软件工程2026级1班-网络工程实训',
+    name: '网络系统集成工程师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '网络工程实训',
+    courseName: '网络系统集成工程师',
     courseCode: 'PRAC008',
     courseVersion: 'v1.3',
     classId: 'c1',
@@ -4474,12 +4474,12 @@ export const tasks: Task[] = [
   {
     id: 'task-056',
     code: 'T-CN2026A-PRAC008-001',
-    name: '计算机网络技术2026级1班-网络工程实训',
+    name: '网络系统集成工程师',
     type: 'scene',
     source: 'imported',
     status: 'published',
     termId: 't1',
-    courseName: '网络工程实训',
+    courseName: '网络系统集成工程师',
     courseCode: 'PRAC008',
     courseVersion: 'v1.3',
     classId: 'c9',
@@ -5276,16 +5276,16 @@ export const curriculumCoursePool: CurriculumItem[] = [
 
 // 实践场景搜索库
 export const curriculumPracticePool: CurriculumItem[] = [
-  { id: 'cp-001', name: '企业认知实习', code: 'PRAC001', hours: 32, nature: '实践', assessment: '报告', version: 'v1.0', batch: '2026春', creator: '周老师', updatedAt: '2026-03-01' },
-  { id: 'cp-002', name: '专业综合实训', code: 'PRAC002', hours: 64, nature: '实践', assessment: '作品', version: 'v2.0', batch: '2026秋', creator: '吴老师', updatedAt: '2026-08-15' },
-  { id: 'cp-003', name: '企业顶岗实习', code: 'PRAC003', hours: 128, nature: '实践', assessment: '鉴定', version: 'v1.5', batch: '2027春', creator: '郑老师', updatedAt: '2027-01-20' },
-  { id: 'cp-004', name: '毕业设计（论文）', code: 'PRAC004', hours: 192, nature: '实践', assessment: '答辩', version: 'v3.0', batch: '2028秋', creator: '王老师', updatedAt: '2028-09-01' },
-  { id: 'cp-005', name: '创新创业实践', code: 'PRAC005', hours: 64, nature: '实践', assessment: '作品', version: 'v1.2', batch: '2027春', creator: '李老师', updatedAt: '2027-03-10' },
-  { id: 'cp-006', name: '开源项目实战', code: 'PRAC006', hours: 64, nature: '实践', assessment: '作品', version: 'v1.0', batch: '2027秋', creator: '陈老师', updatedAt: '2027-08-25' },
-  { id: 'cp-007', name: '软件开发实训', code: 'PRAC007', hours: 96, nature: '实践', assessment: '作品', version: 'v2.1', batch: '2026秋', creator: '赵老师', updatedAt: '2026-09-12' },
-  { id: 'cp-008', name: '网络工程实训', code: 'PRAC008', hours: 64, nature: '实践', assessment: '作品', version: 'v1.3', batch: '2027春', creator: '孙老师', updatedAt: '2027-02-28' },
-  { id: 'cp-009', name: '数据挖掘实践', code: 'PRAC009', hours: 64, nature: '实践', assessment: '报告', version: 'v1.1', batch: '2027秋', creator: '钱老师', updatedAt: '2027-08-18' },
-  { id: 'cp-010', name: '智能系统开发', code: 'PRAC010', hours: 96, nature: '实践', assessment: '答辩', version: 'v2.0', batch: '2028春', creator: '马老师', updatedAt: '2028-01-15' },
+  { id: 'cp-001', name: '软件开发工程师', code: 'PRAC001', hours: 32, nature: '实践', assessment: '报告', version: 'v1.0', batch: '2026春', creator: '周老师', updatedAt: '2026-03-01' },
+  { id: 'cp-002', name: '系统架构师', code: 'PRAC002', hours: 64, nature: '实践', assessment: '作品', version: 'v2.0', batch: '2026秋', creator: '吴老师', updatedAt: '2026-08-15' },
+  { id: 'cp-003', name: '项目经理', code: 'PRAC003', hours: 128, nature: '实践', assessment: '鉴定', version: 'v1.5', batch: '2027春', creator: '郑老师', updatedAt: '2027-01-20' },
+  { id: 'cp-004', name: '系统架构师', code: 'PRAC004', hours: 192, nature: '实践', assessment: '答辩', version: 'v3.0', batch: '2028秋', creator: '王老师', updatedAt: '2028-09-01' },
+  { id: 'cp-005', name: '产品经理', code: 'PRAC005', hours: 64, nature: '实践', assessment: '作品', version: 'v1.2', batch: '2027春', creator: '李老师', updatedAt: '2027-03-10' },
+  { id: 'cp-006', name: '软件开发工程师', code: 'PRAC006', hours: 64, nature: '实践', assessment: '作品', version: 'v1.0', batch: '2027秋', creator: '陈老师', updatedAt: '2027-08-25' },
+  { id: 'cp-007', name: '软件开发工程师', code: 'PRAC007', hours: 96, nature: '实践', assessment: '作品', version: 'v2.1', batch: '2026秋', creator: '赵老师', updatedAt: '2026-09-12' },
+  { id: 'cp-008', name: '网络系统集成工程师', code: 'PRAC008', hours: 64, nature: '实践', assessment: '作品', version: 'v1.3', batch: '2027春', creator: '孙老师', updatedAt: '2027-02-28' },
+  { id: 'cp-009', name: '数据分析师', code: 'PRAC009', hours: 64, nature: '实践', assessment: '报告', version: 'v1.1', batch: '2027秋', creator: '钱老师', updatedAt: '2027-08-18' },
+  { id: 'cp-010', name: '人工智能工程师', code: 'PRAC010', hours: 96, nature: '实践', assessment: '答辩', version: 'v2.0', batch: '2028春', creator: '马老师', updatedAt: '2028-01-15' },
 ]
 
 // 已绑定的实践场景（初始为空）
@@ -5758,7 +5758,7 @@ export const sceneSyllabuses: SceneSyllabus[] = [
     id: 'syl-scene-001',
     programId: 'tp1',
     courseId: 'prac-001',
-    courseName: '企业认知实习',
+    courseName: '软件开发工程师',
     courseCode: 'PRAC001',
     type: 'scene',
     credits: 2,
@@ -5859,7 +5859,7 @@ export const teachingPlansV2: TeachingPlan[] = [
       {
         id: 'pe-003',
         courseId: 'prac-001',
-        courseName: '企业认知实习',
+        courseName: '软件开发工程师',
         courseCode: 'PRAC001',
         type: 'scene',
         nature: '实践',
@@ -5899,8 +5899,8 @@ export const teachingPlansV2: TeachingPlan[] = [
       { id: 'pe-cn-008', courseId: 'pro-c1', courseName: 'Linux网络操作系统', courseCode: 'PC301', type: 'theory', nature: '必修', credits: 4, totalHours: 64, semester: 3, weekHours: 4, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '机房', syllabusId: '', status: 'planned' },
       { id: 'pe-cn-009', courseId: 'pro-c4', courseName: '路由交换技术', courseCode: 'PC304', type: 'theory', nature: '必修', credits: 4, totalHours: 64, semester: 3, weekHours: 4, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '实训室', syllabusId: '', status: 'planned' },
       { id: 'pe-cn-010', courseId: 'pro-e1', courseName: '云计算技术与应用', courseCode: 'PE401', type: 'theory', nature: '选修', credits: 3, totalHours: 48, semester: 4, weekHours: 3, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '机房', syllabusId: '', status: 'planned' },
-      { id: 'pe-cn-011', courseId: 'pro-p1', courseName: '网络技术综合实训', courseCode: 'PP501', type: 'practice', nature: '实践', credits: 4, totalHours: 96, semester: 5, weekHours: 6, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '实训室', syllabusId: '', status: 'planned' },
-      { id: 'pe-cn-012', courseId: 'pro-p3', courseName: '岗位实习', courseCode: 'PP503', type: 'scene', nature: '实践', credits: 12, totalHours: 480, semester: 6, weekHours: 30, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '校外基地', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-011', courseId: 'pro-p1', courseName: '网络系统集成工程师', courseCode: 'PP501', type: 'practice', nature: '实践', credits: 4, totalHours: 96, semester: 5, weekHours: 6, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '实训室', syllabusId: '', status: 'planned' },
+      { id: 'pe-cn-012', courseId: 'pro-p3', courseName: '项目经理', courseCode: 'PP503', type: 'scene', nature: '实践', credits: 12, totalHours: 480, semester: 6, weekHours: 30, startWeek: 1, endWeek: 16, weekPattern: 'all', assignedClassIds: [], preferredFacultyIds: [], venueTypeRequired: '校外基地', syllabusId: '', status: 'planned' },
     ],
   },
 ]
@@ -5975,7 +5975,7 @@ export const preparationTasks: PreparationTask[] = [
     taskId: 'task-scene-001',
     taskName: '企业认知实习-环境熟悉',
     taskType: 'scene',
-    courseName: '企业认知实习',
+    courseName: '软件开发工程师',
     classId: 'c1',
     className: '软件工程2026级1班',
     facultyId: 'f3',
@@ -6077,7 +6077,7 @@ export const courseLaunchRecords: CourseLaunchRecord[] = [
     taskId: 'task-scene-001',
     taskName: '企业认知实习-环境熟悉',
     taskType: 'scene',
-    courseName: '企业认知实习',
+    courseName: '软件开发工程师',
     classId: 'c1',
     className: '软件工程2026级1班',
     facultyId: 'f3',
