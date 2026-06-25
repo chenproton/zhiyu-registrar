@@ -333,7 +333,7 @@ export default function TabCurriculum({
         </Popover>
         <Button variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={onNewScene}>
           <Plus className="h-3 w-3 mr-1" />
-          新建岗位课时
+          切换手动输入
         </Button>
       </div>
     )
