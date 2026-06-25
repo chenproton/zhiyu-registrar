@@ -794,7 +794,11 @@ export default function TabCurriculum({
                       'flex items-center justify-between px-3 py-2 text-sm cursor-pointer border-b last:border-b-0 transition-colors',
                       selectedPositionId === pos.id ? 'bg-primary/10' : 'hover:bg-muted/50'
                     )}
-                    onClick={() => { setSelectedPositionId(pos.id); setSelectedSceneIds(new Set()) }}
+                    onClick={() => {
+                      setSelectedPositionId(pos.id)
+                      const scenes = sceneSyllabuses.filter((s) => s.mappedPositionId === pos.id)
+                      setSelectedSceneIds(new Set(scenes.map((s) => s.id)))
+                    }}
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn(
