@@ -578,10 +578,10 @@ export default function TabCurriculum({
                           href={`/admin/operations/syllabus/${syllabusId}?edit=1`}
                           className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                         >
-                          配置课程课时（能力）目标
+                          进入详细配置
                         </a>
                       ) : (
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">配置课程课时（能力）目标</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">进入详细配置</span>
                       )}
                       <Button
                         variant="ghost"
