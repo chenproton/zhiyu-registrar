@@ -12,12 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import {
-  Search,
-} from 'lucide-react'
 import {
   tasks,
   departments,
@@ -32,10 +28,6 @@ export default function CourseTasksPage() {
   const [selectedGradeId, setSelectedGradeId] = useState<string>('g2026')
   const [selectedMajorId, setSelectedMajorId] = useState<string>('m1')
   const [selectedClassId, setSelectedClassId] = useState<string>('all')
-
-  // 其他筛选
-  const [filterType, setFilterType] = useState<'traditional' | 'scene' | 'mixed'>('mixed')
-  const [filterFaculty, setFilterFaculty] = useState<string>('')
 
   // 联动选项
   const matchedMajors = useMemo(() => {
@@ -68,18 +60,9 @@ export default function CourseTasksPage() {
       // 班级
       if (selectedClassId !== 'all' && t.classId !== selectedClassId) return false
 
-      // 课时类型
-      if (filterType !== 'mixed' && t.type !== filterType) return false
-
-      // 教师搜索
-      if (filterFaculty.trim()) {
-        const q = filterFaculty.trim().toLowerCase()
-        if (!t.facultyName.toLowerCase().includes(q)) return false
-      }
-
       return true
     })
-  }, [selectedDept, selectedGradeId, selectedMajorId, selectedClassId, filterType, filterFaculty])
+  }, [selectedDept, selectedGradeId, selectedMajorId, selectedClassId])
 
   return (
     <div className="space-y-6">
@@ -207,30 +190,6 @@ export default function CourseTasksPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* 筛选栏 */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="任务类型" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="mixed">混合课程</SelectItem>
-            <SelectItem value="traditional">体系课</SelectItem>
-            <SelectItem value="scene">颗粒课</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="搜索教师"
-            className="pl-8 w-[180px]"
-            value={filterFaculty}
-            onChange={(e) => setFilterFaculty(e.target.value)}
-          />
-        </div>
-      </div>
 
       {/* 任务列表表格 */}
       <Card>
