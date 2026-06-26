@@ -99,6 +99,31 @@ function isSceneTask(task: Task) {
   return task.type === 'scene' || task.externalPlatformType === 'scene'
 }
 
+function getMockSceneName(positionName: string): string {
+  const map: Record<string, string> = {
+    '软件开发工程师': '如何使用 IDEA',
+    '系统架构师': '微服务架构设计',
+    '产品经理': '产品需求文档编写',
+    '数据分析师': '数据可视化分析',
+    '技术支持工程师': '客户问题排查',
+    '后端开发工程师': 'Spring Boot 接口开发',
+    '项目经理': '项目进度管理',
+    '人工智能工程师': '模型训练与调优',
+    '网络系统集成工程师': '企业网络规划',
+    '前端开发工程师': 'React 组件开发',
+    '测试工程师': '自动化测试脚本编写',
+    '运维工程师': 'Linux 服务器运维',
+    '网络运维工程师': '网络故障排查',
+    '网络安全运维工程师': '防火墙策略配置',
+    '云计算运维工程师': 'Docker 容器部署',
+    '数据库管理员': 'MySQL 性能优化',
+    '嵌入式开发工程师': 'STM32 外设驱动开发',
+    '物联网工程师': '传感器数据采集',
+    '信息安全工程师': '漏洞扫描与修复',
+  }
+  return map[positionName] ?? `${positionName}实战场景`
+}
+
 // ==================== Schedule Grid ====================
 function ScheduleGrid({
   taskList,
@@ -153,7 +178,7 @@ function ScheduleGrid({
                     <div className="flex items-center gap-1 flex-wrap">
                       {scene && (
                         <Badge variant="outline" className="text-[10px] h-4 border-orange-300 text-orange-600">
-                          岗位
+                          岗位场景
                         </Badge>
                       )}
                       {!scene && (
@@ -669,19 +694,36 @@ function EditTaskDialog({
 
   const isScene = isSceneTask(task)
 
-  const viewRows = [
-    { label: '课时类型', value: <Badge variant={isScene ? 'outline' : 'default'} className={cn('text-xs h-5', isScene && 'border-orange-300 text-orange-600')}>{isScene ? '岗位' : '课程'}</Badge> },
-    { label: `关联${isScene ? '岗位' : '课程'}`, value: (isScene
-      ? curriculumPracticePool.find((p) => p.id === task.externalPlatformId)?.name
-      : trainingPrograms[0]?.courses.find((c) => c.id === task.externalPlatformId)?.name) ?? task.courseName },
-    { label: '参与班级', value: classes.find((c) => c.id === task.classId)?.name ?? task.className },
-    { label: '任课教师', value: (() => {
-      const f = faculty.find((x) => x.id === task.facultyId)
-      return f ? `${f.name} (${f.title})` : task.facultyName
-    })() },
-    { label: '时间', value: `${days[task.dayOfWeek - 1] ?? `周${task.dayOfWeek}`} ${task.periods.join('、')}` },
-    { label: '上课场地', value: venues.find((v) => v.id === task.venueId)?.name ?? task.venueName },
-  ]
+  const positionName = isScene
+    ? (curriculumPracticePool.find((p) => p.id === task.externalPlatformId)?.name ?? task.courseName)
+    : task.courseName
+
+  const sceneName = isScene ? getMockSceneName(positionName) : ''
+
+  const viewRows = isScene
+    ? [
+        { label: '课时类型', value: <Badge variant="outline" className="text-xs h-5 border-orange-300 text-orange-600">岗位场景</Badge> },
+        { label: '关联岗位', value: positionName },
+        { label: '关联场景', value: sceneName },
+        { label: '参与班级', value: classes.find((c) => c.id === task.classId)?.name ?? task.className },
+        { label: '任课教师', value: (() => {
+          const f = faculty.find((x) => x.id === task.facultyId)
+          return f ? `${f.name} (${f.title})` : task.facultyName
+        })() },
+        { label: '时间', value: `${days[task.dayOfWeek - 1] ?? `周${task.dayOfWeek}`} ${task.periods.join('、')}` },
+        { label: '上课场地', value: venues.find((v) => v.id === task.venueId)?.name ?? task.venueName },
+      ]
+    : [
+        { label: '课时类型', value: <Badge variant="default" className="text-xs h-5">课程</Badge> },
+        { label: '关联课程', value: trainingPrograms[0]?.courses.find((c) => c.id === task.externalPlatformId)?.name ?? task.courseName },
+        { label: '参与班级', value: classes.find((c) => c.id === task.classId)?.name ?? task.className },
+        { label: '任课教师', value: (() => {
+          const f = faculty.find((x) => x.id === task.facultyId)
+          return f ? `${f.name} (${f.title})` : task.facultyName
+        })() },
+        { label: '时间', value: `${days[task.dayOfWeek - 1] ?? `周${task.dayOfWeek}`} ${task.periods.join('、')}` },
+        { label: '上课场地', value: venues.find((v) => v.id === task.venueId)?.name ?? task.venueName },
+      ]
 
   return (
     <>
