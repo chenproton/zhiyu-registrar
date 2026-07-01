@@ -377,6 +377,82 @@ export default function TabCurriculum({
     )
   }
 
+  // 课程课时选择器组件
+  function CourseSearchSelect({
+    value,
+    onSelect,
+  }: {
+    value: { code: string; name: string }
+    onSelect: (course: { name: string; code: string; credits: number; hours: number; type: string }) => void
+  }) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
+
+    const filtered = useMemo(() => {
+      if (!search.trim()) return mockCourseLibrary
+      const q = search.toLowerCase()
+      return mockCourseLibrary.filter(
+        (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+      )
+    }, [search])
+
+    const selectedCourse = mockCourseLibrary.find((c) => c.code === value.code && c.name === value.name)
+
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal h-8 text-xs"
+          >
+            <span className={cn('truncate', !selectedCourse && 'text-muted-foreground')}>
+              {selectedCourse ? `${selectedCourse.name} (${selectedCourse.code})` : '选择课程课时...'}
+            </span>
+            <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[400px] p-0" align="start">
+          <Command>
+            <CommandInput
+              placeholder="搜索课程课时名称或代码..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>未找到匹配的课程课时</CommandEmpty>
+              <CommandGroup>
+                {filtered.map((course) => (
+                  <CommandItem
+                    key={course.id}
+                    value={course.code}
+                    onSelect={() => {
+                      onSelect(course)
+                      setOpen(false)
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4 shrink-0',
+                        value.code === course.code ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm">{course.name}</span>
+                      <span className="text-xs text-muted-foreground">{course.code} · {course.type}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    )
+  }
+
   const tabButtons = (
     <div className="flex items-center gap-2 flex-wrap">
       <Button
@@ -411,18 +487,6 @@ export default function TabCurriculum({
 
   const toolbarButtons = (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => { setPositionSceneOpen(true); setSelectedPositionId(''); setPositionSearch('') }}>
-        <Briefcase className="h-4 w-4 mr-1" />
-        岗位导入
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
-        <Upload className="h-4 w-4 mr-1" />
-        导入
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => toast({ title: '导出功能使用现有组件样式即可' })}>
-        <Download className="h-4 w-4 mr-1" />
-        导出
-      </Button>
       <Button variant="outline" size="sm" onClick={() => { setLibraryOpen(true); setSelectedLibraryIds(new Set()); setLibrarySearch(''); setLibraryCategory('全部') }}>
         <Library className="h-4 w-4 mr-1" />
         课程课时库管理
@@ -443,8 +507,7 @@ export default function TabCurriculum({
             <TableRow>
               <TableHead className="w-24"></TableHead>
               <TableHead className="w-44">课程课时类型</TableHead>
-              <TableHead className="w-28">课时代码</TableHead>
-              <TableHead className="w-96">课时名称</TableHead>
+              <TableHead>课时名称/代码</TableHead>
               <TableHead className="w-24">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
               <TableHead className="w-24">性质</TableHead>
@@ -492,26 +555,16 @@ export default function TabCurriculum({
                       <span className="text-xs text-muted-foreground">-</span>
                     </TableCell>
 
-                    {/* 课时代码 */}
-                    <TableCell>
-                      {isNewSceneMode ? (
-                        <Input
-                          value={c.code}
-                          onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                          className="h-8 text-xs w-full"
-                          placeholder="岗位课时编码"
-                        />
-                      ) : (
-                        <span className="text-xs text-muted-foreground truncate block">
-                          {c.code || '-'}
-                        </span>
-                      )}
-                    </TableCell>
-
-                    {/* 课时名称 */}
+                    {/* 课时名称/代码 */}
                     <TableCell>
                       {isNewSceneMode ? (
                         <div className="flex items-center gap-2">
+                          <Input
+                            value={c.code}
+                            onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
+                            className="h-8 text-xs w-28"
+                            placeholder="编码"
+                          />
                           <Input
                             value={c.name}
                             onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
@@ -605,7 +658,7 @@ export default function TabCurriculum({
 
                   {/* 场景名称行：不与其他列对齐 */}
                   <TableRow className="border-b">
-                    <TableCell colSpan={8} className="py-2">
+                      <TableCell colSpan={7} className="py-2">
                       {isNewSceneMode ? (
                         <div className="space-y-1 pl-1">
                           {(c.scenes || []).map((scene) => (
@@ -692,21 +745,19 @@ export default function TabCurriculum({
                     </Select>
                   </TableCell>
 
-                  {/* 课时代码 */}
+                  {/* 课时名称/代码 */}
                   <TableCell>
-                    <Input
-                      value={c.code}
-                      onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                  </TableCell>
-
-                  {/* 课时名称 */}
-                  <TableCell>
-                    <Input
-                      value={c.name}
-                      onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
-                      className="h-8 text-xs"
+                    <CourseSearchSelect
+                      value={{ code: c.code, name: c.name }}
+                      onSelect={(course) => {
+                        updateCourse(realIndex, {
+                          name: course.name,
+                          code: course.code,
+                          credits: course.credits,
+                          hours: course.hours,
+                          courseTypeLabel: course.type,
+                        })
+                      }}
                     />
                   </TableCell>
 
@@ -906,6 +957,23 @@ export default function TabCurriculum({
           </div>
 
           <DialogFooter className="px-6 pb-6 flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { setLibraryOpen(false); setTimeout(() => { setPositionSceneOpen(true); setSelectedPositionId(''); setPositionSearch('') }, 150) }}
+            >
+              <Briefcase className="h-4 w-4 mr-1" />
+              岗位导入
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
+              <Upload className="h-4 w-4 mr-1" />
+              导入
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => toast({ title: '导出功能使用现有组件样式即可' })}>
+              <Download className="h-4 w-4 mr-1" />
+              导出
+            </Button>
+            <div className="flex-1" />
             <Button
               variant="outline"
               size="sm"
