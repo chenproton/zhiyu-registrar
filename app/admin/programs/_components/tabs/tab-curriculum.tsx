@@ -755,10 +755,22 @@ export default function TabCurriculum({
       <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="flex items-center gap-2">
-              <Library className="h-5 w-5" />
-              课程课时库管理
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Library className="h-5 w-5" />
+                课程课时库管理
+              </DialogTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
+                  <Upload className="h-4 w-4 mr-1" />
+                  导入
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toast({ title: '导出功能使用现有组件样式即可' })}>
+                  <Download className="h-4 w-4 mr-1" />
+                  导出
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="px-6 space-y-3">
@@ -842,23 +854,6 @@ export default function TabCurriculum({
           </div>
 
           <DialogFooter className="px-6 pb-6 flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => { setLibraryOpen(false); setTimeout(() => { setPositionSceneOpen(true); setSelectedPositionId(''); setPositionSearch('') }, 150) }}
-            >
-              <Briefcase className="h-4 w-4 mr-1" />
-              岗位导入
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
-              <Upload className="h-4 w-4 mr-1" />
-              导入
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => toast({ title: '导出功能使用现有组件样式即可' })}>
-              <Download className="h-4 w-4 mr-1" />
-              导出
-            </Button>
-            <div className="flex-1" />
             <Button
               variant="outline"
               size="sm"
