@@ -35,6 +35,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { FilterBar } from '@/components/shared/filter-bar'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, ChevronsUpDown, Check, Users, GraduationCap, BookOpen, UserMinus, UserCheck, Upload, Download, Award, ChevronRight, ChevronDown } from 'lucide-react'
 import { students, classes, majors, departments, grades } from '@/lib/mock-data'
 import { toast } from 'sonner'
@@ -57,6 +58,7 @@ function StudentsPageContent() {
   const [editOpen, setEditOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
 
   // 从 URL 读取 classId
   useEffect(() => {
@@ -286,14 +288,27 @@ function StudentsPageContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length}
+                        onCheckedChange={() => {
+                          if (selectedStudents.length === filteredStudents.length) {
+                            setSelectedStudents([])
+                          } else {
+                            setSelectedStudents(filteredStudents.map(s => s.id))
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead>学号</TableHead>
                     <TableHead>姓名</TableHead>
-                    <TableHead>性别</TableHead>
+                    <TableHead>身份证号</TableHead>
                     <TableHead>所属院系</TableHead>
                     <TableHead>专业</TableHead>
                     <TableHead>班级</TableHead>
-                    <TableHead>学历层次</TableHead>
-                    <TableHead>学位</TableHead>
+                    <TableHead>入学年份</TableHead>
+                    <TableHead>GPA</TableHead>
+                    <TableHead>已获学分</TableHead>
                     <TableHead>状态</TableHead>
                     <TableHead className="text-right">操作</TableHead>
                   </TableRow>
@@ -303,14 +318,25 @@ function StudentsPageContent() {
                     const info = getClassInfo(s.classId)
                     return (
                       <TableRow key={s.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedStudents.includes(s.id)}
+                            onCheckedChange={() => {
+                              setSelectedStudents(prev =>
+                                prev.includes(s.id) ? prev.filter(i => i !== s.id) : [...prev, s.id]
+                              )
+                            }}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{s.studentId}</TableCell>
                         <TableCell>{s.name}</TableCell>
-                        <TableCell>{s.gender}</TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">{s.idCard}</TableCell>
                         <TableCell>{info.dept?.name || '—'}</TableCell>
                         <TableCell>{info.major?.name || '—'}</TableCell>
                         <TableCell>{info.cls?.name || '—'}</TableCell>
-                        <TableCell>{s.educationLevel}</TableCell>
-                        <TableCell>{s.degreeType || '—'}</TableCell>
+                        <TableCell>{s.entryYear}</TableCell>
+                        <TableCell>{s.gpa != null ? s.gpa.toFixed(1) : '—'}</TableCell>
+                        <TableCell>{s.creditsEarned}</TableCell>
                         <TableCell>
                           <Badge variant={statusColor[s.status] as any}>{s.status}</Badge>
                         </TableCell>
@@ -322,7 +348,7 @@ function StudentsPageContent() {
                   })}
                   {filteredStudents.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
                         暂无数据
                       </TableCell>
                     </TableRow>
@@ -340,16 +366,27 @@ function StudentsPageContent() {
           <DialogHeader><DialogTitle>新生录入</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>学号</Label><Input placeholder="请输入学号" /></div>
-              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" /></div>
+              <div className="space-y-2"><Label>学号 <span className="text-destructive">*</span></Label><Input placeholder="请输入学号" /></div>
+              <div className="space-y-2"><Label>姓名 <span className="text-destructive">*</span></Label><Input placeholder="请输入姓名" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>性别</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+              <div className="space-y-2"><Label>身份证号 <span className="text-destructive">*</span></Label><Input placeholder="18位身份证号码" /></div>
+              <div className="space-y-2"><Label>密码 <span className="text-destructive">*</span></Label><Input type="password" placeholder="请输入密码" /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>入学年份</Label>
+                <Select><SelectTrigger><SelectValue placeholder="选择入学年份" /></SelectTrigger><SelectContent>
+                  {[2020,2021,2022,2023,2024,2025,2026].map(y => (<SelectItem key={y} value={String(y)}>{y}年</SelectItem>))}
+                </SelectContent></Select>
               </div>
               <div className="space-y-2"><Label>状态</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
+                  <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2"><Label>GPA</Label><Input type="number" step="0.1" min="0" max="4" placeholder="0.0" /></div>
+              <div className="space-y-2"><Label>已获学分</Label><Input type="number" min="0" placeholder="0" /></div>
             </div>
             {/* 班级选择 - 可搜索 */}
             <div className="space-y-2">
@@ -403,14 +440,7 @@ function StudentsPageContent() {
                 <Input value={createClassInfo.major?.name || '—'} readOnly className="bg-muted" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>学历层次</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择学历" /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
-              </div>
-              <div className="space-y-2"><Label>学位</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择学位" /></SelectTrigger><SelectContent><SelectItem value="学士">学士</SelectItem><SelectItem value="无">无</SelectItem></SelectContent></Select>
-              </div>
-            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
@@ -430,12 +460,23 @@ function StudentsPageContent() {
                 <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedStudent.name} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>性别</Label>
-                  <Select defaultValue={selectedStudent.gender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+                <div className="space-y-2"><Label>身份证号</Label><Input defaultValue={selectedStudent.idCard} /></div>
+                <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="留空不修改密码" /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>入学年份</Label>
+                  <Select defaultValue={String(selectedStudent.entryYear)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
+                    {[2020,2021,2022,2023,2024,2025,2026].map(y => (<SelectItem key={y} value={String(y)}>{y}年</SelectItem>))}
+                  </SelectContent></Select>
                 </div>
                 <div className="space-y-2"><Label>状态</Label>
-                  <Select defaultValue={selectedStudent.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
+                    <Select defaultValue={selectedStudent.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><Label>GPA</Label><Input type="number" step="0.1" min="0" max="4" defaultValue={selectedStudent.gpa} /></div>
+                <div className="space-y-2"><Label>已获学分</Label><Input type="number" min="0" defaultValue={selectedStudent.creditsEarned} /></div>
               </div>
               {/* 班级选择 - 可搜索 */}
               <div className="space-y-2">
@@ -489,14 +530,7 @@ function StudentsPageContent() {
                   <Input value={editClassInfo.major?.name || '—'} readOnly className="bg-muted" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>学历层次</Label>
-                  <Select defaultValue={selectedStudent.educationLevel}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
-                </div>
-                <div className="space-y-2"><Label>学位</Label>
-                  <Select defaultValue={selectedStudent.degreeType || '无'}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="学士">学士</SelectItem><SelectItem value="无">无</SelectItem></SelectContent></Select>
-                </div>
-              </div>
+
             </div>
           )}
           <DialogFooter>

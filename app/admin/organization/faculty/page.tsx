@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Table,
   TableBody,
@@ -30,9 +32,13 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Users, GraduationCap, HardHat, Building2, Upload, Download, Trash2, Paperclip, Lock } from 'lucide-react'
+import { Plus, Users, GraduationCap, HardHat, Building2, Upload, Download, Trash2, Paperclip, Lock, ChevronRight, ChevronDown, FolderTree, Check, X } from 'lucide-react'
 import { faculty, departments, facultyRoles } from '@/lib/mock-data'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+
+const allPositions = ['院长', '副院长', '系主任', '副系主任', '教研室主任', '专业负责人', '教授', '副教授', '讲师', '助教', '实验员', '行政人员', '企业导师', '研究员']
+const allTeachingQualifications = ['程序设计', '数据结构', '人工智能', '机器学习', '网络技术', '网络安全', '机械设计', 'CAD/CAM', '会计学', '财务管理', '平面设计', 'UI设计', '前端开发', 'Web设计', '市场营销', '电子商务', '数控技术', '3D打印', '汽车维修', '新能源汽车']
 
 export default function FacultyPage() {
   const [facultyList, setFacultyList] = useState([...faculty])
@@ -42,6 +48,7 @@ export default function FacultyPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null)
 
   // 补充协议管理弹窗
   const [agreementOpen, setAgreementOpen] = useState(false)
@@ -63,9 +70,10 @@ export default function FacultyPage() {
       if (filters.status !== 'all' && f.status !== filters.status) return false
       if (facultyTab === 'teacher' && f.isEnterpriseMentor) return false
       if (facultyTab === 'mentor' && !f.isEnterpriseMentor) return false
+      if (selectedDeptId && f.departmentId !== selectedDeptId) return false
       return true
     })
-  }, [search, filters, facultyTab, facultyList])
+  }, [search, filters, facultyTab, facultyList, selectedDeptId])
 
   const stats = useMemo(() => {
     const all = facultyList.length
@@ -155,6 +163,39 @@ export default function FacultyPage() {
         </Card>
       </div>
 
+      <div className="flex gap-4 items-start">
+        {/* 左侧组织架构树 */}
+        <Card className="w-64 shrink-0">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <FolderTree className="h-4 w-4 text-primary" />组织架构
+            </h3>
+            <ScrollArea className="h-[500px]">
+              <div className="space-y-1">
+                <button
+                  onClick={() => setSelectedDeptId(null)}
+                  className={cn(
+                    'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+                    selectedDeptId === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                  )}
+                >
+                  全部教职工
+                </button>
+                {departments.map(dept => (
+                  <DeptTreeNode
+                    key={dept.id}
+                    dept={dept}
+                    selectedDeptId={selectedDeptId}
+                    onSelectDept={setSelectedDeptId}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* 右侧内容 */}
+        <div className="flex-1 space-y-4">
       <Tabs value={facultyTab} onValueChange={(v) => setFacultyTab(v as 'all' | 'teacher' | 'mentor')}>
         <TabsList>
           <TabsTrigger value="all">全部师资</TabsTrigger>
@@ -201,6 +242,9 @@ export default function FacultyPage() {
                 <TableHead>姓名</TableHead>
                 <TableHead>所属院系</TableHead>
                 <TableHead>关联角色</TableHead>
+                <TableHead>职位</TableHead>
+                <TableHead>授课资格</TableHead>
+                <TableHead>企业导师</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -217,6 +261,23 @@ export default function FacultyPage() {
                         <Badge key={r} variant="outline" className="text-[10px]">{r}</Badge>
                       )) || <span className="text-muted-foreground text-xs">—</span>}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {f.positions && f.positions.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {f.positions.map((p, i) => (
+                          <Badge key={i} variant="secondary" className="text-[10px]">{p}</Badge>
+                        ))}
+                      </div>
+                    ) : <span className="text-muted-foreground text-xs">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {f.teachingQualifications.length > 0
+                      ? `${f.teachingQualifications.slice(0, 2).join('、')}${f.teachingQualifications.length > 2 ? ` 等${f.teachingQualifications.length}项` : ''}`
+                      : <span className="text-muted-foreground text-xs">—</span>}
+                  </TableCell>
+                  <TableCell>
+                    {f.isEnterpriseMentor ? <Badge className="text-[10px]">是</Badge> : <Badge variant="secondary" className="text-[10px]">否</Badge>}
                   </TableCell>
                   <TableCell>
                     <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
@@ -236,7 +297,7 @@ export default function FacultyPage() {
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -245,6 +306,8 @@ export default function FacultyPage() {
           </Table>
         </CardContent>
       </Card>
+        </div>
+      </div>
 
       {/* 新建教师弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -270,6 +333,40 @@ export default function FacultyPage() {
                     <span className="text-xs">{role}</span>
                   </label>
                 ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>职位（可多选）</Label>
+              <div className="flex flex-wrap gap-2">
+                {allPositions.map((pos) => (
+                  <label key={pos} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
+                    <input type="checkbox" className="h-3.5 w-3.5" />
+                    <span className="text-xs">{pos}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>授课资格（可多选）</Label>
+              <div className="flex flex-wrap gap-2">
+                {allTeachingQualifications.map((qual) => (
+                  <label key={qual} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
+                    <input type="checkbox" className="h-3.5 w-3.5" />
+                    <span className="text-xs">{qual}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-4 p-3 border rounded-md bg-muted/30">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" className="h-4 w-4" />
+                <span className="text-sm font-medium">企业导师</span>
+              </label>
+              <div className="flex-1 grid grid-cols-4 gap-2">
+                <Input placeholder="企业名称" className="h-8 text-sm" />
+                <Input placeholder="职位" className="h-8 text-sm" />
+                <Input type="number" placeholder="年限" className="h-8 text-sm" />
+                <Input placeholder="领域" className="h-8 text-sm" />
               </div>
             </div>
             <div className="space-y-2">
@@ -309,6 +406,40 @@ export default function FacultyPage() {
                       <span className="text-xs">{role}</span>
                     </label>
                   ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>职位（可多选）</Label>
+                <div className="flex flex-wrap gap-2">
+                  {allPositions.map((pos) => (
+                    <label key={pos} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
+                      <input type="checkbox" className="h-3.5 w-3.5" defaultChecked={selectedFaculty.positions?.includes(pos)} />
+                      <span className="text-xs">{pos}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>授课资格（可多选）</Label>
+                <div className="flex flex-wrap gap-2">
+                  {allTeachingQualifications.map((qual) => (
+                    <label key={qual} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
+                      <input type="checkbox" className="h-3.5 w-3.5" defaultChecked={selectedFaculty.teachingQualifications?.includes(qual)} />
+                      <span className="text-xs">{qual}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 p-3 border rounded-md bg-muted/30">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="h-4 w-4" defaultChecked={selectedFaculty.isEnterpriseMentor} />
+                  <span className="text-sm font-medium">企业导师</span>
+                </label>
+                <div className="flex-1 grid grid-cols-4 gap-2">
+                  <Input placeholder="企业名称" defaultValue={selectedFaculty.enterpriseInfo?.company} className="h-8 text-sm" />
+                  <Input placeholder="职位" defaultValue={selectedFaculty.enterpriseInfo?.position} className="h-8 text-sm" />
+                  <Input type="number" placeholder="年限" defaultValue={selectedFaculty.enterpriseInfo?.years} className="h-8 text-sm" />
+                  <Input placeholder="领域" defaultValue={selectedFaculty.enterpriseInfo?.field} className="h-8 text-sm" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -413,5 +544,28 @@ export default function FacultyPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function DeptTreeNode({
+  dept,
+  selectedDeptId,
+  onSelectDept,
+}: {
+  dept: { id: string; name: string }
+  selectedDeptId: string | null
+  onSelectDept: (id: string | null) => void
+}) {
+  return (
+    <button
+      onClick={() => onSelectDept(dept.id)}
+      className={cn(
+        'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors flex items-center gap-1.5',
+        selectedDeptId === dept.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+      )}
+    >
+      <FolderTree className="h-3.5 w-3.5 shrink-0" />
+      <span className="truncate">{dept.name}</span>
+    </button>
   )
 }
