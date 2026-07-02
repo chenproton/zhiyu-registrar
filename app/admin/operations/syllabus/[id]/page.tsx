@@ -7,11 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import RichTextEditor from '@/components/ui/rich-text-editor'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-
 import {
   Table,
   TableBody,
@@ -27,19 +23,15 @@ import {
   BookOpen,
   Beaker,
   CheckCircle2,
-  Plus,
-  Trash2,
   Sparkles,
   Target,
   ListChecks,
   FileText,
   Award,
   Library,
-  Upload,
-  Download,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { syllabuses, sceneSyllabuses, positions, teachingPlansV2, trainingPrograms, type Syllabus, type SceneSyllabus, type SyllabusObjective, type SyllabusChapter } from '@/lib/mock-data'
+import { syllabuses, sceneSyllabuses, positions, type Syllabus, type SceneSyllabus } from '@/lib/mock-data'
 import PositionSearchSelect from '@/components/shared/position-search-select'
 
 export default function SyllabusDetailPage() {
@@ -67,7 +59,7 @@ export default function SyllabusDetailPage() {
       { id: 'objectives', label: '教学目标', icon: Target },
       { id: 'chapters', label: '教学内容', icon: ListChecks },
       { id: 'methods', label: '教学方法与考核', icon: FileText },
-      { id: 'materials', label: '教材资料', icon: Library },
+      { id: 'materials', label: '教学资源', icon: Library },
     ]
     if (isScene) items.push({ id: 'scene', label: '场景任务链', icon: Beaker })
     return items
@@ -93,41 +85,6 @@ export default function SyllabusDetailPage() {
     })
     return () => observerRef.current?.disconnect()
   }, [isScene, syllabus])
-
-  // 从 trainingPrograms 查找关联的人培方案，计算学期列表
-  const linkedProgram = useMemo(() => {
-    if (!syllabus) return null
-    return trainingPrograms.find((p) => p.id === syllabus.programId)
-  }, [syllabus?.programId])
-
-  // 根据人培方案的基本信息自动计算学期列表
-  const semesterItems = useMemo(() => {
-    if (!linkedProgram) return []
-    const startDate = linkedProgram.startDate
-    const duration = linkedProgram.duration
-    if (!startDate || !duration) return []
-    const startYear = new Date(startDate).getFullYear()
-    const items: { semester: number; label: string }[] = []
-    for (let i = 0; i < duration; i++) {
-      const year = startYear + i
-      items.push({ semester: i * 2 + 1, label: `${year}年第一学期` })
-      items.push({ semester: i * 2 + 2, label: `${year}年第二学期` })
-    }
-    return items
-  }, [linkedProgram])
-
-  const allSemesters = useMemo(() => semesterItems.map((s) => s.semester), [semesterItems])
-
-  const defaultSemester = allSemesters[0] || 1
-
-  const [activeSemester, setActiveSemester] = useState<number>(defaultSemester)
-
-  // 当学期列表变化时，确保 activeSemester 有效
-  useEffect(() => {
-    if (allSemesters.length > 0 && !allSemesters.includes(activeSemester)) {
-      setActiveSemester(allSemesters[0])
-    }
-  }, [allSemesters, activeSemester])
 
   if (!syllabus) {
     return (
@@ -160,60 +117,6 @@ export default function SyllabusDetailPage() {
     const pos = positions.find((p) => p.id === posId)
     updateSceneField('mappedPositionId', posId)
     updateSceneField('mappedPositionName', pos?.name || '')
-  }
-
-  const addObjective = () => {
-    const newObj: SyllabusObjective = {
-      id: `obj-${Date.now()}`,
-      dimension: '知识',
-      content: '',
-      level: '掌握',
-    }
-    setSyllabus((prev) => prev ? { ...prev, objectives: [...prev.objectives, newObj] } : prev)
-  }
-
-  const updateObjective = (id: string, field: keyof SyllabusObjective, value: string) => {
-    setSyllabus((prev) => prev ? {
-      ...prev,
-      objectives: prev.objectives.map((o) => o.id === id ? { ...o, [field]: value } : o),
-    } : prev)
-  }
-
-  const removeObjective = (id: string) => {
-    setSyllabus((prev) => prev ? {
-      ...prev,
-      objectives: prev.objectives.filter((o) => o.id !== id),
-    } : prev)
-  }
-
-  const addChapter = () => {
-    const newCh: SyllabusChapter = {
-      id: `ch-${Date.now()}`,
-      name: '',
-      hours: 2,
-      theoryHours: 2,
-      practiceHours: 0,
-      content: '',
-      teachingMethod: '讲授',
-      keyPoints: '',
-      difficultPoints: '',
-      semester: activeSemester,
-    }
-    setSyllabus((prev) => prev ? { ...prev, chapters: [...prev.chapters, newCh] } : prev)
-  }
-
-  const updateChapter = (id: string, field: keyof SyllabusChapter, value: any) => {
-    setSyllabus((prev) => prev ? {
-      ...prev,
-      chapters: prev.chapters.map((c) => c.id === id ? { ...c, [field]: value } : c),
-    } : prev)
-  }
-
-  const removeChapter = (id: string) => {
-    setSyllabus((prev) => prev ? {
-      ...prev,
-      chapters: prev.chapters.filter((c) => c.id !== id),
-    } : prev)
   }
 
   const handleSave = () => {
@@ -360,94 +263,14 @@ export default function SyllabusDetailPage() {
               <h2 className="text-lg font-bold">教学目标</h2>
             </div>
             <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  教学目标（基于 KSA 目标）
-                  <a
-                    href="https://www.jiangshitai.com/f/145567.html"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-blue-600 hover:underline font-normal"
-                  >
-                    查看介绍
-                  </a>
-                </CardTitle>
-                {editMode && (
-                  <Button size="sm" variant="outline" onClick={addObjective}>
-                    <Plus className="h-4 w-4 mr-1" />
-                    添加目标
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {syllabus.objectives.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无教学目标，{editMode ? '请点击上方按钮添加' : '请进入编辑模式添加'}
-                </div>
+            <CardContent className="pt-6">
+              {editMode ? (
+                <RichTextEditor
+                  value={syllabus.objectivesText || ''}
+                  onChange={(v) => setSyllabus((prev) => prev ? { ...prev, objectivesText: v } : prev)}
+                />
               ) : (
-                <div className="space-y-3">
-                  {syllabus.objectives.map((obj) => (
-                    <div key={obj.id} className="flex items-start gap-3 rounded-lg border p-3">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          'shrink-0',
-                          obj.dimension === '知识' && 'text-blue-600 border-blue-300',
-                          obj.dimension === '能力' && 'text-amber-600 border-amber-300',
-                          obj.dimension === '素养' && 'text-emerald-600 border-emerald-300',
-                        )}
-                      >
-                        {obj.dimension}
-                      </Badge>
-                      {editMode ? (
-                        <div className="flex-1 space-y-3">
-                          <select
-                            value={obj.dimension}
-                            onChange={(e) => updateObjective(obj.id, 'dimension', e.target.value)}
-                            className="h-8 rounded-md border px-2 text-sm"
-                          >
-                            <option value="知识">知识</option>
-                            <option value="能力">能力</option>
-                            <option value="素养">素养</option>
-                          </select>
-                          <select
-                            value={obj.level}
-                            onChange={(e) => updateObjective(obj.id, 'level', e.target.value)}
-                            className="h-8 rounded-md border px-2 text-sm"
-                          >
-                            <option value="了解">了解</option>
-                            <option value="理解">理解</option>
-                            <option value="掌握">掌握</option>
-                            <option value="熟练">熟练</option>
-                            <option value="精通">精通</option>
-                          </select>
-                          <RichTextEditor
-                            value={obj.content}
-                            onChange={(v) => updateObjective(obj.id, 'content', v)}
-                            placeholder="目标内容"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex-1">
-                          <p className="text-sm">{obj.content}</p>
-                          <p className="text-xs text-muted-foreground mt-1">掌握程度：{obj.level}</p>
-                        </div>
-                      )}
-                      {editMode && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive shrink-0"
-                          onClick={() => removeObjective(obj.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: syllabus.objectivesText || '暂无' }} />
               )}
             </CardContent>
           </Card>
@@ -459,43 +282,14 @@ export default function SyllabusDetailPage() {
               <h2 className="text-lg font-bold">教学内容</h2>
             </div>
             <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">教学内容与学时分配</CardTitle>
-                {editMode && (
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => toast.success('导入功能使用现有组件样式即可')}>
-                      <Upload className="h-4 w-4 mr-1" />
-                      导入
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => toast.success('导出功能使用现有组件样式即可')}>
-                      <Download className="h-4 w-4 mr-1" />
-                      导出
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={addChapter}>
-                      <Plus className="h-4 w-4 mr-1" />
-                      添加节点
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {syllabus.chapters.length === 0 && semesterItems.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  暂无节点内容
-                </div>
-              ) : (
-                <SemesterChapterView
-                  syllabus={syllabus}
-                  editMode={editMode}
-                  activeSemester={activeSemester}
-                  onSemesterChange={setActiveSemester}
-                  defaultSemester={defaultSemester}
-                  semesterItems={semesterItems}
-                  updateChapter={updateChapter}
-                  removeChapter={removeChapter}
+            <CardContent className="pt-6">
+              {editMode ? (
+                <RichTextEditor
+                  value={syllabus.chaptersText || ''}
+                  onChange={(v) => setSyllabus((prev) => prev ? { ...prev, chaptersText: v } : prev)}
                 />
+              ) : (
+                <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: syllabus.chaptersText || '暂无' }} />
               )}
             </CardContent>
           </Card>
@@ -588,7 +382,7 @@ export default function SyllabusDetailPage() {
           <section id="section-materials" className="scroll-mt-24">
             <div className="flex items-center gap-2 mb-4 pb-2 border-b">
               <Library className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold">教材资料</h2>
+              <h2 className="text-lg font-bold">教学资源</h2>
             </div>
             <div className="space-y-4">
             <Card>
@@ -634,6 +428,21 @@ export default function SyllabusDetailPage() {
                       </li>
                     ))}
                   </ul>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">教学条件</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {editMode ? (
+                  <RichTextEditor
+                    value={syllabus.teachingConditions || ''}
+                    onChange={(v) => setSyllabus((prev) => prev ? { ...prev, teachingConditions: v } : prev)}
+                  />
+                ) : (
+                  <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: syllabus.teachingConditions || '暂无' }} />
                 )}
               </CardContent>
             </Card>
@@ -734,170 +543,4 @@ export default function SyllabusDetailPage() {
   )
 }
 
-// 按学期分组的章节展示组件
-function SemesterChapterView({
-  syllabus,
-  editMode,
-  activeSemester,
-  onSemesterChange,
-  defaultSemester,
-  semesterItems,
-  updateChapter,
-  removeChapter,
-}: {
-  syllabus: Syllabus | SceneSyllabus
-  editMode: boolean
-  activeSemester: number
-  onSemesterChange: (sem: number) => void
-  defaultSemester: number
-  semesterItems: { semester: number; label: string }[]
-  updateChapter: (id: string, field: keyof SyllabusChapter, value: any) => void
-  removeChapter: (id: string) => void
-}) {
-  const semesterGroups = useMemo(() => {
-    const groups = new Map<number, SyllabusChapter[]>()
-    syllabus.chapters.forEach((ch) => {
-      const sem = ch.semester || defaultSemester
-      const list = groups.get(sem) || []
-      list.push(ch)
-      groups.set(sem, list)
-    })
-    return groups
-  }, [syllabus.chapters, defaultSemester])
 
-  if (semesterItems.length === 0) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        <p>未关联有效的人培方案学期信息</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-4">
-      <Tabs value={String(activeSemester)} onValueChange={(v) => onSemesterChange(Number(v))} className="w-full">
-        <TabsList>
-          {semesterItems.map((item) => (
-            <TabsTrigger key={item.semester} value={String(item.semester)}>
-              {item.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {semesterItems.map((item) => {
-          const chapters = semesterGroups.get(item.semester) || []
-          return (
-            <TabsContent key={item.semester} value={String(item.semester)} className="mt-4 space-y-4">
-              {chapters.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground rounded-lg border border-dashed">
-                  该学期暂无节点，点击上方"添加节点"按钮添加
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-lg border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12">序号</TableHead>
-                          <TableHead>节点名称（单元/模块/章节/项目）</TableHead>
-                          <TableHead className="w-20">总学时</TableHead>
-                          <TableHead className="w-20">理论</TableHead>
-                          <TableHead className="w-20">实践</TableHead>
-                          <TableHead>教学内容</TableHead>
-                          {editMode && <TableHead className="w-16">操作</TableHead>}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {chapters.map((ch, index) => (
-                          <TableRow key={ch.id}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                              {editMode ? (
-                                <Input
-                                  value={ch.name}
-                                  onChange={(e) => updateChapter(ch.id, 'name', e.target.value)}
-                                  className="h-8"
-                                />
-                              ) : (
-                                <span className="font-medium">{ch.name}</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editMode ? (
-                                <Input
-                                  type="number"
-                                  value={ch.hours}
-                                  onChange={(e) => updateChapter(ch.id, 'hours', parseInt(e.target.value) || 0)}
-                                  className="h-8 w-16"
-                                />
-                              ) : (
-                                ch.hours
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editMode ? (
-                                <Input
-                                  type="number"
-                                  value={ch.theoryHours}
-                                  onChange={(e) => updateChapter(ch.id, 'theoryHours', parseInt(e.target.value) || 0)}
-                                  className="h-8 w-16"
-                                />
-                              ) : (
-                                ch.theoryHours
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editMode ? (
-                                <Input
-                                  type="number"
-                                  value={ch.practiceHours}
-                                  onChange={(e) => updateChapter(ch.id, 'practiceHours', parseInt(e.target.value) || 0)}
-                                  className="h-8 w-16"
-                                />
-                              ) : (
-                                ch.practiceHours
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {editMode ? (
-                                <Input
-                                  value={ch.content}
-                                  onChange={(e) => updateChapter(ch.id, 'content', e.target.value)}
-                                  className="h-8"
-                                  placeholder="教学内容摘要"
-                                />
-                              ) : (
-                                <span className="text-sm text-muted-foreground">{ch.content}</span>
-                              )}
-                            </TableCell>
-                            {editMode && (
-                              <TableCell>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive"
-                                  onClick={() => removeChapter(ch.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  <div className="mt-3 flex items-center justify-end gap-4 text-sm text-muted-foreground">
-                    <span>总学时：<strong className="text-foreground">{chapters.reduce((s, c) => s + c.hours, 0)}</strong></span>
-                    <span>理论：<strong className="text-foreground">{chapters.reduce((s, c) => s + c.theoryHours, 0)}</strong></span>
-                    <span>实践：<strong className="text-foreground">{chapters.reduce((s, c) => s + c.practiceHours, 0)}</strong></span>
-                  </div>
-                </>
-              )}
-            </TabsContent>
-          )
-        })}
-      </Tabs>
-    </div>
-  )
-}

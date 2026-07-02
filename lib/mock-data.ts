@@ -278,6 +278,7 @@ export const textbooks: Textbook[] = [
 
 export interface Venue {
   id: string
+  code: string
   name: string
   type: '教室' | '实验室' | '实训基地' | '机房' | '多媒体教室' | '其他'
   capacity: number
@@ -296,21 +297,21 @@ export interface Venue {
 export const venueTypes = ['教室', '实验室', '实训基地', '机房', '多媒体教室', '其他']
 
 export const venues: Venue[] = [
-  { id: 'v1', name: 'A101 多媒体教室', type: '多媒体教室', capacity: 60, location: 'A栋1层', facilities: '投影仪、音响、空调', status: 'available',
+  { id: 'v1', code: 'V001', name: 'A101 多媒体教室', type: '多媒体教室', capacity: 60, location: 'A栋1层', facilities: '投影仪、音响、空调', status: 'available',
     digitalInfo: { floorPlanUrl: '#', smartDeviceCount: 3, iotSensors: ['温湿度', ' occupancy'] } },
-  { id: 'v2', name: 'A102 普通教室', type: '教室', capacity: 50, location: 'A栋1层', facilities: '黑板、空调', status: 'available',
+  { id: 'v2', code: 'V002', name: 'A102 普通教室', type: '教室', capacity: 50, location: 'A栋1层', facilities: '黑板、空调', status: 'available',
     digitalInfo: { floorPlanUrl: '#', smartDeviceCount: 1, iotSensors: ['温湿度'] } },
-  { id: 'v3', name: 'B201 计算机机房', type: '机房', capacity: 80, location: 'B栋2层', facilities: '电脑80台、投影仪、空调', status: 'available',
+  { id: 'v3', code: 'V003', name: 'B201 计算机机房', type: '机房', capacity: 80, location: 'B栋2层', facilities: '电脑80台、投影仪、空调', status: 'available',
     digitalInfo: { floorPlanUrl: '#', model3dUrl: '#', smartDeviceCount: 85, iotSensors: ['温湿度', '能耗监测', ' occupancy'] } },
-  { id: 'v4', name: 'B301 网络实验室', type: '实验室', capacity: 40, location: 'B栋3层', facilities: '网络设备、防火墙、空调', status: 'available',
+  { id: 'v4', code: 'V004', name: 'B301 网络实验室', type: '实验室', capacity: 40, location: 'B栋3层', facilities: '网络设备、防火墙、空调', status: 'available',
     digitalInfo: { floorPlanUrl: '#', model3dUrl: '#', smartDeviceCount: 20, iotSensors: ['温湿度', '能耗监测'] } },
-  { id: 'v5', name: 'C101 机械实训基地', type: '实训基地', capacity: 30, location: 'C栋1层', facilities: '数控机床、3D打印机、吊车', status: 'available',
+  { id: 'v5', code: 'V005', name: 'C101 机械实训基地', type: '实训基地', capacity: 30, location: 'C栋1层', facilities: '数控机床、3D打印机、吊车', status: 'available',
     digitalInfo: { floorPlanUrl: '#', model3dUrl: '#', bookingSystemUrl: '#', smartDeviceCount: 15, iotSensors: ['温湿度', '能耗监测', '设备状态'] } },
-  { id: 'v6', name: 'C201 汽车实训车间', type: '实训基地', capacity: 25, location: 'C栋2层', facilities: '举升机、诊断仪、新能源实训台', status: 'available',
+  { id: 'v6', code: 'V006', name: 'C201 汽车实训车间', type: '实训基地', capacity: 25, location: 'C栋2层', facilities: '举升机、诊断仪、新能源实训台', status: 'available',
     digitalInfo: { floorPlanUrl: '#', model3dUrl: '#', bookingSystemUrl: '#', smartDeviceCount: 12, iotSensors: ['温湿度', '能耗监测', '设备状态', '安全监控'] } },
-  { id: 'v7', name: 'D101 设计工作室', type: '实验室', capacity: 35, location: 'D栋1层', facilities: 'iMac、绘图板、打印机', status: 'available',
+  { id: 'v7', code: 'V007', name: 'D101 设计工作室', type: '实验室', capacity: 35, location: 'D栋1层', facilities: 'iMac、绘图板、打印机', status: 'available',
     digitalInfo: { floorPlanUrl: '#', smartDeviceCount: 35, iotSensors: ['温湿度', ' occupancy'] } },
-  { id: 'v8', name: 'A201 大阶梯教室', type: '教室', capacity: 120, location: 'A栋2层', facilities: '投影仪、音响、空调', status: 'available',
+  { id: 'v8', code: 'V008', name: 'A201 大阶梯教室', type: '教室', capacity: 120, location: 'A栋2层', facilities: '投影仪、音响、空调', status: 'available',
     digitalInfo: { floorPlanUrl: '#', smartDeviceCount: 5, iotSensors: ['温湿度', ' occupancy'] } },
 ]
 
@@ -5475,6 +5476,12 @@ export interface Syllabus {
   applicableMajorIds: string[]
   objectives: SyllabusObjective[]
   chapters: SyllabusChapter[]
+  /** 简化教学目标（富文本） */
+  objectivesText?: string
+  /** 简化教学内容（富文本） */
+  chaptersText?: string
+  /** 教学条件（富文本） */
+  teachingConditions?: string
   teachingMethods: string
   assessmentMethod: string
   assessmentWeight: {
@@ -5769,16 +5776,19 @@ export const sceneSyllabuses: SceneSyllabus[] = [
       { id: 'obj-2', dimension: '能力', content: '能够参与团队协作完成简单任务', level: '掌握' },
       { id: 'obj-3', dimension: '素养', content: '培养职业素养和沟通协调能力', level: '掌握' },
     ],
+    objectivesText: '<p>通过本课程的学习，学生应达到以下目标：</p><ul><li>了解企业组织架构和软件开发流程</li><li>能够参与团队协作完成简单任务</li><li>培养职业素养和沟通协调能力</li></ul>',
     chapters: [
       { id: 'ch-1', name: '企业环境与规章制度', hours: 4, theoryHours: 4, practiceHours: 0, content: '企业文化、组织架构、安全规范', teachingMethod: '参观+讲解', keyPoints: '企业规章制度', difficultPoints: '保密协议理解' },
       { id: 'ch-2', name: '软件开发流程实践', hours: 12, theoryHours: 4, practiceHours: 8, content: '需求分析、设计、编码、测试全流程', teachingMethod: '项目实践', keyPoints: '敏捷开发流程', difficultPoints: '需求变更处理' },
       { id: 'ch-3', name: '岗位技能体验', hours: 16, theoryHours: 0, practiceHours: 16, content: '前端/后端/测试岗位轮换体验', teachingMethod: '岗位轮训', keyPoints: '岗位核心技能', difficultPoints: '快速适应新岗位' },
     ],
+    chaptersText: '<p>本课程教学内容分为以下阶段：</p><ol><li><strong>企业环境与规章制度</strong>（4学时）— 企业文化、组织架构、安全规范</li><li><strong>软件开发流程实践</strong>（12学时）— 需求分析、设计、编码、测试全流程</li><li><strong>岗位技能体验</strong>（16学时）— 前端/后端/测试岗位轮换体验</li></ol>',
     teachingMethods: '场景化教学、岗位轮训、企业导师制',
     assessmentMethod: '过程评价40% + 岗位胜任力测评60%',
     assessmentWeight: { usual: 40, midterm: 0, final: 0, practice: 60 },
     textbooks: ['企业内训资料'],
     references: ['《软件工程实践者的研究方法》，Roger Pressman'],
+    teachingConditions: '<p>1. 校内实训基地：配备高性能计算机、软件开发环境（IDE、Git等）</p><p>2. 企业实训基地：合作企业提供真实项目工位</p><p>3. 软件资源：正版开发工具、项目管理平台</p>',
     status: 'finalized',
     version: 'v1.0',
     createdAt: '2025-01-15',
