@@ -579,37 +579,10 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
 // ============================================
 function ImportScheduleTab({ onImported }: { onImported?: () => void }) {
   const [importOpen, setImportOpen] = useState(false)
-  const [text, setText] = useState('')
-  const [previewCount, setPreviewCount] = useState(0)
   const [imported, setImported] = useState(false)
-
-  const handleParse = () => {
-    if (!text.trim()) {
-      toast.error('请输入数据')
-      return
-    }
-    const lines = text.trim().split('\n').filter((l) => l.trim())
-    setPreviewCount(lines.length)
-    toast.success(`解析成功，共 ${lines.length} 条记录`)
-  }
-
-  const handleConfirm = () => {
-    if (previewCount === 0) {
-      toast.error('请先解析数据')
-      return
-    }
-    setImported(true)
-    toast.success(`成功导入 ${previewCount} 条排课记录，请继续点击下一步进入自定义排课`)
-    onImported?.()
-    setImportOpen(false)
-    setText('')
-    setPreviewCount(0)
-  }
 
   const handleClose = () => {
     setImportOpen(false)
-    setText('')
-    setPreviewCount(0)
   }
 
   return (
@@ -648,38 +621,40 @@ function ImportScheduleTab({ onImported }: { onImported?: () => void }) {
       </Card>
 
       <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5 text-green-600" />
               导入排课Excel
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">数据格式</p>
-              <p>每行一条排课记录，字段用逗号分隔：</p>
-              <p className="font-mono bg-white border rounded px-2 py-1">班级名称, 课程名称, 教师姓名, 星期, 节次, 周次, 场地</p>
-              <p>示例：</p>
-              <p className="font-mono bg-white border rounded px-2 py-1">软件工程2026级1班, 程序设计基础, 周建国, 周一, 1-2, 1-16, 计算机楼A101</p>
-            </div>
-            <div className="space-y-2">
-              <Label>粘贴Excel数据</Label>
-              <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="在此粘贴排课数据..." rows={8} />
-              <Button variant="outline" size="sm" onClick={handleParse}>
-                <Upload className="h-3.5 w-3.5 mr-1" />
-                解析数据
+          <div className="flex flex-col items-center justify-center py-6 space-y-4">
+            <input
+              id="schedule-excel-upload"
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setImported(true)
+                toast.success(`已上传 ${file.name}，请继续点击下一步进入自定义排课`)
+                onImported?.()
+                setImportOpen(false)
+                e.target.value = ''
+              }}
+            />
+            <label htmlFor="schedule-excel-upload" className="w-full">
+              <Button className="w-full gap-2" asChild>
+                <span>
+                  <Upload className="h-4 w-4" />
+                  上传 Excel
+                </span>
               </Button>
-            </div>
-            {previewCount > 0 && (
-              <div className="rounded-lg border bg-green-50 p-2 text-xs text-green-700">
-                已解析 {previewCount} 条记录，点击确认导入
-              </div>
-            )}
+            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleClose}>取消</Button>
-            <Button onClick={handleConfirm} disabled={previewCount === 0}>确认导入</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

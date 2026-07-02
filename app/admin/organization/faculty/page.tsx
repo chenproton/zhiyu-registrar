@@ -51,6 +51,9 @@ export default function FacultyPage() {
   const [editDeptPopoverOpen, setEditDeptPopoverOpen] = useState(false)
   const [formDepartmentId, setFormDepartmentId] = useState('')
   const [editDepartmentId, setEditDepartmentId] = useState('')
+  const [formEmployeeId, setFormEmployeeId] = useState('')
+  const [formName, setFormName] = useState('')
+  const [formPassword, setFormPassword] = useState('')
 
   const deptTree = useMemo(() => departments.map(d => ({
     ...d,
@@ -216,13 +219,13 @@ export default function FacultyPage() {
           <DialogHeader><DialogTitle>新建教师</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>工号</Label><Input placeholder="请输入工号" /></div>
-              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" /></div>
+              <div className="space-y-2"><Label>工号 <span className="text-destructive">*</span></Label><Input value={formEmployeeId} onChange={(e) => setFormEmployeeId(e.target.value)} placeholder="请输入工号" required /></div>
+              <div className="space-y-2"><Label>姓名 <span className="text-destructive">*</span></Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="请输入姓名" required /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="请输入密码" /></div>
+              <div className="space-y-2"><Label>密码</Label><Input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="请输入密码" /></div>
               <div className="space-y-2">
-                <Label>所属部门</Label>
+                <Label>所属部门 <span className="text-destructive">*</span></Label>
                 <Popover open={deptPopoverOpen} onOpenChange={setDeptPopoverOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -280,7 +283,27 @@ export default function FacultyPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={() => { toast.success('新建教师成功'); setCreateOpen(false) }}>保存</Button>
+            <Button onClick={() => {
+              if (!formEmployeeId.trim()) { toast.error('请输入工号'); return }
+              if (!formName.trim()) { toast.error('请输入姓名'); return }
+              if (!formDepartmentId) { toast.error('请选择所属部门'); return }
+              setFacultyList((prev) => [...prev, {
+                id: `f${Date.now()}`,
+                employeeId: formEmployeeId.trim(),
+                name: formName.trim(),
+                password: formPassword || '123456',
+                departmentId: formDepartmentId,
+                roles: [],
+                positions: [],
+                status: '在职',
+              }])
+              toast.success('新建教师成功')
+              setFormEmployeeId('')
+              setFormName('')
+              setFormPassword('')
+              setFormDepartmentId('')
+              setCreateOpen(false)
+            }}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
