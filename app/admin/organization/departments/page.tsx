@@ -69,7 +69,7 @@ export default function DepartmentsPage() {
     const majorIds = majors.filter((m) => m.departmentId === deptId).map((m) => m.id)
     const classCount = classes.filter((c) => majorIds.includes(c.majorId)).length
     const studentCount = students.filter((s) => s.departmentId === deptId).length
-    const facultyCount = faculty.filter((f) => f.departmentId === deptId).length
+    const facultyCount = 0
     return { majorCount, classCount, studentCount, facultyCount }
   }
 

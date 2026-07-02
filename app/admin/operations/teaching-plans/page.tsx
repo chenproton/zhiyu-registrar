@@ -295,19 +295,14 @@ function PlanPage() {
   // ---- 筛选教师/导师列表（按类型 + 院系 + 搜索）----
   const filteredFacultyForDialog = useMemo(() => {
     let list = teacherFormType === '校本师资'
-      ? faculty.filter(f => !f.isEnterpriseMentor)
-      : faculty.filter(f => f.isEnterpriseMentor)
-    if (teacherFilterDeptId) {
-      list = list.filter(f => f.departmentId === teacherFilterDeptId)
-    }
+      ? faculty
+      : []
     if (teacherSearchText.trim()) {
       const term = teacherSearchText.trim().toLowerCase()
       list = list.filter(f =>
         f.name.toLowerCase().includes(term) ||
         f.employeeId.toLowerCase().includes(term) ||
-        (f.teachingQualifications || []).some(q => q.toLowerCase().includes(term)) ||
-        (f.enterpriseInfo?.company || '').toLowerCase().includes(term) ||
-        (f.enterpriseInfo?.position || '').toLowerCase().includes(term)
+        (f.positions || []).some(q => q.toLowerCase().includes(term))
       )
     }
     return list
@@ -1082,7 +1077,7 @@ function PlanPage() {
                                 {f.name}
                               </span>
                               <span className="text-xs text-muted-foreground shrink-0">{f.employeeId}</span>
-                              {f.isEnterpriseMentor && (
+                              {false && (
                                 <Badge variant="outline" className="text-[10px] h-4 px-1 shrink-0">企业</Badge>
                               )}
                               {isCurrent && (
@@ -1090,14 +1085,14 @@ function PlanPage() {
                               )}
                             </div>
                           </div>
-                          {f.isEnterpriseMentor && f.enterpriseInfo && (
+                          {false && (
                             <div className="text-xs text-muted-foreground mt-0.5">
-                              {f.enterpriseInfo.company} · {f.enterpriseInfo.position} · {f.enterpriseInfo.years}年经验
+                              {'—'}
                             </div>
                           )}
-                          {!f.isEnterpriseMentor && f.teachingQualifications && f.teachingQualifications.length > 0 && (
+                          {f.positions && f.positions.length > 0 && (
                             <div className="text-xs text-muted-foreground mt-0.5">
-                              {f.teachingQualifications.join('、')}
+                              {f.positions.join('、')}
                             </div>
                           )}
                         </button>
