@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Table,
   TableBody,
@@ -29,9 +31,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Upload, Download, Lock } from 'lucide-react'
-import { faculty, facultyRoles } from '@/lib/mock-data'
+import { Plus, Upload, Download, Lock, FolderTree, ChevronRight, ChevronDown } from 'lucide-react'
+import { faculty, facultyRoles, departments } from '@/lib/mock-data'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 const allPositions = ['院长', '副院长', '系主任', '副系主任', '教研室主任', '专业负责人', '教授', '副教授', '讲师', '助教', '实验员', '行政人员', '企业导师', '研究员']
 
@@ -42,6 +45,7 @@ export default function FacultyPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     return facultyList.filter((f) => {
@@ -50,9 +54,10 @@ export default function FacultyPage() {
         if (!f.name.toLowerCase().includes(s) && !f.employeeId.toLowerCase().includes(s)) return false
       }
       if (filters.status !== 'all' && f.status !== filters.status) return false
+      if (selectedDeptId && f.departmentId !== selectedDeptId) return false
       return true
     })
-  }, [search, filters, facultyList])
+  }, [search, filters, facultyList, selectedDeptId])
 
   return (
     <div className="space-y-6">
@@ -73,91 +78,127 @@ export default function FacultyPage() {
         </div>
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <FilterBar
-            searchPlaceholder="搜索教师姓名或工号..."
-            searchValue={search}
-            onSearchChange={setSearch}
-            filters={[
-              {
-                key: 'status',
-                label: '全部状态',
-                options: [
-                  { value: '在职', label: '在职' },
-                  { value: '离职', label: '离职' },
-                  { value: '外聘', label: '外聘' },
-                ],
-              },
-            ]}
-            filterValues={filters}
-            onFilterChange={(key, value) => setFilters((p) => ({ ...p, [key]: value }))}
-            onClearFilters={() => { setSearch(''); setFilters({ status: 'all' }) }}
-          />
-        </CardContent>
-      </Card>
+      <div className="flex gap-4 items-start">
+        <Card className="w-64 shrink-0">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <FolderTree className="h-4 w-4" />组织架构
+            </h3>
+            <ScrollArea className="h-[500px]">
+              <div className="space-y-1">
+                <button
+                  onClick={() => setSelectedDeptId(null)}
+                  className={cn(
+                    'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+                    selectedDeptId === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                  )}
+                >
+                  全部教职工
+                </button>
+                {departments.map((dept) => (
+                  <DeptTreeNode
+                    key={dept.id}
+                    deptId={dept.id}
+                    deptName={dept.name}
+                    selected={selectedDeptId === dept.id}
+                    onSelect={setSelectedDeptId}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>工号</TableHead>
-                <TableHead>姓名</TableHead>
-                <TableHead>关联角色</TableHead>
-                <TableHead>职位</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((f) => (
-                <TableRow key={f.id}>
-                  <TableCell className="font-medium">{f.employeeId}</TableCell>
-                  <TableCell>{f.name}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {f.roles?.map((r) => (
-                        <Badge key={r} variant="outline" className="text-[10px]">{r}</Badge>
-                      )) || <span className="text-muted-foreground text-xs">—</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {f.positions && f.positions.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {f.positions.map((p, i) => (
-                          <Badge key={i} variant="secondary" className="text-[10px]">{p}</Badge>
-                        ))}
-                      </div>
-                    ) : <span className="text-muted-foreground text-xs">—</span>}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}>编辑</Button>
-                      <Button variant="ghost" size="sm" onClick={() => {
-                        setFacultyList((prev) => prev.map((item) => item.id === f.id ? { ...item, password: '123456' } : item))
-                        toast.success(`已重置 ${f.name} 的密码`)
-                      }}>
-                        <Lock className="h-3.5 w-3.5 mr-1" />重置密码
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    暂无数据
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        <div className="flex-1 space-y-4">
+          <Card>
+            <CardContent className="pt-6">
+              <FilterBar
+                searchPlaceholder="搜索教师姓名或工号..."
+                searchValue={search}
+                onSearchChange={setSearch}
+                filters={[
+                  {
+                    key: 'status',
+                    label: '全部状态',
+                    options: [
+                      { value: '在职', label: '在职' },
+                      { value: '离职', label: '离职' },
+                      { value: '外聘', label: '外聘' },
+                    ],
+                  },
+                ]}
+                filterValues={filters}
+                onFilterChange={(key, value) => setFilters((p) => ({ ...p, [key]: value }))}
+                onClearFilters={() => { setSearch(''); setFilters({ status: 'all' }); setSelectedDeptId(null) }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>工号</TableHead>
+                    <TableHead>姓名</TableHead>
+                    <TableHead>所属院系</TableHead>
+                    <TableHead>关联角色</TableHead>
+                    <TableHead>职位</TableHead>
+                    <TableHead>状态</TableHead>
+                    <TableHead className="text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((f) => (
+                    <TableRow key={f.id}>
+                      <TableCell className="font-medium">{f.employeeId}</TableCell>
+                      <TableCell>{f.name}</TableCell>
+                      <TableCell>{departments.find((d) => d.id === f.departmentId)?.name || '—'}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {f.roles?.map((r) => (
+                            <Badge key={r} variant="outline" className="text-[10px]">{r}</Badge>
+                          )) || <span className="text-muted-foreground text-xs">—</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {f.positions && f.positions.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {f.positions.map((p, i) => (
+                              <Badge key={i} variant="secondary" className="text-[10px]">{p}</Badge>
+                            ))}
+                          </div>
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}>编辑</Button>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setFacultyList((prev) => prev.map((item) => item.id === f.id ? { ...item, password: '123456' } : item))
+                            toast.success(`已重置 ${f.name} 的密码`)
+                          }}>
+                            <Lock className="h-3.5 w-3.5 mr-1" />重置密码
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        暂无数据
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* 新建教师弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -170,6 +211,17 @@ export default function FacultyPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="请输入密码" /></div>
+              <div className="space-y-2">
+                <Label>所属院系</Label>
+                <Select>
+                  <SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger>
+                  <SelectContent>
+                    {departments.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>关联角色（可多选）</Label>
@@ -217,6 +269,17 @@ export default function FacultyPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>密码</Label><Input type="password" defaultValue={selectedFaculty.password} /></div>
+                <div className="space-y-2">
+                  <Label>所属院系</Label>
+                  <Select defaultValue={selectedFaculty.departmentId}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {departments.map((d) => (
+                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>关联角色（可多选）</Label>
@@ -253,5 +316,19 @@ export default function FacultyPage() {
         </DialogContent>
       </Dialog>
     </div>
+  )
+}
+
+function DeptTreeNode({ deptId, deptName, selected, onSelect }: { deptId: string; deptName: string; selected: boolean; onSelect: (id: string) => void }) {
+  return (
+    <button
+      onClick={() => onSelect(deptId)}
+      className={cn(
+        'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+        selected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+      )}
+    >
+      {deptName}
+    </button>
   )
 }

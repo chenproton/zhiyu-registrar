@@ -113,6 +113,7 @@ export interface Faculty {
   employeeId: string
   name: string
   password: string
+  departmentId: string
   status: '在职' | '离职' | '外聘'
   roles?: string[]
   positions?: string[]
@@ -121,16 +122,16 @@ export interface Faculty {
 export const facultyRoles = ['系统管理员', '教学秘书', '教师', '企业导师', '质量管理员']
 
 export const faculty: Faculty[] = [
-  { id: 'f1', employeeId: 'T2021001', name: '周建国', password: '123456', status: '在职', roles: ['系统管理员', '教师'], positions: ['系主任', '教授'] },
-  { id: 'f2', employeeId: 'T2021002', name: '吴晓敏', password: '123456', status: '在职', roles: ['教学秘书', '教师'], positions: ['副教授'] },
-  { id: 'f3', employeeId: 'T2021003', name: '王志强', password: '123456', status: '在职', roles: ['教师'], positions: ['企业导师', '讲师'] },
-  { id: 'f4', employeeId: 'T2021004', name: '李红梅', password: '123456', status: '在职', positions: ['讲师'] },
-  { id: 'f5', employeeId: 'T2021005', name: '张大伟', password: '123456', status: '在职', positions: ['教授'] },
-  { id: 'f6', employeeId: 'T2021006', name: '赵丽华', password: '123456', status: '在职', positions: ['副教授'] },
-  { id: 'f7', employeeId: 'T2021007', name: '刘建国', password: '123456', status: '在职', positions: ['企业导师', '研究员'] },
-  { id: 'f8', employeeId: 'T2021008', name: '陈秀英', password: '123456', status: '在职', positions: ['讲师'] },
-  { id: 'f9', employeeId: 'T2021009', name: '孙伟', password: '123456', status: '在职', positions: ['教研室主任'] },
-  { id: 'f10', employeeId: 'T2021010', name: '郑雅琴', password: '123456', status: '在职', positions: ['助教'] },
+  { id: 'f1', employeeId: 'T2021001', name: '周建国', password: '123456', departmentId: 'd1', status: '在职', roles: ['系统管理员', '教师'], positions: ['系主任', '教授'] },
+  { id: 'f2', employeeId: 'T2021002', name: '吴晓敏', password: '123456', departmentId: 'd1', status: '在职', roles: ['教学秘书', '教师'], positions: ['副教授'] },
+  { id: 'f3', employeeId: 'T2021003', name: '王志强', password: '123456', departmentId: 'd1', status: '在职', roles: ['教师'], positions: ['企业导师', '讲师'] },
+  { id: 'f4', employeeId: 'T2021004', name: '李红梅', password: '123456', departmentId: 'd2', status: '在职', positions: ['讲师'] },
+  { id: 'f5', employeeId: 'T2021005', name: '张大伟', password: '123456', departmentId: 'd3', status: '在职', positions: ['教授'] },
+  { id: 'f6', employeeId: 'T2021006', name: '赵丽华', password: '123456', departmentId: 'd4', status: '在职', positions: ['副教授'] },
+  { id: 'f7', employeeId: 'T2021007', name: '刘建国', password: '123456', departmentId: 'd5', status: '在职', positions: ['企业导师', '研究员'] },
+  { id: 'f8', employeeId: 'T2021008', name: '陈秀英', password: '123456', departmentId: 'd3', status: '在职', positions: ['讲师'] },
+  { id: 'f9', employeeId: 'T2021009', name: '孙伟', password: '123456', departmentId: 'd2', status: '在职', positions: ['教研室主任'] },
+  { id: 'f10', employeeId: 'T2021010', name: '郑雅琴', password: '123456', departmentId: 'd1', status: '在职', positions: ['助教'] },
 ]
 
 // ----- 3. 学生学籍 -----
