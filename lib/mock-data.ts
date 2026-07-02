@@ -113,12 +113,6 @@ export interface Faculty {
   employeeId: string
   name: string
   password: string
-  departmentId: string
-  majorId?: string
-  teachingQualifications: string[]
-  isEnterpriseMentor: boolean
-  enterpriseInfo?: { company: string; position: string; years: number; field: string }
-  agreements?: { id: string; name: string; company: string; startDate: string; endDate: string; status: '有效' | '过期' }[]
   status: '在职' | '离职' | '外聘'
   roles?: string[]
   positions?: string[]
@@ -127,16 +121,16 @@ export interface Faculty {
 export const facultyRoles = ['系统管理员', '教学秘书', '教师', '企业导师', '质量管理员']
 
 export const faculty: Faculty[] = [
-  { id: 'f1', employeeId: 'T2021001', name: '周建国', password: '123456', departmentId: 'd1', teachingQualifications: ['程序设计', '数据结构'], isEnterpriseMentor: false, status: '在职', roles: ['系统管理员', '教师'], positions: ['系主任', '教授'] },
-  { id: 'f2', employeeId: 'T2021002', name: '吴晓敏', password: '123456', departmentId: 'd1', teachingQualifications: ['人工智能', '机器学习'], isEnterpriseMentor: false, status: '在职', roles: ['教学秘书', '教师'], positions: ['副教授'] },
-  { id: 'f3', employeeId: 'T2021003', name: '王志强', password: '123456', departmentId: 'd1', teachingQualifications: ['网络技术', '网络安全'], isEnterpriseMentor: true, enterpriseInfo: { company: '华为', position: '高级工程师', years: 8, field: '网络工程' }, agreements: [{ id: 'a1', name: '华为-网络工程实践教学合作协议', company: '华为技术有限公司', startDate: '2024-09-01', endDate: '2026-08-31', status: '有效' }, { id: 'a2', name: '华为-校企联合培养补充协议', company: '华为技术有限公司', startDate: '2023-03-01', endDate: '2025-02-28', status: '过期' }], status: '在职', roles: ['企业导师', '教师'], positions: ['企业导师', '讲师'] },
-  { id: 'f4', employeeId: 'T2021004', name: '李红梅', password: '123456', departmentId: 'd2', teachingQualifications: ['机械设计', 'CAD/CAM'], isEnterpriseMentor: false, status: '在职', positions: ['讲师'] },
-  { id: 'f5', employeeId: 'T2021005', name: '张大伟', password: '123456', departmentId: 'd3', teachingQualifications: ['会计学', '财务管理'], isEnterpriseMentor: false, status: '在职', positions: ['教授'] },
-  { id: 'f6', employeeId: 'T2021006', name: '赵丽华', password: '123456', departmentId: 'd4', teachingQualifications: ['平面设计', 'UI设计'], isEnterpriseMentor: true, enterpriseInfo: { company: '字节跳动', position: '设计总监', years: 6, field: '视觉设计' }, agreements: [{ id: 'a3', name: '字节跳动-UI设计实践合作协议', company: '字节跳动', startDate: '2025-01-01', endDate: '2027-12-31', status: '有效' }], status: '在职', positions: ['副教授'] },
-  { id: 'f7', employeeId: 'T2021007', name: '刘建国', password: '123456', departmentId: 'd5', teachingQualifications: ['汽车维修', '新能源汽车'], isEnterpriseMentor: true, enterpriseInfo: { company: '比亚迪', position: '技术专家', years: 12, field: '汽车工程' }, agreements: [{ id: 'a4', name: '比亚迪-新能源汽车技术合作协议', company: '比亚迪股份有限公司', startDate: '2024-06-01', endDate: '2026-05-31', status: '有效' }], status: '在职', positions: ['企业导师', '研究员'] },
-  { id: 'f8', employeeId: 'T2021008', name: '陈秀英', password: '123456', departmentId: 'd3', teachingQualifications: ['市场营销', '电子商务'], isEnterpriseMentor: false, status: '在职', positions: ['讲师'] },
-  { id: 'f9', employeeId: 'T2021009', name: '孙伟', password: '123456', departmentId: 'd2', teachingQualifications: ['数控技术', '3D打印'], isEnterpriseMentor: false, status: '在职', positions: ['教研室主任'] },
-  { id: 'f10', employeeId: 'T2021010', name: '郑雅琴', password: '123456', departmentId: 'd1', teachingQualifications: ['前端开发', 'Web设计'], isEnterpriseMentor: false, status: '在职', positions: ['助教'] },
+  { id: 'f1', employeeId: 'T2021001', name: '周建国', password: '123456', status: '在职', roles: ['系统管理员', '教师'], positions: ['系主任', '教授'] },
+  { id: 'f2', employeeId: 'T2021002', name: '吴晓敏', password: '123456', status: '在职', roles: ['教学秘书', '教师'], positions: ['副教授'] },
+  { id: 'f3', employeeId: 'T2021003', name: '王志强', password: '123456', status: '在职', roles: ['教师'], positions: ['企业导师', '讲师'] },
+  { id: 'f4', employeeId: 'T2021004', name: '李红梅', password: '123456', status: '在职', positions: ['讲师'] },
+  { id: 'f5', employeeId: 'T2021005', name: '张大伟', password: '123456', status: '在职', positions: ['教授'] },
+  { id: 'f6', employeeId: 'T2021006', name: '赵丽华', password: '123456', status: '在职', positions: ['副教授'] },
+  { id: 'f7', employeeId: 'T2021007', name: '刘建国', password: '123456', status: '在职', positions: ['企业导师', '研究员'] },
+  { id: 'f8', employeeId: 'T2021008', name: '陈秀英', password: '123456', status: '在职', positions: ['讲师'] },
+  { id: 'f9', employeeId: 'T2021009', name: '孙伟', password: '123456', status: '在职', positions: ['教研室主任'] },
+  { id: 'f10', employeeId: 'T2021010', name: '郑雅琴', password: '123456', status: '在职', positions: ['助教'] },
 ]
 
 // ----- 3. 学生学籍 -----
@@ -155,14 +149,10 @@ export interface Student {
   id: string
   studentId: string
   name: string
-  idCard: string
   departmentId: string
   majorId: string
   classId: string
-  entryYear: number
   status: StudentStatus
-  gpa: number
-  creditsEarned: number
   abilityPortfolio?: AbilityPortfolio
   abilityRecognition?: {
     totalSkills: number
@@ -174,7 +164,7 @@ export interface Student {
 }
 
 export const students: Student[] = [
-  { id: 's1', studentId: '2026010101', name: '李明', idCard: '110101200801011234', departmentId: 'd1', majorId: 'm1', classId: 'c1', entryYear: 2026, status: '在籍', gpa: 3.6, creditsEarned: 28,
+  { id: 's1', studentId: '2026010101', name: '李明', departmentId: 'd1', majorId: 'm1', classId: 'c1', status: '在籍',
     abilityPortfolio: {
       certificates: [{ name: '全国计算机等级考试二级', issuer: '教育部考试中心', date: '2026-03', status: '有效' }],
       competitions: [{ name: '蓝桥杯程序设计大赛', level: '省级', award: '二等奖', date: '2026-04' }],
@@ -184,7 +174,7 @@ export const students: Student[] = [
     },
     abilityRecognition: { totalSkills: 8, certifiedSkills: 3, competencyLevel: '中级', lastAssessment: '2026-06-15', status: '已认定' },
   },
-  { id: 's2', studentId: '2026010102', name: '王芳', idCard: '110101200802021234', departmentId: 'd1', majorId: 'm1', classId: 'c1', entryYear: 2026, status: '在籍', gpa: 3.8, creditsEarned: 30,
+  { id: 's2', studentId: '2026010102', name: '王芳', departmentId: 'd1', majorId: 'm1', classId: 'c1', status: '在籍',
     abilityPortfolio: {
       certificates: [{ name: '大学英语六级', issuer: '教育部考试中心', date: '2026-06', status: '有效' }],
       competitions: [],
@@ -194,11 +184,11 @@ export const students: Student[] = [
     },
     abilityRecognition: { totalSkills: 6, certifiedSkills: 2, competencyLevel: '初级', lastAssessment: '2026-06-15', status: '待审核' },
   },
-  { id: 's3', studentId: '2026010103', name: '张伟', idCard: '110101200803031234', departmentId: 'd1', majorId: 'm1', classId: 'c1', entryYear: 2026, status: '在籍', gpa: 3.2, creditsEarned: 26 },
-  { id: 's4', studentId: '2026010201', name: '刘洋', idCard: '110101200801041234', departmentId: 'd1', majorId: 'm2', classId: 'c3', entryYear: 2026, status: '在籍', gpa: 3.5, creditsEarned: 29 },
-  { id: 's5', studentId: '2025010301', name: '陈静', idCard: '110101200703051234', departmentId: 'd1', majorId: 'm3', classId: 'c4', entryYear: 2025, status: '在籍', gpa: 3.7, creditsEarned: 78 },
-  { id: 's6', studentId: '2025010401', name: '杨强', idCard: '110101200706061234', departmentId: 'd2', majorId: 'm4', classId: 'c5', entryYear: 2025, status: '在籍', gpa: 3.1, creditsEarned: 72 },
-  { id: 's7', studentId: '2026010501', name: '黄丽', idCard: '110101200805071234', departmentId: 'd3', majorId: 'm5', classId: 'c6', entryYear: 2026, status: '在籍', gpa: 3.9, creditsEarned: 32,
+  { id: 's3', studentId: '2026010103', name: '张伟', departmentId: 'd1', majorId: 'm1', classId: 'c1', status: '在籍' },
+  { id: 's4', studentId: '2026010201', name: '刘洋', departmentId: 'd1', majorId: 'm2', classId: 'c3', status: '在籍' },
+  { id: 's5', studentId: '2025010301', name: '陈静', departmentId: 'd1', majorId: 'm3', classId: 'c4', status: '在籍' },
+  { id: 's6', studentId: '2025010401', name: '杨强', departmentId: 'd2', majorId: 'm4', classId: 'c5', status: '在籍' },
+  { id: 's7', studentId: '2026010501', name: '黄丽', departmentId: 'd3', majorId: 'm5', classId: 'c6', status: '在籍',
     abilityPortfolio: {
       certificates: [{ name: '初级会计职称', issuer: '财政部', date: '2026-05', status: '有效' }],
       competitions: [{ name: '全国大学生会计技能大赛', level: '国家级', award: '三等奖', date: '2026-06' }],
@@ -208,10 +198,10 @@ export const students: Student[] = [
     },
     abilityRecognition: { totalSkills: 10, certifiedSkills: 4, competencyLevel: '中级', lastAssessment: '2026-06-15', status: '已认定' },
   },
-  { id: 's8', studentId: '2026010502', name: '赵军', idCard: '110101200806081234', departmentId: 'd3', majorId: 'm6', classId: 'c6', entryYear: 2026, status: '在籍', gpa: 3.3, creditsEarned: 27 },
-  { id: 's9', studentId: '2025010701', name: '周敏', idCard: '110101200704091234', departmentId: 'd4', majorId: 'm7', classId: 'c7', entryYear: 2025, status: '在籍', gpa: 3.4, creditsEarned: 75 },
-  { id: 's10', studentId: '2026010801', name: '吴磊', idCard: '110101200807101234', departmentId: 'd5', majorId: 'm8', classId: 'c8', entryYear: 2026, status: '在籍', gpa: 3.0, creditsEarned: 25 },
-  { id: 's11', studentId: '2023010101', name: '郑涛', idCard: '110101200601111234', departmentId: 'd1', majorId: 'm1', classId: 'c1', entryYear: 2023, status: '毕业', gpa: 3.5, creditsEarned: 164,
+  { id: 's8', studentId: '2026010502', name: '赵军', departmentId: 'd3', majorId: 'm6', classId: 'c6', status: '在籍' },
+  { id: 's9', studentId: '2025010701', name: '周敏', departmentId: 'd4', majorId: 'm7', classId: 'c7', status: '在籍' },
+  { id: 's10', studentId: '2026010801', name: '吴磊', departmentId: 'd5', majorId: 'm8', classId: 'c8', status: '在籍' },
+  { id: 's11', studentId: '2023010101', name: '郑涛', departmentId: 'd1', majorId: 'm1', classId: 'c1', status: '毕业',
     abilityPortfolio: {
       certificates: [
         { name: '软件设计师（中级）', issuer: '工信部', date: '2025-05', status: '有效' },
@@ -227,10 +217,10 @@ export const students: Student[] = [
     },
     abilityRecognition: { totalSkills: 15, certifiedSkills: 8, competencyLevel: '高级', lastAssessment: '2026-06-01', status: '已认定' },
   },
-  { id: 's12', studentId: '2024010101', name: '孙雪', idCard: '110101200702121234', departmentId: 'd1', majorId: 'm1', classId: 'c2', entryYear: 2024, status: '在籍', gpa: 3.6, creditsEarned: 98 },
-  { id: 's13', studentId: '2026010104', name: '钱多多', idCard: '110101200808131234', departmentId: 'd1', majorId: 'm1', classId: 'c2', entryYear: 2026, status: '在籍', gpa: 2.9, creditsEarned: 24 },
-  { id: 's14', studentId: '2025010302', name: '林晓', idCard: '110101200705141234', departmentId: 'd1', majorId: 'm3', classId: 'c4', entryYear: 2025, status: '休学', gpa: 3.0, creditsEarned: 45 },
-  { id: 's15', studentId: '2024010201', name: '徐凯', idCard: '110101200603151234', departmentId: 'd1', majorId: 'm2', classId: 'c3', entryYear: 2024, status: '在籍', gpa: 3.7, creditsEarned: 92 },
+  { id: 's12', studentId: '2024010101', name: '孙雪', departmentId: 'd1', majorId: 'm1', classId: 'c2', status: '在籍' },
+  { id: 's13', studentId: '2026010104', name: '钱多多', departmentId: 'd1', majorId: 'm1', classId: 'c2', status: '在籍' },
+  { id: 's14', studentId: '2025010302', name: '林晓', departmentId: 'd1', majorId: 'm3', classId: 'c4', status: '休学' },
+  { id: 's15', studentId: '2024010201', name: '徐凯', departmentId: 'd1', majorId: 'm2', classId: 'c3', status: '在籍' },
 ]
 
 export interface StatusChange {

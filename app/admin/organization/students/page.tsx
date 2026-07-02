@@ -60,7 +60,6 @@ function StudentsPageContent() {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
   const [selectedStudents, setSelectedStudents] = useState<string[]>([])
 
-  // 从 URL 读取 classId
   useEffect(() => {
     const classIdFromUrl = searchParams.get('classId')
     if (classIdFromUrl) {
@@ -68,7 +67,6 @@ function StudentsPageContent() {
     }
   }, [searchParams])
 
-  // 班级 Combobox
   const [createClassOpen, setCreateClassOpen] = useState(false)
   const [editClassOpen, setEditClassOpen] = useState(false)
   const [createClassId, setCreateClassId] = useState('')
@@ -111,7 +109,6 @@ function StudentsPageContent() {
     setEditOpen(true)
   }
 
-  // 组织架构树数据
   const treeData = useMemo(() => {
     return departments.map(dept => {
       const deptMajors = majors.filter(m => m.departmentId === dept.id)
@@ -162,7 +159,6 @@ function StudentsPageContent() {
         </div>
       </div>
 
-      {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardContent className="flex items-center justify-between p-4">
@@ -222,7 +218,6 @@ function StudentsPageContent() {
       </div>
 
       <div className="flex gap-4 items-start">
-        {/* 左侧组织架构树 */}
         <Card className="w-64 shrink-0">
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3">组织架构</h3>
@@ -250,7 +245,6 @@ function StudentsPageContent() {
           </CardContent>
         </Card>
 
-        {/* 右侧内容 */}
         <div className="flex-1 space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -302,13 +296,9 @@ function StudentsPageContent() {
                     </TableHead>
                     <TableHead>学号</TableHead>
                     <TableHead>姓名</TableHead>
-                    <TableHead>身份证号</TableHead>
                     <TableHead>所属院系</TableHead>
                     <TableHead>专业</TableHead>
                     <TableHead>班级</TableHead>
-                    <TableHead>入学年份</TableHead>
-                    <TableHead>GPA</TableHead>
-                    <TableHead>已获学分</TableHead>
                     <TableHead>状态</TableHead>
                     <TableHead className="text-right">操作</TableHead>
                   </TableRow>
@@ -330,13 +320,9 @@ function StudentsPageContent() {
                         </TableCell>
                         <TableCell className="font-medium">{s.studentId}</TableCell>
                         <TableCell>{s.name}</TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">{s.idCard}</TableCell>
                         <TableCell>{info.dept?.name || '—'}</TableCell>
                         <TableCell>{info.major?.name || '—'}</TableCell>
                         <TableCell>{info.cls?.name || '—'}</TableCell>
-                        <TableCell>{s.entryYear}</TableCell>
-                        <TableCell>{s.gpa != null ? s.gpa.toFixed(1) : '—'}</TableCell>
-                        <TableCell>{s.creditsEarned}</TableCell>
                         <TableCell>
                           <Badge variant={statusColor[s.status] as any}>{s.status}</Badge>
                         </TableCell>
@@ -348,7 +334,7 @@ function StudentsPageContent() {
                   })}
                   {filteredStudents.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={12} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         暂无数据
                       </TableCell>
                     </TableRow>
@@ -360,7 +346,6 @@ function StudentsPageContent() {
         </div>
       </div>
 
-      {/* 新生录入弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>新生录入</DialogTitle></DialogHeader>
@@ -370,25 +355,11 @@ function StudentsPageContent() {
               <div className="space-y-2"><Label>姓名 <span className="text-destructive">*</span></Label><Input placeholder="请输入姓名" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>身份证号 <span className="text-destructive">*</span></Label><Input placeholder="18位身份证号码" /></div>
               <div className="space-y-2"><Label>密码 <span className="text-destructive">*</span></Label><Input type="password" placeholder="请输入密码" /></div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>入学年份</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择入学年份" /></SelectTrigger><SelectContent>
-                  {[2020,2021,2022,2023,2024,2025,2026].map(y => (<SelectItem key={y} value={String(y)}>{y}年</SelectItem>))}
-                </SelectContent></Select>
-              </div>
               <div className="space-y-2"><Label>状态</Label>
                   <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>GPA</Label><Input type="number" step="0.1" min="0" max="4" placeholder="0.0" /></div>
-              <div className="space-y-2"><Label>已获学分</Label><Input type="number" min="0" placeholder="0" /></div>
-            </div>
-            {/* 班级选择 - 可搜索 */}
             <div className="space-y-2">
               <Label>所属班级</Label>
               <Popover open={createClassOpen} onOpenChange={setCreateClassOpen}>
@@ -429,7 +400,6 @@ function StudentsPageContent() {
                 </PopoverContent>
               </Popover>
             </div>
-            {/* 院系和专业只读显示 */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>所属院系</Label>
@@ -449,7 +419,6 @@ function StudentsPageContent() {
         </DialogContent>
       </Dialog>
 
-      {/* 编辑学生弹窗 */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>编辑学生 — {selectedStudent?.name}</DialogTitle></DialogHeader>
@@ -460,25 +429,11 @@ function StudentsPageContent() {
                 <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedStudent.name} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>身份证号</Label><Input defaultValue={selectedStudent.idCard} /></div>
                 <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="留空不修改密码" /></div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>入学年份</Label>
-                  <Select defaultValue={String(selectedStudent.entryYear)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
-                    {[2020,2021,2022,2023,2024,2025,2026].map(y => (<SelectItem key={y} value={String(y)}>{y}年</SelectItem>))}
-                  </SelectContent></Select>
-                </div>
                 <div className="space-y-2"><Label>状态</Label>
                     <Select defaultValue={selectedStudent.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>GPA</Label><Input type="number" step="0.1" min="0" max="4" defaultValue={selectedStudent.gpa} /></div>
-                <div className="space-y-2"><Label>已获学分</Label><Input type="number" min="0" defaultValue={selectedStudent.creditsEarned} /></div>
-              </div>
-              {/* 班级选择 - 可搜索 */}
               <div className="space-y-2">
                 <Label>所属班级</Label>
                 <Popover open={editClassOpen} onOpenChange={setEditClassOpen}>
@@ -519,7 +474,6 @@ function StudentsPageContent() {
                   </PopoverContent>
                 </Popover>
               </div>
-              {/* 院系和专业只读显示 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>所属院系</Label>
@@ -551,7 +505,6 @@ export default function StudentsPage() {
   )
 }
 
-// 树形组件
 function DeptNode({ dept, selectedClassId, onSelectClass }: { dept: any, selectedClassId: string | null, onSelectClass: (id: string | null) => void }) {
   const [open, setOpen] = useState(false)
   return (
