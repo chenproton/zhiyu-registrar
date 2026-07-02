@@ -70,6 +70,29 @@ export default function TabCurriculum({
   const [librarySearch, setLibrarySearch] = useState('')
   const [libraryCategory, setLibraryCategory] = useState<string>('全部')
 
+  // 新增课程弹窗
+  const [newCourseOpen, setNewCourseOpen] = useState(false)
+  const [newCourseForm, setNewCourseForm] = useState<{ name: string; code: string; credits: number; hours: number; courseTypeLabel: string }>({
+    name: '', code: '', credits: 0, hours: 0, courseTypeLabel: defaultCourseTypes[0],
+  })
+
+  const addNewCourse = () => {
+    if (!newCourseForm.name.trim()) {
+      toast({ title: '请输入课程名称', variant: 'destructive' })
+      return
+    }
+    updateCurriculum([...curriculum, emptyCourse({
+      name: newCourseForm.name,
+      code: newCourseForm.code,
+      credits: newCourseForm.credits,
+      hours: newCourseForm.hours,
+      courseTypeLabel: newCourseForm.courseTypeLabel,
+    })])
+    setNewCourseOpen(false)
+    setNewCourseForm({ name: '', code: '', credits: 0, hours: 0, courseTypeLabel: defaultCourseTypes[0] })
+    toast({ title: `已添加课程：${newCourseForm.name}` })
+  }
+
   // 岗位导入弹窗
   const [positionSceneOpen, setPositionSceneOpen] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState<string>('')
@@ -222,7 +245,7 @@ export default function TabCurriculum({
     updateCurriculum(curriculum.filter((_, i) => i !== index))
   }
 
-  // 课程课时类型管理
+  // 课程类型管理
   const updateTypeName = (idx: number, newName: string) => {
     const oldName = courseTypes[idx]
     const newTypes = [...courseTypes]
@@ -442,11 +465,11 @@ export default function TabCurriculum({
     <div className="flex items-center gap-2">
       <Button variant="outline" size="sm" onClick={() => { setLibraryOpen(true); setSelectedLibraryIds(new Set()); setLibrarySearch(''); setLibraryCategory('全部') }}>
         <Library className="h-4 w-4 mr-1" />
-        课程课时库管理
+        课程库管理
       </Button>
       <Button variant="outline" size="sm" onClick={() => setTypeConfigOpen(true)}>
         <Settings className="h-4 w-4 mr-1" />
-        课程课时类型管理
+        课程类型管理
       </Button>
     </div>
   )
@@ -721,7 +744,7 @@ export default function TabCurriculum({
       <Dialog open={typeConfigOpen} onOpenChange={setTypeConfigOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>课程课时类型管理</DialogTitle>
+            <DialogTitle>课程类型管理</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             {courseTypes.map((type, idx) => (
@@ -758,9 +781,13 @@ export default function TabCurriculum({
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
                 <Library className="h-5 w-5" />
-                课程课时库管理
+                课程库管理
               </DialogTitle>
               <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setNewCourseOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  新增
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
                   <Upload className="h-4 w-4 mr-1" />
                   导入
@@ -865,6 +892,54 @@ export default function TabCurriculum({
             <Button size="sm" onClick={addFromLibrary} disabled={selectedLibraryIds.size === 0}>
               添加选中课程课时 ({selectedLibraryIds.size})
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 新增课程弹窗 */}
+      <Dialog open={newCourseOpen} onOpenChange={setNewCourseOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增课程</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-sm">课程名称</Label>
+              <Input value={newCourseForm.name} onChange={(e) => setNewCourseForm({ ...newCourseForm, name: e.target.value })} placeholder="请输入课程名称" className="h-9 text-sm" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm">课程代码</Label>
+                <Input value={newCourseForm.code} onChange={(e) => setNewCourseForm({ ...newCourseForm, code: e.target.value })} placeholder="选填" className="h-9 text-sm" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">课程类型</Label>
+                <Select value={newCourseForm.courseTypeLabel} onValueChange={(v) => setNewCourseForm({ ...newCourseForm, courseTypeLabel: v })}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courseTypes.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm">学分</Label>
+                <Input type="number" value={newCourseForm.credits} onChange={(e) => setNewCourseForm({ ...newCourseForm, credits: Number(e.target.value) })} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">学时</Label>
+                <Input type="number" value={newCourseForm.hours} onChange={(e) => setNewCourseForm({ ...newCourseForm, hours: Number(e.target.value) })} className="h-9 text-sm" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" size="sm" onClick={() => setNewCourseOpen(false)}>取消</Button>
+            <Button size="sm" onClick={addNewCourse}>确认添加</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
