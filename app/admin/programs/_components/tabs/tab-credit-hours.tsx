@@ -37,7 +37,7 @@ export default function TabCreditHours({
     const publicBasic = curriculum.filter((c) => c.courseTypeLabel?.startsWith('公共基础'))
     const profBasic = curriculum.filter((c) => c.courseTypeLabel === '专业基础课程')
     const profCore = curriculum.filter((c) => c.courseTypeLabel === '专业核心课程')
-    const profExtended = curriculum.filter((c) => c.courseTypeLabel === '专业拓展课程')
+    const profExtended = curriculum.filter((c) => c.courseTypeLabel === '拓展课程')
     const practice = curriculum.filter((c) => c.courseType === '场景')
 
     const publicBasicCredits = sumCredits(publicBasic)
