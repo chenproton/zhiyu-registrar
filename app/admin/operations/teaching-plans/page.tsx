@@ -163,7 +163,6 @@ function PlanPage() {
   const [selectedDept, setSelectedDept] = useState<string>('d1')
   const [selectedGradeId, setSelectedGradeId] = useState<string>('g2029')
   const [selectedMajorId, setSelectedMajorId] = useState<string>('m1')
-  const [selectedSemester, setSelectedSemester] = useState<string>('1')
 
   // ---- 本地教学计划状态（固定数据）----
   const [localPlan, setLocalPlan] = useState<TeachingPlan | null>(null)
@@ -174,7 +173,6 @@ function PlanPage() {
   const [selectedCourseToAdd, setSelectedCourseToAdd] = useState<CoursePlan | null>(null)
   const [newEntryCredits, setNewEntryCredits] = useState<number>(0)
   const [newEntryHours, setNewEntryHours] = useState<number>(0)
-  const [newEntrySemester, setNewEntrySemester] = useState<number>(1)
 
   // ---- 提交确认弹窗状态 ----
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
@@ -229,18 +227,11 @@ function PlanPage() {
     return trainingPrograms.find((tp) => tp.majorId === selectedMajorId) || null
   }, [selectedMajorId, selectedGradeId])
 
-  const semesterOptions = useMemo(
-    () => Array.from({ length: FIXED_PROGRAM.duration * 2 }, (_, i) => i + 1),
-    []
-  )
-
-  // ---- 按学期筛选 entries ----
+  // ---- 全部 entries（不再按学期筛选）----
   const displayedEntries = useMemo(() => {
     if (!localPlan) return []
-    if (selectedSemester === 'all') return localPlan.entries
-    const sem = parseInt(selectedSemester)
-    return localPlan.entries.filter((e) => e.semester === sem)
-  }, [localPlan, selectedSemester])
+    return localPlan.entries
+  }, [localPlan])
 
   // ---- 统计 ----
   const stats = useMemo(() => {
@@ -250,19 +241,6 @@ function PlanPage() {
     const hours = displayedEntries.reduce((s, e) => s + (e.totalHours || 0), 0)
     return { total, credits, hours }
   }, [displayedEntries])
-
-  // ---- 学期内学时统计 ----
-  const semesterHoursStats = useMemo(() => {
-    if (!localPlan || selectedSemester === 'all')
-      return { sceneHours: 0, courseHours: 0 }
-    let sceneHours = 0
-    let courseHours = 0
-    displayedEntries.forEach((e) => {
-      if (e.type === 'scene') sceneHours += e.totalHours || 0
-      else courseHours += e.totalHours || 0
-    })
-    return { sceneHours, courseHours }
-  }, [displayedEntries, localPlan, selectedSemester])
 
   // ---- 学时统计 ----
   const programHoursStats = useMemo(() => {
@@ -392,7 +370,6 @@ function PlanPage() {
     setSelectedCourseToAdd(first)
     setNewEntryCredits(first.credits)
     setNewEntryHours(first.hours)
-    setNewEntrySemester(first.semester || 1)
     setAddDialogOpen(true)
   }
 
@@ -402,7 +379,6 @@ function PlanPage() {
     setSelectedCourseToAdd(course)
     setNewEntryCredits(course.credits)
     setNewEntryHours(course.hours)
-    setNewEntrySemester(course.semester || 1)
   }
 
   const confirmAdd = () => {
@@ -429,7 +405,7 @@ function PlanPage() {
           nature: '场景' as PlanCourseEntry['nature'],
           credits: creditsPerScene,
           totalHours: hoursPerScene,
-          semester: newEntrySemester,
+          semester: course.semester || 1,
           weekHours,
           startWeek: 1,
           endWeek,
@@ -454,7 +430,7 @@ function PlanPage() {
         nature: course.nature as PlanCourseEntry['nature'],
         credits: newEntryCredits,
         totalHours: newEntryHours,
-        semester: newEntrySemester,
+        semester: course.semester || 1,
         weekHours,
         startWeek: 1,
         endWeek,
@@ -475,7 +451,7 @@ function PlanPage() {
   // ---- 导出教学计划为 CSV ----
   const exportToCSV = () => {
     if (!localPlan) return
-    const headers = ['课程/岗位名称', '课程代码', '类型', '性质', '学分', '总学时', '学期']
+    const headers = ['课程/岗位名称', '课程代码', '类型', '性质', '学分', '总学时']
     const rows = localPlan.entries.map((e) => [
       e.courseName,
       e.courseCode,
@@ -483,7 +459,6 @@ function PlanPage() {
       e.nature === '场景' ? '岗位' : e.nature,
       String(e.credits),
       String(e.totalHours),
-      `第${e.semester}学期`,
     ])
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n')
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
@@ -510,11 +485,11 @@ function PlanPage() {
       <div>
         <h1 className="text-2xl font-bold">教学计划管理</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          基于人培方案灵活配置课程/岗位的学分、学时与学期安排
+          基于人培方案灵活配置课程/岗位的学分与学时
         </p>
       </div>
 
-      {/* 四级联动选择器：院系 + 年级 + 专业 + 学期 */}
+      {/* 三级联动选择器：院系 + 年级 + 专业 */}
       <Card>
         <CardContent className="pt-5 pb-5">
           <div className="flex items-center gap-4 flex-wrap">
@@ -526,7 +501,6 @@ function PlanPage() {
                   setSelectedDept(v)
                   setSelectedGradeId('')
                   setSelectedMajorId('')
-                  setSelectedSemester('all')
                 }}
               >
                 <SelectTrigger className="w-[220px]">
@@ -549,7 +523,6 @@ function PlanPage() {
                 onValueChange={(v) => {
                   setSelectedGradeId(v)
                   setSelectedMajorId('')
-                  setSelectedSemester('all')
                 }}
                 disabled={!selectedDept}
               >
@@ -574,7 +547,6 @@ function PlanPage() {
                 value={selectedMajorId}
                 onValueChange={(v) => {
                   setSelectedMajorId(v)
-                  setSelectedSemester('all')
                 }}
                 disabled={!selectedGradeId || matchedMajors.length === 0}
               >
@@ -689,42 +661,7 @@ function PlanPage() {
           {/* 教学计划表格 */}
           <Card>
             <CardContent className="p-0">
-              {/* 学期切换 Tabs */}
-              <div className="px-4 pt-4 pb-0 flex items-start justify-between gap-4">
-                <Tabs value={selectedSemester} onValueChange={setSelectedSemester}>
-                  <TabsList className="h-8">
-                    {semesterOptions.map((s) => (
-                      <TabsTrigger key={s} value={String(s)} className="text-xs px-3">
-                        第{s}学期
-                      </TabsTrigger>
-                    ))}
-                  </TabsList>
-                </Tabs>
-
-                {selectedSemester !== 'all' && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card shadow-sm border-l-4 border-l-emerald-400">
-                    <div className="flex flex-col leading-none">
-                      <span className="text-[10px] text-muted-foreground">
-                        第{selectedSemester}学期学时
-                      </span>
-                      <span className="text-sm font-bold tabular-nums">
-                        {semesterHoursStats.sceneHours + semesterHoursStats.courseHours}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground border-l pl-2">
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                        岗位 {semesterHoursStats.sceneHours}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-                        课程 {semesterHoursStats.courseHours}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="rounded-lg border mt-4 mx-4 mb-4">
+              <div className="rounded-lg border m-4">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -733,7 +670,6 @@ function PlanPage() {
                       <TableHead>课程类型</TableHead>
                       <TableHead className="w-[100px]">学分</TableHead>
                       <TableHead className="w-[100px]">总学时</TableHead>
-                      <TableHead className="w-[120px]">学期</TableHead>
                       <TableHead className="w-[120px]">授课教师</TableHead>
                       <TableHead className="w-[80px]">操作</TableHead>
                     </TableRow>
@@ -742,10 +678,10 @@ function PlanPage() {
                     {displayedEntries.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={8}
+                          colSpan={7}
                           className="text-center text-muted-foreground py-8"
                         >
-                          该学期暂无教学计划条目
+                          暂无教学计划条目
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -811,27 +747,6 @@ function PlanPage() {
                             />
                           </TableCell>
                           <TableCell>
-                            <Select
-                              value={String(entry.semester)}
-                              onValueChange={(v) =>
-                                updateEntry(entry.id, {
-                                  semester: parseInt(v),
-                                })
-                              }
-                            >
-                              <SelectTrigger className="h-8 w-24">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {semesterOptions.map((s) => (
-                                  <SelectItem key={s} value={String(s)}>
-                                    第{s}学期
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -876,7 +791,7 @@ function PlanPage() {
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <BookOpen className="h-12 w-12 mb-3 opacity-30" />
-          <p>请先选择院系、年级、专业和学期</p>
+          <p>请先选择院系、年级和专业</p>
         </div>
       )}
 
@@ -906,7 +821,7 @@ function PlanPage() {
               </Select>
             </div>
             {selectedCourseToAdd && (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>学分</Label>
                   <Input
@@ -929,24 +844,6 @@ function PlanPage() {
                       setNewEntryHours(parseInt(e.target.value) || 0)
                     }
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>学期</Label>
-                  <Select
-                    value={String(newEntrySemester)}
-                    onValueChange={(v) => setNewEntrySemester(parseInt(v))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {semesterOptions.map((s) => (
-                        <SelectItem key={s} value={String(s)}>
-                          第{s}学期
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             )}
@@ -973,7 +870,7 @@ function PlanPage() {
               您即将提交当前二级学院的教学计划至教务办公室进行整体评估。
             </p>
             <p>
-              提交后，教学计划将进入审核流程，暂时无法继续编辑。请确认所有课程/岗位的学分、学时和学期安排均已核对无误。
+              提交后，教学计划将进入审核流程，暂时无法继续编辑。请确认所有课程/岗位的学分和学时均已核对无误。
             </p>
           </div>
           <DialogFooter>
