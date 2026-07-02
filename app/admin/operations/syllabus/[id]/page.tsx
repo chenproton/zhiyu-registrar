@@ -29,6 +29,7 @@ import {
   FileText,
   Award,
   Library,
+  Monitor,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { syllabuses, sceneSyllabuses, positions, type Syllabus, type SceneSyllabus } from '@/lib/mock-data'
@@ -60,6 +61,7 @@ export default function SyllabusDetailPage() {
       { id: 'chapters', label: '教学内容', icon: ListChecks },
       { id: 'methods', label: '教学方法与考核', icon: FileText },
       { id: 'materials', label: '教学资源', icon: Library },
+      { id: 'conditions', label: '教学条件', icon: Monitor },
     ]
     if (isScene) items.push({ id: 'scene', label: '场景任务链', icon: Beaker })
     return items
@@ -431,22 +433,26 @@ export default function SyllabusDetailPage() {
                 )}
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">教学条件</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {editMode ? (
-                  <RichTextEditor
-                    value={syllabus.teachingConditions || ''}
-                    onChange={(v) => setSyllabus((prev) => prev ? { ...prev, teachingConditions: v } : prev)}
-                  />
-                ) : (
-                  <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: syllabus.teachingConditions || '暂无' }} />
-                )}
-              </CardContent>
-            </Card>
           </div>
+          </section>
+
+          <section id="section-conditions" className="scroll-mt-24">
+            <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+              <Monitor className="h-5 w-5 text-primary" />
+              <h2 className="text-lg font-bold">教学条件</h2>
+            </div>
+            <Card>
+            <CardContent className="pt-6">
+              {editMode ? (
+                <RichTextEditor
+                  value={syllabus.teachingConditions || ''}
+                  onChange={(v) => setSyllabus((prev) => prev ? { ...prev, teachingConditions: v } : prev)}
+                />
+              ) : (
+                <div className="text-sm leading-relaxed" dangerouslySetInnerHTML={{ __html: syllabus.teachingConditions || '暂无' }} />
+              )}
+            </CardContent>
+          </Card>
           </section>
 
           {sceneSyl && (
