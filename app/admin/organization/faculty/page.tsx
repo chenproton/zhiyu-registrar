@@ -30,9 +30,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Upload, Download, Lock, FolderTree, ChevronRight, ChevronDown } from 'lucide-react'
-import { faculty, facultyRoles, departments } from '@/lib/mock-data'
+import { Plus, Upload, Download, Lock, FolderTree, ChevronRight, ChevronDown, Check, ChevronsUpDown } from 'lucide-react'
+import { faculty, facultyRoles, departments, majors } from '@/lib/mock-data'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -46,6 +55,15 @@ export default function FacultyPage() {
   const [editOpen, setEditOpen] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
   const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null)
+  const [deptPopoverOpen, setDeptPopoverOpen] = useState(false)
+  const [editDeptPopoverOpen, setEditDeptPopoverOpen] = useState(false)
+  const [formDepartmentId, setFormDepartmentId] = useState('')
+  const [editDepartmentId, setEditDepartmentId] = useState('')
+
+  const deptTree = useMemo(() => departments.map(d => ({
+    ...d,
+    majors: majors.filter(m => m.departmentId === d.id)
+  })), [])
 
   const filtered = useMemo(() => {
     return facultyList.filter((f) => {
@@ -175,7 +193,7 @@ export default function FacultyPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}>编辑</Button>
+                          <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditDepartmentId(f.departmentId); setEditOpen(true) }}>编辑</Button>
                           <Button variant="ghost" size="sm" onClick={() => {
                             setFacultyList((prev) => prev.map((item) => item.id === f.id ? { ...item, password: '123456' } : item))
                             toast.success(`已重置 ${f.name} 的密码`)
@@ -213,14 +231,36 @@ export default function FacultyPage() {
               <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="请输入密码" /></div>
               <div className="space-y-2">
                 <Label>所属院系</Label>
-                <Select>
-                  <SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger>
-                  <SelectContent>
-                    {departments.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={deptPopoverOpen} onOpenChange={setDeptPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {formDepartmentId ? (departments.find(d=>d.id===formDepartmentId)?.name || '—') : '选择组织节点...'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[350px] p-0">
+                    <Command>
+                      <CommandInput placeholder="搜索组织节点..." />
+                      <CommandList>
+                        <CommandEmpty>未找到</CommandEmpty>
+                        {deptTree.map(dept => (
+                          <CommandGroup key={dept.id} heading={dept.name}>
+                            <CommandItem onSelect={() => { setFormDepartmentId(dept.id); setDeptPopoverOpen(false) }}>
+                              <Check className={cn("mr-2 h-4 w-4", formDepartmentId === dept.id ? "opacity-100" : "opacity-0")} />
+                              {dept.name}（院系）
+                            </CommandItem>
+                            {dept.majors.map(major => (
+                              <CommandItem key={major.id} onSelect={() => { setFormDepartmentId(dept.id); setDeptPopoverOpen(false) }} className="pl-6">
+                                <Check className={cn("mr-2 h-4 w-4", formDepartmentId === dept.id ? "opacity-100" : "opacity-0")} />
+                                <span className="text-muted-foreground">{major.name}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        ))}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <div className="space-y-2">
@@ -271,14 +311,36 @@ export default function FacultyPage() {
                 <div className="space-y-2"><Label>密码</Label><Input type="password" defaultValue={selectedFaculty.password} /></div>
                 <div className="space-y-2">
                   <Label>所属院系</Label>
-                  <Select defaultValue={selectedFaculty.departmentId}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {departments.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={editDeptPopoverOpen} onOpenChange={setEditDeptPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                        {editDepartmentId ? (departments.find(d=>d.id===editDepartmentId)?.name || '—') : '选择组织节点...'}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[350px] p-0">
+                      <Command>
+                        <CommandInput placeholder="搜索组织节点..." />
+                        <CommandList>
+                          <CommandEmpty>未找到</CommandEmpty>
+                          {deptTree.map(dept => (
+                            <CommandGroup key={dept.id} heading={dept.name}>
+                              <CommandItem onSelect={() => { setEditDepartmentId(dept.id); setEditDeptPopoverOpen(false) }}>
+                                <Check className={cn("mr-2 h-4 w-4", editDepartmentId === dept.id ? "opacity-100" : "opacity-0")} />
+                                {dept.name}（院系）
+                              </CommandItem>
+                              {dept.majors.map(major => (
+                                <CommandItem key={major.id} onSelect={() => { setEditDepartmentId(dept.id); setEditDeptPopoverOpen(false) }} className="pl-6">
+                                  <Check className={cn("mr-2 h-4 w-4", editDepartmentId === dept.id ? "opacity-100" : "opacity-0")} />
+                                  <span className="text-muted-foreground">{major.name}</span>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               <div className="space-y-2">
