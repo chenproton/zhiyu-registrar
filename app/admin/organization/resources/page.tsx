@@ -109,6 +109,7 @@ export default function ResourcesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>场地编码</TableHead>
                 <TableHead>场地名称</TableHead>
                 <TableHead>场地类型</TableHead>
                 <TableHead>容纳人数</TableHead>
@@ -121,6 +122,7 @@ export default function ResourcesPage() {
             <TableBody>
               {venues.map((v) => (
                 <TableRow key={v.id} className={v.type === '实训基地' ? 'bg-purple-50/30' : undefined}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{v.code}</TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {v.type === '实训基地' && <Beaker className="h-3.5 w-3.5 text-purple-600" />}
@@ -161,9 +163,10 @@ export default function ResourcesPage() {
       <Dialog open={createVenueOpen} onOpenChange={setCreateVenueOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>新建场地（教室）</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2"><Label>场地名称</Label><Input placeholder="请输入场地名称" /></div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4 py-2">
+              <div className="space-y-2"><Label>场地名称</Label><Input placeholder="请输入场地名称" /></div>
+              <div className="space-y-2"><Label>场地编码</Label><Input placeholder="如 V009" /></div>
+              <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2"><Label>场地类型</Label>
                 <Select>
                   <SelectTrigger><SelectValue placeholder="选择类型" /></SelectTrigger>
@@ -206,6 +209,7 @@ export default function ResourcesPage() {
           {selectedVenue && (
             <div className="space-y-4 py-2">
               <div className="space-y-2"><Label>场地名称</Label><Input defaultValue={selectedVenue.name} /></div>
+              <div className="space-y-2"><Label>场地编码</Label><Input defaultValue={selectedVenue.code} /></div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>场地类型</Label>
                   <Select defaultValue={selectedVenue.type}>

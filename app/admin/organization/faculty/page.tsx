@@ -30,26 +30,18 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Users, GraduationCap, HardHat, Building2, Upload, Download, ShieldCheck, FileText, Search, Trash2, Paperclip } from 'lucide-react'
+import { Plus, Users, GraduationCap, HardHat, Building2, Upload, Download, Trash2, Paperclip, Lock } from 'lucide-react'
 import { faculty, departments, facultyRoles } from '@/lib/mock-data'
 import { toast } from 'sonner'
 
 export default function FacultyPage() {
+  const [facultyList, setFacultyList] = useState([...faculty])
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({ department: 'all', status: 'all' })
   const [facultyTab, setFacultyTab] = useState<'all' | 'teacher' | 'mentor'>('all')
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
-
-  // 聘任企业导师弹窗
-  const [hireMentorOpen, setHireMentorOpen] = useState(false)
-  const [mentorSearch, setMentorSearch] = useState('')
-  const [selectedMentorCandidate, setSelectedMentorCandidate] = useState<typeof faculty[0] | null>(null)
-  const [mentorCompany, setMentorCompany] = useState('')
-  const [mentorPosition, setMentorPosition] = useState('')
-  const [mentorYears, setMentorYears] = useState('')
-  const [mentorField, setMentorField] = useState('')
 
   // 补充协议管理弹窗
   const [agreementOpen, setAgreementOpen] = useState(false)
@@ -62,7 +54,7 @@ export default function FacultyPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const filtered = useMemo(() => {
-    return faculty.filter((f) => {
+    return facultyList.filter((f) => {
       if (search) {
         const s = search.toLowerCase()
         if (!f.name.toLowerCase().includes(s) && !f.employeeId.toLowerCase().includes(s)) return false
@@ -73,13 +65,13 @@ export default function FacultyPage() {
       if (facultyTab === 'mentor' && !f.isEnterpriseMentor) return false
       return true
     })
-  }, [search, filters, facultyTab])
+  }, [search, filters, facultyTab, facultyList])
 
   const stats = useMemo(() => {
-    const all = faculty.length
-    const mentors = faculty.filter((f) => f.isEnterpriseMentor).length
-    const active = faculty.filter((f) => f.status === '在职').length
-    const companies = new Set(faculty.filter((f) => f.isEnterpriseMentor).map((f) => f.enterpriseInfo?.company).filter(Boolean)).size
+    const all = facultyList.length
+    const mentors = facultyList.filter((f) => f.isEnterpriseMentor).length
+    const active = facultyList.filter((f) => f.status === '在职').length
+    const companies = new Set(facultyList.filter((f) => f.isEnterpriseMentor).map((f) => f.enterpriseInfo?.company).filter(Boolean)).size
     return { all, mentors, active, companies }
   }, [])
 
@@ -110,20 +102,7 @@ export default function FacultyPage() {
           <Button variant="outline" size="sm" onClick={() => toast.success('导出功能使用现有组件样式即可')}>
             <Download className="h-4 w-4 mr-2" />导出
           </Button>
-          <Button variant="outline" size="sm" onClick={() => toast.success('批量授权功能使用现有组件样式即可')}>
-            <ShieldCheck className="h-4 w-4 mr-2" />批量授权
-          </Button>
-          <Button variant="outline" onClick={() => {
-            setMentorSearch('')
-            setSelectedMentorCandidate(null)
-            setMentorCompany('')
-            setMentorPosition('')
-            setMentorYears('')
-            setMentorField('')
-            setHireMentorOpen(true)
-          }}>
-            <HardHat className="h-4 w-4 mr-2" />聘任企业导师
-          </Button>
+
           <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
         </div>
       </div>
@@ -220,11 +199,7 @@ export default function FacultyPage() {
               <TableRow>
                 <TableHead>工号</TableHead>
                 <TableHead>姓名</TableHead>
-                <TableHead>性别</TableHead>
                 <TableHead>所属院系</TableHead>
-                <TableHead>职称</TableHead>
-                <TableHead>学历</TableHead>
-                <TableHead>企业导师</TableHead>
                 <TableHead>关联角色</TableHead>
                 <TableHead>状态</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -235,17 +210,7 @@ export default function FacultyPage() {
                 <TableRow key={f.id}>
                   <TableCell className="font-medium">{f.employeeId}</TableCell>
                   <TableCell>{f.name}</TableCell>
-                  <TableCell>{f.gender}</TableCell>
                   <TableCell>{departments.find((d) => d.id === f.departmentId)?.name}</TableCell>
-                  <TableCell>{f.title}</TableCell>
-                  <TableCell>{f.education}</TableCell>
-                  <TableCell>
-                    {f.isEnterpriseMentor ? (
-                      <Badge variant="default" className="text-xs">是</Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
                       {f.roles?.map((r) => (
@@ -258,19 +223,20 @@ export default function FacultyPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {f.isEnterpriseMentor && (
-                        <Button variant="ghost" size="sm" onClick={() => { setAgreementFaculty(f); setAgreementOpen(true) }}>
-                          <FileText className="h-3.5 w-3.5 mr-1" />补充协议管理
-                        </Button>
-                      )}
                       <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditOpen(true) }}>编辑</Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        setFacultyList((prev) => prev.map((item) => item.id === f.id ? { ...item, password: '123456' } : item))
+                        toast.success(`已重置 ${f.name} 的密码`)
+                      }}>
+                        <Lock className="h-3.5 w-3.5 mr-1" />重置密码
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     暂无数据
                   </TableCell>
                 </TableRow>
@@ -290,16 +256,10 @@ export default function FacultyPage() {
               <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>性别</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
-              </div>
+              <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="请输入密码" /></div>
               <div className="space-y-2"><Label>所属院系</Label>
                 <Select><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>职称</Label><Input placeholder="如 副教授" /></div>
-              <div className="space-y-2"><Label>学历</Label><Input placeholder="如 博士" /></div>
             </div>
             <div className="space-y-2">
               <Label>关联角色（可多选）</Label>
@@ -335,16 +295,10 @@ export default function FacultyPage() {
                 <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedFaculty.name} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>性别</Label>
-                  <Select defaultValue={selectedFaculty.gender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
-                </div>
+                <div className="space-y-2"><Label>密码</Label><Input type="password" defaultValue={selectedFaculty.password} /></div>
                 <div className="space-y-2"><Label>所属院系</Label>
                   <Select defaultValue={selectedFaculty.departmentId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>职称</Label><Input defaultValue={selectedFaculty.title} /></div>
-                <div className="space-y-2"><Label>学历</Label><Input defaultValue={selectedFaculty.education} /></div>
               </div>
               <div className="space-y-2">
                 <Label>关联角色（可多选）</Label>
@@ -366,131 +320,6 @@ export default function FacultyPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
             <Button onClick={() => { toast.success('保存成功'); setEditOpen(false) }}>保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 聘任企业导师弹窗 */}
-      <Dialog open={hireMentorOpen} onOpenChange={setHireMentorOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>聘任企业导师</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* 搜索 */}
-            <div className="space-y-2">
-              <Label>搜索教师</Label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder="输入姓名或工号搜索..."
-                  value={mentorSearch}
-                  onChange={(e) => setMentorSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* 候选教师列表 */}
-            <div className="space-y-2">
-              <Label>选择教师（仅显示非企业导师）</Label>
-              <div className="border rounded-md overflow-hidden">
-                <div className="max-h-[240px] overflow-y-auto">
-                  {faculty
-                    .filter((f) => !f.isEnterpriseMentor)
-                    .filter((f) => {
-                      if (!mentorSearch.trim()) return true
-                      const q = mentorSearch.toLowerCase()
-                      return f.name.toLowerCase().includes(q) || f.employeeId.toLowerCase().includes(q)
-                    })
-                    .map((f) => {
-                      const dept = departments.find((d) => d.id === f.departmentId)
-                      const isSelected = selectedMentorCandidate?.id === f.id
-                      return (
-                        <div
-                          key={f.id}
-                          className={`flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors border-b last:border-b-0 ${
-                            isSelected ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted'
-                          }`}
-                          onClick={() => setSelectedMentorCandidate(f)}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium">{f.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {f.employeeId} · {dept?.name || '-'} · {f.title}
-                              </div>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="text-[10px] shrink-0">{f.education}</Badge>
-                        </div>
-                      )
-                    })}
-                  {faculty.filter((f) => !f.isEnterpriseMentor).length === 0 && (
-                    <div className="text-center text-muted-foreground text-sm py-6">暂无可聘任教师</div>
-                  )}
-                  {faculty.filter((f) => !f.isEnterpriseMentor).length > 0 &&
-                    faculty
-                      .filter((f) => !f.isEnterpriseMentor)
-                      .filter((f) => {
-                        if (!mentorSearch.trim()) return true
-                        const q = mentorSearch.toLowerCase()
-                        return f.name.toLowerCase().includes(q) || f.employeeId.toLowerCase().includes(q)
-                      }).length === 0 && (
-                      <div className="text-center text-muted-foreground text-sm py-6">未找到匹配的教师</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 选中后显示企业信息表单 */}
-            {selectedMentorCandidate && (
-              <div className="space-y-3 border rounded-md p-3 bg-muted/30">
-                <div className="text-sm font-medium flex items-center gap-2">
-                  <HardHat className="h-4 w-4 text-primary" />
-                  为 <span className="text-primary">{selectedMentorCandidate.name}</span> 填写企业信息
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">企业名称</Label>
-                    <Input value={mentorCompany} onChange={(e) => setMentorCompany(e.target.value)} placeholder="如 华为技术有限公司" className="h-8 text-sm" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">担任职位</Label>
-                    <Input value={mentorPosition} onChange={(e) => setMentorPosition(e.target.value)} placeholder="如 高级工程师" className="h-8 text-sm" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">从业年限</Label>
-                    <Input value={mentorYears} onChange={(e) => setMentorYears(e.target.value)} placeholder="如 8" className="h-8 text-sm" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">技术领域</Label>
-                    <Input value={mentorField} onChange={(e) => setMentorField(e.target.value)} placeholder="如 网络工程" className="h-8 text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setHireMentorOpen(false)}>取消</Button>
-            <Button
-              disabled={!selectedMentorCandidate}
-              onClick={() => {
-                if (!selectedMentorCandidate) return
-                toast.success(`已成功聘任 ${selectedMentorCandidate.name} 为企业导师`)
-                setHireMentorOpen(false)
-                setSelectedMentorCandidate(null)
-                setMentorCompany('')
-                setMentorPosition('')
-                setMentorYears('')
-                setMentorField('')
-              }}
-            >
-              确认聘任
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

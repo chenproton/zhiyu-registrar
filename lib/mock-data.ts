@@ -5543,6 +5543,9 @@ export interface PlanCourseEntry {
   venueTypeRequired: '教室' | '机房' | '实训室' | '实验室' | '校外基地'
   syllabusId: string
   status: 'planned' | 'confirmed' | 'scheduled'
+  teacherType?: '校本师资' | '企业导师'
+  teacherId?: string
+  teacherName?: string
 }
 
 export interface TeachingPlan {

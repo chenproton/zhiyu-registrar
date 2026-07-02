@@ -32,6 +32,18 @@ import {
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Plus,
   Trash2,
@@ -43,6 +55,11 @@ import {
   Clock,
   Download,
   Send,
+  UserPlus,
+  ChevronsUpDown,
+  Check,
+  ChevronRight,
+  ChevronDown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -50,6 +67,8 @@ import {
   departments,
   grades,
   majors,
+  classes,
+  faculty,
   type TrainingProgram,
   type CoursePlan,
   type PlanCourseEntry,
@@ -173,6 +192,13 @@ function PlanPage() {
   // ---- 提交确认弹窗状态 ----
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
 
+  // ---- 授课教师弹窗状态 ----
+  const [teacherDialogOpen, setTeacherDialogOpen] = useState(false)
+  const [selectedEntryForTeacher, setSelectedEntryForTeacher] = useState<string | null>(null)
+  const [teacherFormType, setTeacherFormType] = useState<'校本师资' | '企业导师'>('校本师资')
+  const [teacherFilterDeptId, setTeacherFilterDeptId] = useState<string | null>(null)
+  const [teacherSearchOpen, setTeacherSearchOpen] = useState(false)
+
   // ---- 从 URL 参数自动恢复院系/年级 ----
   useEffect(() => {
     const deptFromUrl = searchParams.get('dept')
@@ -278,6 +304,68 @@ function PlanPage() {
     })
     return { sceneHours, courseHours }
   }, [localPlan])
+
+  // ---- 组织架构树数据（授课教师弹窗用）----
+  const teacherTreeData = useMemo(() => {
+    return departments.map(dept => {
+      const deptMajors = majors.filter(m => m.departmentId === dept.id)
+      return {
+        ...dept,
+        majors: deptMajors.map(major => {
+          const majorClasses = classes.filter(c => c.majorId === major.id)
+          const gradeIds = [...new Set(majorClasses.map(c => c.gradeId))]
+          return {
+            ...major,
+            grades: gradeIds.map(gid => {
+              const grade = grades.find(g => g.id === gid)!
+              return {
+                ...grade,
+                classes: majorClasses.filter(c => c.gradeId === gid)
+              }
+            })
+          }
+        })
+      }
+    })
+  }, [])
+
+  // ---- 筛选教师/导师列表 ----
+  const filteredFacultyForDialog = useMemo(() => {
+    const typeFiltered = teacherFormType === '校本师资'
+      ? faculty.filter(f => !f.isEnterpriseMentor)
+      : faculty.filter(f => f.isEnterpriseMentor)
+    if (teacherFilterDeptId) {
+      return typeFiltered.filter(f => f.departmentId === teacherFilterDeptId)
+    }
+    return typeFiltered
+  }, [teacherFormType, teacherFilterDeptId])
+
+  // ---- 教师操作 ----
+  const openTeacherDialog = (entryId: string) => {
+    const entry = localPlan?.entries.find(e => e.id === entryId)
+    setSelectedEntryForTeacher(entryId)
+    setTeacherFormType(entry?.teacherType || '校本师资')
+    setTeacherFilterDeptId(null)
+    setTeacherDialogOpen(true)
+  }
+
+  const handleSelectTeacher = (facultyId: string) => {
+    if (!localPlan || !selectedEntryForTeacher) return
+    const selectedFaculty = faculty.find(f => f.id === facultyId)
+    if (!selectedFaculty) return
+    updateEntry(selectedEntryForTeacher, {
+      teacherId: facultyId,
+      teacherName: selectedFaculty.name,
+      teacherType: teacherFormType,
+    })
+    setTeacherSearchOpen(false)
+    toast.success(`已指定授课教师：${selectedFaculty.name}`)
+  }
+
+  const handleTeacherTypeChange = (value: '校本师资' | '企业导师') => {
+    setTeacherFormType(value)
+    setTeacherFilterDeptId(null)
+  }
 
   // ---- 操作函数 ----
   const commitPlanUpdate = (nextPlan: TeachingPlan) => {
@@ -665,6 +753,7 @@ function PlanPage() {
                       <TableHead className="w-[100px]">学分</TableHead>
                       <TableHead className="w-[100px]">总学时</TableHead>
                       <TableHead className="w-[120px]">学期</TableHead>
+                      <TableHead className="w-[120px]">授课教师</TableHead>
                       <TableHead className="w-[80px]">操作</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -672,7 +761,7 @@ function PlanPage() {
                     {displayedEntries.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={7}
+                          colSpan={8}
                           className="text-center text-muted-foreground py-8"
                         >
                           该学期暂无教学计划条目
@@ -760,6 +849,29 @@ function PlanPage() {
                                 ))}
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 text-muted-foreground hover:text-foreground justify-start px-2 font-normal"
+                              onClick={() => openTeacherDialog(entry.id)}
+                            >
+                              {entry.teacherName ? (
+                                <span className="flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                  {entry.teacherName}
+                                  <Badge variant="outline" className="text-[10px] h-4 px-1 ml-1">
+                                    {entry.teacherType === '企业导师' ? '企业' : '校本'}
+                                  </Badge>
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1">
+                                  <UserPlus className="h-3 w-3" />
+                                  设置教师
+                                </span>
+                              )}
+                            </Button>
                           </TableCell>
                           <TableCell>
                             <Button
@@ -894,6 +1006,208 @@ function PlanPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 授课教师设置弹窗 */}
+      <Dialog open={teacherDialogOpen} onOpenChange={setTeacherDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>设置授课教师</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 space-y-4">
+            <div className="space-y-2">
+              <Label>教师类型</Label>
+              <RadioGroup
+                value={teacherFormType}
+                onValueChange={(v) => handleTeacherTypeChange(v as '校本师资' | '企业导师')}
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="校本师资" id="school-faculty" />
+                  <Label htmlFor="school-faculty" className="cursor-pointer">校本师资</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="企业导师" id="enterprise-mentor" />
+                  <Label htmlFor="enterprise-mentor" className="cursor-pointer">企业导师</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            <div className="flex gap-4 items-start">
+              {/* 左侧组织架构树 */}
+              <Card className="w-56 shrink-0">
+                <CardContent className="p-3">
+                  <h4 className="text-xs font-semibold mb-2">组织架构</h4>
+                  <ScrollArea className="h-[300px]">
+                    <div className="space-y-1">
+                      <button
+                        onClick={() => setTeacherFilterDeptId(null)}
+                        className={cn(
+                          'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+                          teacherFilterDeptId === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                        )}
+                      >
+                        全部部门
+                      </button>
+                      {teacherTreeData.map(dept => (
+                        <TeacherDeptNode
+                          key={dept.id}
+                          dept={dept}
+                          selectedDeptId={teacherFilterDeptId}
+                          onSelectDept={setTeacherFilterDeptId}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+
+              {/* 右侧搜索教师 */}
+              <div className="flex-1 space-y-3">
+                <Popover open={teacherSearchOpen} onOpenChange={setTeacherSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={teacherSearchOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedEntryForTeacher && localPlan?.entries.find(e => e.id === selectedEntryForTeacher)?.teacherName || '搜索并选择教师...'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder={teacherFormType === '校本师资' ? '搜索教师名称...' : '搜索企业导师名称...'} />
+                      <CommandList>
+                        <CommandEmpty>未找到{teacherFormType === '校本师资' ? '教师' : '企业导师'}</CommandEmpty>
+                        <CommandGroup>
+                          {filteredFacultyForDialog.map((f) => (
+                            <CommandItem
+                              key={f.id}
+                              value={`${f.name} ${f.employeeId} ${f.teachingQualifications?.join(' ') || ''}`}
+                              onSelect={() => handleSelectTeacher(f.id)}
+                            >
+                              <Check
+                                className={cn(
+                                  'mr-2 h-4 w-4',
+                                  selectedEntryForTeacher && localPlan?.entries.find(e => e.id === selectedEntryForTeacher)?.teacherId === f.id
+                                    ? 'opacity-100'
+                                    : 'opacity-0'
+                                )}
+                              />
+                              <div className="flex flex-col">
+                                <span className="flex items-center gap-2">
+                                  {f.name}
+                                  <span className="text-xs text-muted-foreground">{f.employeeId}</span>
+                                  {f.isEnterpriseMentor && (
+                                    <Badge variant="outline" className="text-[10px] h-4 px-1">企业导师</Badge>
+                                  )}
+                                </span>
+                                {f.isEnterpriseMentor && f.enterpriseInfo && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {f.enterpriseInfo.company} · {f.enterpriseInfo.position}
+                                  </span>
+                                )}
+                                {!f.isEnterpriseMentor && f.teachingQualifications && f.teachingQualifications.length > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {f.teachingQualifications.join('、')}
+                                  </span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+
+                {selectedEntryForTeacher && localPlan?.entries.find(e => e.id === selectedEntryForTeacher)?.teacherName && (
+                  <div className="text-xs text-muted-foreground">
+                    已选择：{localPlan?.entries.find(e => e.id === selectedEntryForTeacher)?.teacherName}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTeacherDialogOpen(false)}>
+              关闭
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+// ============================================
+// 组织架构树组件（授课教师弹窗用）
+// ============================================
+function TeacherDeptNode({ dept, selectedDeptId, onSelectDept }: { dept: any, selectedDeptId: string | null, onSelectDept: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors">
+          {open ? <ChevronDown className="h-3.5 w-3.5 mr-1 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 mr-1 shrink-0" />}
+          <span className="truncate text-xs">{dept.name}</span>
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ml-4 space-y-1">
+          {dept.majors.map((major: any) => (
+            <TeacherMajorNode key={major.id} major={major} deptId={dept.id} selectedDeptId={selectedDeptId} onSelectDept={onSelectDept} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+function TeacherMajorNode({ major, deptId, selectedDeptId, onSelectDept }: { major: any, deptId: string, selectedDeptId: string | null, onSelectDept: (id: string | null) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button
+          className={cn(
+            'flex items-center w-full px-2 py-1.5 text-xs rounded-md transition-colors',
+            selectedDeptId === deptId ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+          )}
+          onClick={() => onSelectDept(deptId)}
+        >
+          {open ? <ChevronDown className="h-3 w-3 mr-1 shrink-0" /> : <ChevronRight className="h-3 w-3 mr-1 shrink-0" />}
+          <span className="truncate">{major.name}</span>
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="ml-4 space-y-0.5">
+          {major.grades.map((grade: any) => (
+            <TeacherGradeNode key={grade.id} grade={grade} deptId={deptId} selectedDeptId={selectedDeptId} onSelectDept={onSelectDept} />
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
+function TeacherGradeNode({ grade, deptId, selectedDeptId, onSelectDept }: { grade: any, deptId: string, selectedDeptId: string | null, onSelectDept: (id: string | null) => void }) {
+  return (
+    <div className="space-y-0.5">
+      <span className="text-[11px] text-muted-foreground px-2">{grade.name}</span>
+      {grade.classes.map((cls: any) => (
+        <button
+          key={cls.id}
+          onClick={() => onSelectDept(deptId)}
+          className={cn(
+            'w-full text-left px-2 py-1 text-[11px] rounded-md transition-colors truncate ml-3',
+            selectedDeptId === deptId ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+          )}
+        >
+          {cls.name}
+        </button>
+      ))}
     </div>
   )
 }
