@@ -44,7 +44,6 @@ export const registrarNavigationConfig: PlatformNavigationConfig = {
         { id: "classes", label: "班级管理", href: "/admin/organization/classes", matchers: ["/admin/organization/classes"] },
         { id: "faculty", label: "师资管理", href: "/admin/organization/faculty", matchers: ["/admin/organization/faculty"] },
         { id: "students", label: "学生管理", href: "/admin/organization/students", matchers: ["/admin/organization/students"] },
-        { id: "resources", label: "场地资源管理", href: "/admin/organization/resources", matchers: ["/admin/organization/resources"] },
       ],
     },
     {

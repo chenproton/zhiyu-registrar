@@ -1122,7 +1122,13 @@ function SidebarNav({
 }
 
 // ==================== Main Component ====================
-export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade: string }) {
+export default function TaskOrchestrationTab({
+  selectedGrade,
+  importedTasks,
+}: {
+  selectedGrade: string
+  importedTasks?: Task[]
+}) {
   // 固定按场地查看，不再切换视图
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('venue')
   const [selectedClassId, setSelectedClassId] = useState('')
@@ -1132,8 +1138,13 @@ export default function TaskOrchestrationTab({ selectedGrade }: { selectedGrade:
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [currentWeek, setCurrentWeek] = useState(1)
-  const [localTasks, setLocalTasks] = useState<Task[]>(tasks)
+  const baseTasks = importedTasks?.length ? importedTasks : tasks
+  const [localTasks, setLocalTasks] = useState<Task[]>(baseTasks)
   const totalWeeks = 16
+
+  useEffect(() => {
+    setLocalTasks(importedTasks?.length ? importedTasks : tasks)
+  }, [importedTasks])
 
   const gradeData = grades.find((g) => g.id === selectedGrade)
   const gradeClassIds = useMemo(
