@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# deploydemo.sh - 演示环境一键部署脚本
-# 将本项目构建后部署到 demo2.zhiyu.com.cn，并把跳转链接中的 IP 替换为演示服务器 IP
+# deploydemo.sh - 演示环境一键部署脚本（standalone 复用版）
+# 复用本地 deploy.sh 构建好的 .next/standalone 产物，复制到 /dev/shm 后替换 IP，
+# 再上传到远程演示服务器。全程不重新构建、不停止本地 PM2、不破坏本地 .next。
 #
 set -euo pipefail
 
@@ -20,9 +21,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_BASE="/var/www"
 REMOTE_DIR="$REMOTE_BASE/$SITE_NAME"
 STANDALONE_DIR="$SCRIPT_DIR/.next/standalone"
-STATIC_DIR="$SCRIPT_DIR/.next/static"
-PUBLIC_DIR="$SCRIPT_DIR/public"
-SERVER_DIR="$SCRIPT_DIR/.next/server"
+DEMO_PKG_DIR="/dev/shm/${SITE_NAME}-demo-pkg"
+DATA_DIR="$SCRIPT_DIR/data"
 SSH_PORT="${SSH_PORT:-22}"
 
 # 安全提示
@@ -42,115 +42,75 @@ fi
 # 通过环境变量传密码，避免出现在进程列表
 export SSHPASS="$DEMO_PASS"
 SSH_CMD="sshpass -e ssh"
-SCP_CMD="sshpass -e scp"
 SSH_OPTS="-o StrictHostKeyChecking=no -o ConnectTimeout=15 -o ServerAliveInterval=60 -o ServerAliveCountMax=3 -p $SSH_PORT"
 
 cd "$SCRIPT_DIR"
-
-# ==================== IP 替换与还原 ====================
-backup_files=()
-
-replace_ip() {
-  local old="$1" new="$2"
-  local files
-  local old_pattern
-  old_pattern=$(sed 's/\./\\./g' <<< "$old")
-
-  mapfile -t files < <(grep -rlF \
-    --exclude-dir=.git \
-    --exclude-dir=node_modules \
-    --exclude-dir=.next \
-    --exclude-dir=dist \
-    --exclude='*.demo-bak' \
-    --exclude='deploydemo.sh' \
-    --exclude='deploy.sh' \
-    --exclude='deploycom.sh' \
-    --exclude='deploy.ps1' \
-    --exclude='*.tar.gz' \
-    "$old" . 2>/dev/null || true)
-
-  for f in "${files[@]}"; do
-    if [ -f "$f" ]; then
-      cp "$f" "$f.demo-bak"
-      backup_files+=("$f")
-      sed -i "s/$old_pattern/$new/g" "$f"
-      echo "  已替换: $f"
-    fi
-  done
-}
-
-restore_ip() {
-  if [ ${#backup_files[@]} -eq 0 ]; then
-    return 0
-  fi
-  echo ""
-  echo ">>> 还原源码中的 IP 配置..."
-  for f in "${backup_files[@]}"; do
-    mv "$f.demo-bak" "$f"
-    echo "  已还原: $f"
-  done
-}
-
-# 确保脚本退出时还原源码
-trap 'restore_ip' EXIT
-
-# 清理上次残留的备份文件
-find . -maxdepth 3 -name '*.demo-bak' -type f -delete 2>/dev/null || true
 
 # ==================== 主流程 ====================
 echo ""
 echo "🚀 启动演示环境部署: [$SITE_NAME] -> http://$DEMO_HOST:$PORT"
 echo ""
 
-echo "[1/5] 替换源码中的旧 IP ($OLD_IP -> $DEMO_HOST)..."
-replace_ip "$OLD_IP" "$DEMO_HOST"
-
-echo ""
-echo "[2/5] 清理旧构建..."
-rm -rf "$STANDALONE_DIR" "$STATIC_DIR" "$SERVER_DIR"
-
-echo ""
-echo "[3/5] 安装依赖并构建（使用 webpack 以绕过 Turbopack standalone 问题）..."
-if [ ! -d "node_modules" ] || [ "${FORCE_INSTALL:-0}" = "1" ]; then
-  pnpm install --prefer-offline --no-frozen-lockfile
-else
-  echo "node_modules 已存在，跳过依赖安装（设置 FORCE_INSTALL=1 可强制重新安装）"
-fi
-pnpm exec next build --webpack
-
-echo ""
-echo "[4/5] 组装 standalone 产物..."
-if [ -d "$SERVER_DIR" ]; then
-  mkdir -p "$STANDALONE_DIR/.next/server"
-  rsync -a --delete --exclude="*.map" "$SERVER_DIR/" "$STANDALONE_DIR/.next/server/"
-fi
-if [ -d "$STATIC_DIR" ]; then
-  mkdir -p "$STANDALONE_DIR/.next/static"
-  rsync -a --delete --exclude="*.map" "$STATIC_DIR/" "$STANDALONE_DIR/.next/static/"
-fi
-if [ -d "$PUBLIC_DIR" ]; then
-  mkdir -p "$STANDALONE_DIR/public"
-  rsync -a --delete --exclude="*.map" "$PUBLIC_DIR/" "$STANDALONE_DIR/public/"
+# ── 0. 确保本地 standalone 产物已存在 ─────────────────────────────────
+if [ ! -f "$STANDALONE_DIR/server.js" ]; then
+  echo "❌ 本地 standalone 产物不存在：$STANDALONE_DIR/server.js"
+  echo "   请先运行 ./deploy.sh 完成本地构建，再执行本脚本。"
+  exit 1
 fi
 
-echo ""
-echo "[5/5] 上传并部署到演示服务器 $DEMO_HOST..."
+# ── 1. 复制 standalone 产物到 /dev/shm ────────────────────────────────
+echo "[1/4] 复制本地 standalone 产物到 $DEMO_PKG_DIR ..."
+rm -rf "$DEMO_PKG_DIR"
+mkdir -p "$DEMO_PKG_DIR"
+rsync -a --delete --exclude='*.map' "$STANDALONE_DIR/" "$DEMO_PKG_DIR/"
 
-# 远程清扫
+# 同时复制 data 目录中的配置（如平台链接等），确保运行时读取到的是 demo 配置
+if [ -d "$DATA_DIR" ]; then
+  echo "      同步 data 目录..."
+  mkdir -p "$DEMO_PKG_DIR/data"
+  rsync -a --delete "$DATA_DIR/" "$DEMO_PKG_DIR/data/"
+fi
+
+# ── 2. 替换源码 IP 为演示域名 ─────────────────────────────────────────
+echo ""
+echo "[2/4] 替换产物中的旧 IP ($OLD_IP -> $DEMO_HOST) ..."
+OLD_PATTERN=$(sed 's/\./\\./g' <<< "$OLD_IP")
+REPLACED_COUNT=0
+
+mapfile -t files < <(grep -rlF "$OLD_IP" "$DEMO_PKG_DIR" 2>/dev/null || true)
+for f in "${files[@]}"; do
+  if [ -f "$f" ]; then
+    sed -i "s/$OLD_PATTERN/$DEMO_HOST/g" "$f"
+    REPLACED_COUNT=$((REPLACED_COUNT + 1))
+  fi
+done
+echo "      已替换 $REPLACED_COUNT 个文件"
+
+RESIDUAL=$(grep -rlF "$OLD_IP" "$DEMO_PKG_DIR" 2>/dev/null | wc -l || true)
+if [ "${RESIDUAL:-0}" -ne 0 ]; then
+  echo "⚠️  警告：仍有 $RESIDUAL 个文件包含旧 IP"
+fi
+
+# ── 3. 上传并部署到演示服务器 ─────────────────────────────────────────
+echo ""
+echo "[3/4] 上传并部署到演示服务器 $DEMO_HOST ..."
+
 $SSH_CMD $SSH_OPTS "$DEMO_USER@$DEMO_HOST" \
   "rm -rf $REMOTE_DIR && mkdir -p $REMOTE_DIR && chown $DEMO_USER:$DEMO_USER $REMOTE_DIR"
 
-# 同步产物
 rsync -az --delete \
   -e "$SSH_CMD $SSH_OPTS" \
   --timeout=300 \
   --exclude='*.map' \
   --exclude='*.log' \
   --exclude='logs/' \
-  "$STANDALONE_DIR/" \
+  "$DEMO_PKG_DIR/" \
   "$DEMO_USER@$DEMO_HOST:$REMOTE_DIR/"
 
-# 远程启动
+# ── 4. 远程启动服务 ───────────────────────────────────────────────────
+echo ""
+echo "[4/4] 远程启动 PM2 服务 ..."
+
 $SSH_CMD $SSH_OPTS "$DEMO_USER@$DEMO_HOST" \
   "export SITE_NAME='$SITE_NAME'; export PORT='$PORT'; export REMOTE_DIR='$REMOTE_DIR'; bash -s" << 'REMOTE_EOF'
   set -e
@@ -163,18 +123,15 @@ $SSH_CMD $SSH_OPTS "$DEMO_USER@$DEMO_HOST" \
     exit 1
   fi
 
-  # 自动安装 pm2（未安装时）
   if ! command -v pm2 &>/dev/null; then
     echo ">>> 远程安装 pm2..."
     "$NODE_BIN" "$(command -v npm || echo '/usr/local/bin/npm')" install -g pm2
   fi
 
-  # 彻底删除旧进程防止残留
   pm2 delete "$SITE_NAME" &>/dev/null || true
 
   cd "$REMOTE_DIR"
 
-  # 启动新进程
   PORT="$PORT" HOSTNAME="0.0.0.0" pm2 start server.js \
     --name "$SITE_NAME" \
     --interpreter "$NODE_BIN" \
@@ -183,9 +140,11 @@ $SSH_CMD $SSH_OPTS "$DEMO_USER@$DEMO_HOST" \
   pm2 save > /dev/null
 REMOTE_EOF
 
-# 尝试远程刷新后等待服务就绪
 $SSH_CMD $SSH_OPTS "$DEMO_USER@$DEMO_HOST" \
   "pm2 restart '$SITE_NAME' --update-env" >/dev/null 2>&1 || true
+
+# ── 5. 清理临时产物 ───────────────────────────────────────────────────
+rm -rf "$DEMO_PKG_DIR"
 
 echo ""
 echo "✨ [$SITE_NAME] 演示环境部署完成！"
