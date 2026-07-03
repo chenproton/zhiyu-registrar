@@ -602,26 +602,27 @@ interface ParsedRow {
 function ImportScheduleTab({
   alignment,
   onImported,
+  onRequestAlignment,
 }: {
   alignment: AlignmentState
   onImported?: (tasks: Task[]) => void
+  onRequestAlignment?: () => void
 }) {
-  const [importOpen, setImportOpen] = useState(false)
   const [imported, setImported] = useState(false)
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [headers, setHeaders] = useState<string[]>([])
-  const [rows, setRows] = useState<unknown[][]>([])
+  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
+
+  const excel = alignment.excel
+  const headers = excel?.headers || []
+  const rows = excel?.rows || []
 
   const [courseCol, setCourseCol] = useState('')
   const [classCol, setClassCol] = useState('')
   const [teacherCol, setTeacherCol] = useState('')
   const [dayCol, setDayCol] = useState('')
-  const [periodCol, setPeriodCol] = useState('')
+  const [periodCol, setPeriodCol] = useState(excel?.periodColumn || '')
   const [weeksCol, setWeeksCol] = useState('')
-  const [venueCol, setVenueCol] = useState('')
+  const [venueCol, setVenueCol] = useState(excel?.venueColumn || '')
   const [natureCol, setNatureCol] = useState('')
-
-  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
 
   const detectColumn = (candidates: string[]) => {
     for (const h of headers) {
@@ -631,41 +632,21 @@ function ImportScheduleTab({
     return ''
   }
 
-  const handleUpload = async (file: File) => {
-    try {
-      const data = await file.arrayBuffer()
-      const workbook = XLSX.read(data, { type: 'array' })
-      const sheet = workbook.Sheets[workbook.SheetNames[0]]
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][]
-      if (json.length < 2) {
-        toast.warning('Excel 内容为空或缺少表头')
-        return
-      }
-      const [headerRow, ...dataRows] = json
-      const newHeaders = (headerRow || [])
-        .map((h) => String(h || ''))
-        .filter(Boolean)
-      setFileName(file.name)
-      setHeaders(newHeaders)
-      setRows(dataRows)
+  useEffect(() => {
+    if (!excel) {
       setParsedRows([])
-
-      // 自动识别列
-      setCourseCol(detectColumn(['课程名', '课程名称', 'course']))
-      setClassCol(detectColumn(['班级', '教学班', 'class']))
-      setTeacherCol(detectColumn(['教师', '主讲教师', 'teacher', '老师']))
-      setDayCol(detectColumn(['星期', '周几', '星期几', 'day']))
-      setPeriodCol(detectColumn(['节次', '时段', 'period']))
-      setWeeksCol(detectColumn(['周次', '周数', 'weeks']))
-      setVenueCol(detectColumn(['场地', '教室', 'venue', 'room']))
-      setNatureCol(detectColumn(['课程性质', '类型', 'nature', '性质']))
-
-      toast.success(`已解析 ${file.name}，共 ${dataRows.length} 行`)
-    } catch (err) {
-      toast.error('Excel 解析失败')
-      console.error(err)
+      return
     }
-  }
+    setCourseCol(detectColumn(['课程名', '课程名称', 'course']))
+    setClassCol(detectColumn(['班级', '教学班', 'class']))
+    setTeacherCol(detectColumn(['教师', '主讲教师', 'teacher', '老师']))
+    setDayCol(detectColumn(['星期', '周几', '星期几', 'day']))
+    setWeeksCol(detectColumn(['周次', '周数', 'weeks']))
+    setNatureCol(detectColumn(['课程性质', '类型', 'nature', '性质']))
+    setPeriodCol(excel.periodColumn || '')
+    setVenueCol(excel.venueColumn || '')
+    setParsedRows([])
+  }, [excel])
 
   const dayToNumber = (val: string): number => {
     const map: Record<string, number> = {
@@ -776,9 +757,33 @@ function ImportScheduleTab({
       } as Task
     })
     setImported(true)
-    setImportOpen(false)
     onImported?.(generated)
     toast.success(`成功导入 ${generated.length} 条排课记录`)
+  }
+
+  if (!excel) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <FileSpreadsheet className="h-5 w-5 text-green-600" />
+              导入排课结果
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="rounded-lg border bg-amber-50 p-4 text-sm text-amber-700 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">尚未上传排课 Excel</p>
+                <p className="mt-1">请先在“场地节次对齐”步骤上传外部排课 Excel 并完成场地/节次映射。</p>
+              </div>
+            </div>
+            <Button onClick={onRequestAlignment}>返回“场地节次对齐”</Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -792,18 +797,9 @@ function ImportScheduleTab({
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-muted-foreground">
-            下载标准模板并填写排课数据后，导入系统即可进入自定义排课调整。导入前请确保已完成“场地节次对齐”。
+            数据来自对齐步骤上传的 <strong>{excel.fileName}</strong>（{rows.length} 行）。
+            请确认其余列映射，系统将使用已保存的场地/节次对齐规则自动转换。
           </p>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" className="gap-2" onClick={() => toast.success('模板下载中...')}>
-              <Download className="h-4 w-4" />
-              下载模板
-            </Button>
-            <Button className="gap-2" onClick={() => setImportOpen(true)}>
-              <Upload className="h-4 w-4" />
-              导入排课Excel
-            </Button>
-          </div>
           {imported && (
             <div className="rounded-lg border bg-green-50 p-4 text-sm text-green-700 flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
@@ -816,178 +812,138 @@ function ImportScheduleTab({
         </CardContent>
       </Card>
 
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-green-600" />
-              导入排课Excel
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-auto pr-2 space-y-5">
-            <div className="flex items-center gap-3">
-              <input
-                id="schedule-excel-upload"
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  handleUpload(file)
-                  e.target.value = ''
-                }}
-              />
-              <label htmlFor="schedule-excel-upload">
-                <Button asChild>
-                  <span className="cursor-pointer">
-                    <Upload className="h-4 w-4 mr-2" />
-                    上传 Excel
-                  </span>
-                </Button>
-              </label>
-              {fileName && (
-                <span className="text-sm text-muted-foreground">
-                  已选择：{fileName}（{rows.length} 行）
-                </span>
-              )}
+      <Card>
+        <CardContent className="p-4">
+          <p className="text-sm font-medium mb-3">列映射</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: '课程名', value: courseCol, onChange: setCourseCol },
+              { label: '班级', value: classCol, onChange: setClassCol },
+              { label: '教师', value: teacherCol, onChange: setTeacherCol },
+              { label: '星期', value: dayCol, onChange: setDayCol },
+              { label: '节次（已对齐）', value: periodCol, onChange: setPeriodCol, disabled: true },
+              { label: '周次', value: weeksCol, onChange: setWeeksCol },
+              { label: '场地（已对齐）', value: venueCol, onChange: setVenueCol, disabled: true },
+              { label: '课程性质', value: natureCol, onChange: setNatureCol },
+            ].map((col) => (
+              <div key={col.label} className="space-y-1.5">
+                <Label className="text-xs">{col.label}</Label>
+                <Select
+                  value={col.value}
+                  onValueChange={col.onChange}
+                  disabled={col.disabled}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="选择列" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">不导入</SelectItem>
+                    {headers.map((h) => (
+                      <SelectItem key={h} value={h}>
+                        {h}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex items-center gap-2">
+            <Button size="sm" onClick={parseRows}>
+              解析预览
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              将根据“场地节次对齐”中的映射规则转换场地和节次
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {parsedRows.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>导入预览</span>
+              <div className="flex items-center gap-2 text-sm font-normal">
+                <Badge variant="outline" className="text-green-600 border-green-300">
+                  可导入 {validRows.length}
+                </Badge>
+                <Badge variant="outline" className="text-red-600 border-red-300">
+                  异常 {parsedRows.length - validRows.length}
+                </Badge>
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">行号</TableHead>
+                    <TableHead>课程</TableHead>
+                    <TableHead>班级</TableHead>
+                    <TableHead>教师</TableHead>
+                    <TableHead>星期</TableHead>
+                    <TableHead>节次</TableHead>
+                    <TableHead>周次</TableHead>
+                    <TableHead>场地</TableHead>
+                    <TableHead>类型</TableHead>
+                    <TableHead>状态</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {parsedRows.map((r) => {
+                    const ok = !r.venueUnmapped && !r.periodUnmapped && !r.invalidReason
+                    return (
+                      <TableRow key={r.rowIndex}>
+                        <TableCell className="text-xs text-muted-foreground">{r.rowIndex}</TableCell>
+                        <TableCell>{r.courseName}</TableCell>
+                        <TableCell>{r.className}</TableCell>
+                        <TableCell>{r.teacherName}</TableCell>
+                        <TableCell>{r.dayOfWeek > 0 ? ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'][r.dayOfWeek] : '-'}</TableCell>
+                        <TableCell>{r.periods.join('、') || '-'}</TableCell>
+                        <TableCell>{r.weeks}</TableCell>
+                        <TableCell>{r.venueName}</TableCell>
+                        <TableCell>{r.type === 'scene' ? '场景' : '传统'}</TableCell>
+                        <TableCell>
+                          {ok ? (
+                            <Badge variant="outline" className="text-green-600 border-green-300">正常</Badge>
+                          ) : (
+                            <div className="space-y-1">
+                              {r.venueUnmapped && <Badge variant="outline" className="text-red-600 border-red-300">场地未映射</Badge>}
+                              {r.periodUnmapped && <Badge variant="outline" className="text-red-600 border-red-300">节次未映射</Badge>}
+                              {r.invalidReason && <span className="text-xs text-red-600 block">{r.invalidReason}</span>}
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </div>
 
-            {headers.length > 0 && (
-              <>
-                <Card>
-                  <CardContent className="p-4">
-                    <p className="text-sm font-medium mb-3">列映射</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {[ 
-                        { label: '课程名', value: courseCol, onChange: setCourseCol },
-                        { label: '班级', value: classCol, onChange: setClassCol },
-                        { label: '教师', value: teacherCol, onChange: setTeacherCol },
-                        { label: '星期', value: dayCol, onChange: setDayCol },
-                        { label: '节次', value: periodCol, onChange: setPeriodCol },
-                        { label: '周次', value: weeksCol, onChange: setWeeksCol },
-                        { label: '场地', value: venueCol, onChange: setVenueCol },
-                        { label: '课程性质', value: natureCol, onChange: setNatureCol },
-                      ].map((col) => (
-                        <div key={col.label} className="space-y-1.5">
-                          <Label className="text-xs">{col.label}</Label>
-                          <Select value={col.value} onValueChange={col.onChange}>
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="选择列" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">不导入</SelectItem>
-                              {headers.map((h) => (
-                                <SelectItem key={h} value={h}>
-                                  {h}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 flex items-center gap-2">
-                      <Button size="sm" onClick={parseRows}>
-                        解析预览
-                      </Button>
-                      <span className="text-xs text-muted-foreground">
-                        将根据“场地节次对齐”中的映射规则转换场地和节次
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {parsedRows.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center justify-between">
-                        <span>导入预览</span>
-                        <div className="flex items-center gap-2 text-sm font-normal">
-                          <Badge variant="outline" className="text-green-600 border-green-300">
-                            可导入 {validRows.length}
-                          </Badge>
-                          <Badge variant="outline" className="text-red-600 border-red-300">
-                            异常 {parsedRows.length - validRows.length}
-                          </Badge>
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="border rounded-lg overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="w-16">行号</TableHead>
-                              <TableHead>课程</TableHead>
-                              <TableHead>班级</TableHead>
-                              <TableHead>教师</TableHead>
-                              <TableHead>星期</TableHead>
-                              <TableHead>节次</TableHead>
-                              <TableHead>周次</TableHead>
-                              <TableHead>场地</TableHead>
-                              <TableHead>类型</TableHead>
-                              <TableHead>状态</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {parsedRows.map((r) => {
-                              const ok = !r.venueUnmapped && !r.periodUnmapped && !r.invalidReason
-                              return (
-                                <TableRow key={r.rowIndex}>
-                                  <TableCell className="text-xs text-muted-foreground">{r.rowIndex}</TableCell>
-                                  <TableCell>{r.courseName}</TableCell>
-                                  <TableCell>{r.className}</TableCell>
-                                  <TableCell>{r.teacherName}</TableCell>
-                                  <TableCell>{r.dayOfWeek > 0 ? ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'][r.dayOfWeek] : '-'}</TableCell>
-                                  <TableCell>{r.periods.join('、') || '-'}</TableCell>
-                                  <TableCell>{r.weeks}</TableCell>
-                                  <TableCell>{r.venueName}</TableCell>
-                                  <TableCell>{r.type === 'scene' ? '场景' : '传统'}</TableCell>
-                                  <TableCell>
-                                    {ok ? (
-                                      <Badge variant="outline" className="text-green-600 border-green-300">正常</Badge>
-                                    ) : (
-                                      <div className="space-y-1">
-                                        {r.venueUnmapped && <Badge variant="outline" className="text-red-600 border-red-300">场地未映射</Badge>}
-                                        {r.periodUnmapped && <Badge variant="outline" className="text-red-600 border-red-300">节次未映射</Badge>}
-                                        {r.invalidReason && <span className="text-xs text-red-600 block">{r.invalidReason}</span>}
-                                      </div>
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            })}
-                          </TableBody>
-                        </Table>
-                      </div>
-
-                      {parsedRows.some((r) => r.venueUnmapped || r.periodUnmapped) && (
-                        <div className="rounded-lg border bg-amber-50 p-3 text-sm text-amber-700 flex items-start gap-2">
-                          <AlertTriangle className="h-5 w-5 shrink-0" />
-                          <div>
-                            <p className="font-medium">存在未映射的场地或节次</p>
-                            <p>请先返回“场地节次对齐”步骤补充映射规则，或在本页重新上传 Excel。</p>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+            {parsedRows.some((r) => r.venueUnmapped || r.periodUnmapped) && (
+              <div className="rounded-lg border bg-amber-50 p-3 text-sm text-amber-700 flex items-start gap-2">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <div>
+                  <p className="font-medium">存在未映射的场地或节次</p>
+                  <p>请先返回“场地节次对齐”步骤补充映射规则。</p>
+                </div>
+              </div>
             )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setImportOpen(false)}>取消</Button>
-            <Button
-              disabled={validRows.length === 0}
-              onClick={handleImport}
-            >
-              确认导入（{validRows.length} 条）
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+            <div className="flex justify-end">
+              <Button
+                disabled={validRows.length === 0}
+                onClick={handleImport}
+              >
+                确认导入（{validRows.length} 条）
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
@@ -1455,7 +1411,7 @@ export default function SchedulingCenterPage() {
           <>
             {currentStep === 0 && <ClassScheduleTab />}
             {currentStep === 1 && <VenuePeriodAlignmentTab onChange={setAlignmentState} />}
-            {currentStep === 2 && <ImportScheduleTab alignment={alignmentState} onImported={setImportedTasks} />}
+            {currentStep === 2 && <ImportScheduleTab alignment={alignmentState} onImported={setImportedTasks} onRequestAlignment={() => setCurrentStep(1)} />}
             {currentStep === 3 && <TaskOrchestrationTab selectedGrade={selectedGrade} importedTasks={importedTasks} />}
             {currentStep === 4 && <ExportTab selectedGrade={selectedGrade} />}
           </>
