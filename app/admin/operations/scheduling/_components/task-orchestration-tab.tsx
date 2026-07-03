@@ -1193,7 +1193,10 @@ export default function TaskOrchestrationTab({
     [gradeData, selectedGrade]
   )
   const filteredTasks = useMemo(() => {
-    const matched = localTasks.filter((t) => gradeClassIds.includes(t.classId))
+    // 导入的数据直接全部展示，不再按当前年级/培养方案过滤
+    const matched = importedTasks?.length
+      ? localTasks
+      : localTasks.filter((t) => gradeClassIds.includes(t.classId))
     // Stable pseudo-random shuffle so courses and scenes are scattered visually
     const hash = (str: string) => {
       let h = 0
@@ -1203,7 +1206,7 @@ export default function TaskOrchestrationTab({
       return h
     }
     return [...matched].sort((a, b) => hash(a.id) - hash(b.id))
-  }, [gradeClassIds, localTasks])
+  }, [gradeClassIds, localTasks, importedTasks])
 
   // Auto-select first item when grade actually changes
   const prevGradeRef = useRef(selectedGrade)
