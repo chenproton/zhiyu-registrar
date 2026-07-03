@@ -86,8 +86,8 @@ for f in "${files[@]}"; do
 done
 echo "      已替换 $REPLACED_COUNT 个文件"
 
-RESIDUAL=$(grep -rlF "$OLD_IP" "$DEMO_PKG_DIR" 2>/dev/null | wc -l)
-if [ "$RESIDUAL" -ne 0 ]; then
+RESIDUAL=$(grep -rlF "$OLD_IP" "$DEMO_PKG_DIR" 2>/dev/null | wc -l || true)
+if [ "${RESIDUAL:-0}" -ne 0 ]; then
   echo "⚠️  警告：仍有 $RESIDUAL 个文件包含旧 IP"
 fi
 

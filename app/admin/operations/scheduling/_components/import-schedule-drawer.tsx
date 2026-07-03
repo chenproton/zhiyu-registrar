@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -150,7 +150,8 @@ export default function ImportScheduleDrawer({
   }
 
   const buildMockRows = (): unknown[][] => {
-    const classPool = classes.slice(0, 5)
+    // 全部使用 2026 级班级，确保导入后能与默认年级匹配并显示在网格中
+    const classPool = classes.filter((c) => c.gradeId === 'g2026').slice(0, 3)
     const teacherPool = faculty.slice(0, 5)
     return Array.from({ length: 10 }).map((_, idx) => {
       const cls = classPool[idx % classPool.length]
@@ -195,12 +196,15 @@ export default function ImportScheduleDrawer({
     setVenueMapping(venueNext)
     setPeriodMapping(periodNext)
 
-    // 基于 mock 数据直接生成预览
-    const preview = generateParsedRows(mockRows, venueNext, periodNext)
-    setParsedRows(preview)
-
     toast.success(`已解析 ${file.name}，共 ${mockRows.length} 行（演示数据）`)
   }
+
+  // 列选择或映射变化后自动重新解析预览
+  useEffect(() => {
+    if (rows.length === 0) return
+    setParsedRows(generateParsedRows())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, headers, courseCol, classCol, teacherCol, dayCol, periodCol, weeksCol, venueCol, natureCol, venueMapping, periodMapping])
 
   const extractUniqueValues = (column: string) => {
     const idx = headers.indexOf(column)

@@ -1154,9 +1154,11 @@ function SidebarNav({
 export default function TaskOrchestrationTab({
   selectedGrade,
   importedTasks,
+  onImported,
 }: {
   selectedGrade: string
   importedTasks?: Task[]
+  onImported?: (tasks: Task[]) => void
 }) {
   // 固定按场地查看，不再切换视图
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('venue')
@@ -1435,6 +1437,7 @@ export default function TaskOrchestrationTab({
         onImported={(imported) => {
           setLocalTasks(imported)
           setImportDrawerOpen(false)
+          onImported?.(imported)
         }}
       />
 

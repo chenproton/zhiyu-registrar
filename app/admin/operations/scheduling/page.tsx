@@ -873,6 +873,9 @@ export default function SchedulingCenterPage() {
   const [selectedMajorId, setSelectedMajorId] = useState<string>('m1')
   const [selectedSemester, setSelectedSemester] = useState<string>('all')
 
+  // 导入的排课结果提升到页面级，便于步骤间共享
+  const [importedTasks, setImportedTasks] = useState<Task[]>([])
+
   // 根据专业自动匹配培养方案（模拟对应关系）
   const matchedProgram = useMemo(() => {
     if (!selectedMajorId) return null
@@ -1026,8 +1029,23 @@ export default function SchedulingCenterPage() {
           </div>
         ) : (
           <>
-            {currentStep === 0 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
-            {currentStep === 1 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
+            {currentStep === 0 && (
+              <TaskOrchestrationTab
+                selectedGrade={selectedGrade}
+                importedTasks={importedTasks}
+                onImported={(tasks) => {
+                  setImportedTasks(tasks)
+                  // 根据导入数据中的班级自动切换到对应年级，确保网格能显示
+                  const firstClass = tasks[0] ? classes.find((c) => c.id === tasks[0].classId) : null
+                  if (firstClass) {
+                    setSelectedGradeId(firstClass.gradeId)
+                  }
+                }}
+              />
+            )}
+            {currentStep === 1 && (
+              <TaskOrchestrationTab selectedGrade={selectedGrade} importedTasks={importedTasks} />
+            )}
             {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
           </>
         )}
