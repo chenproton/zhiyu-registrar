@@ -41,10 +41,13 @@ import {
   CheckCircle2,
   ChevronDown,
   FileSpreadsheet,
+  BookOpen,
+  Users,
+  User,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { classes, faculty, type Task, type Venue } from '@/lib/mock-data'
+import { classes, coursePool, faculty, type Task, type Venue } from '@/lib/mock-data'
 
 interface ParsedRow {
   rowIndex: number
@@ -87,6 +90,9 @@ const MOCK_HEADERS = [
 const MOCK_EXTERNAL_VENUES = ['A101', 'B201', 'C101']
 const MOCK_EXTERNAL_PERIODS = ['1-2节', '3-4节', '5-6节']
 
+const CLASS_POOL = classes.filter((c) => c.gradeId === 'g2026').slice(0, 3)
+const TEACHER_POOL = faculty.slice(0, 5)
+
 const MOCK_COURSES = [
   '计算机网络技术',
   'Web前端开发',
@@ -122,6 +128,9 @@ export default function ImportScheduleDrawer({
 
   const [venueMapping, setVenueMapping] = useState<Record<string, string>>({})
   const [periodMapping, setPeriodMapping] = useState<Record<string, string[]>>({})
+  const [courseMapping, setCourseMapping] = useState<Record<string, string>>({})
+  const [classMapping, setClassMapping] = useState<Record<string, string>>({})
+  const [teacherMapping, setTeacherMapping] = useState<Record<string, string>>({})
 
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
 
@@ -146,16 +155,29 @@ export default function ImportScheduleDrawer({
       periodNext[val] = currentPeriods.slice(start, start + 2)
     })
 
-    return { venueNext, periodNext }
+    const courseNext: Record<string, string> = {}
+    MOCK_COURSES.forEach((val, idx) => {
+      const matched = coursePool[idx % coursePool.length]
+      if (matched) courseNext[val] = matched.id
+    })
+
+    const classNext: Record<string, string> = {}
+    CLASS_POOL.forEach((cls) => {
+      classNext[cls.name] = cls.id
+    })
+
+    const teacherNext: Record<string, string> = {}
+    TEACHER_POOL.forEach((fac) => {
+      teacherNext[fac.name] = fac.id
+    })
+
+    return { venueNext, periodNext, courseNext, classNext, teacherNext }
   }
 
   const buildMockRows = (): unknown[][] => {
-    // 全部使用 2026 级班级，确保导入后能与默认年级匹配并显示在网格中
-    const classPool = classes.filter((c) => c.gradeId === 'g2026').slice(0, 3)
-    const teacherPool = faculty.slice(0, 5)
     return Array.from({ length: 10 }).map((_, idx) => {
-      const cls = classPool[idx % classPool.length]
-      const fac = teacherPool[idx % teacherPool.length]
+      const cls = CLASS_POOL[idx % CLASS_POOL.length]
+      const fac = TEACHER_POOL[idx % TEACHER_POOL.length]
       const day = (idx % 5) + 1
       const period = MOCK_EXTERNAL_PERIODS[idx % MOCK_EXTERNAL_PERIODS.length]
       const venue = MOCK_EXTERNAL_VENUES[idx % MOCK_EXTERNAL_VENUES.length]
@@ -177,7 +199,8 @@ export default function ImportScheduleDrawer({
     // 演示系统：不读取真实 Excel，使用 mock 数据保证演示流程可继续
     const mockHeaders = MOCK_HEADERS
     const mockRows = buildMockRows()
-    const { venueNext, periodNext } = buildAutoMapping(venues, periods)
+    const { venueNext, periodNext, courseNext, classNext, teacherNext } =
+      buildAutoMapping(venues, periods)
 
     setFileName(file.name)
     setHeaders(mockHeaders)
@@ -195,6 +218,9 @@ export default function ImportScheduleDrawer({
 
     setVenueMapping(venueNext)
     setPeriodMapping(periodNext)
+    setCourseMapping(courseNext)
+    setClassMapping(classNext)
+    setTeacherMapping(teacherNext)
 
     toast.success(`已解析 ${file.name}，共 ${mockRows.length} 行（演示数据）`)
   }
@@ -204,7 +230,7 @@ export default function ImportScheduleDrawer({
     if (rows.length === 0) return
     setParsedRows(generateParsedRows())
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rows, headers, courseCol, classCol, teacherCol, dayCol, periodCol, weeksCol, venueCol, natureCol, venueMapping, periodMapping])
+  }, [rows, headers, courseCol, classCol, teacherCol, dayCol, periodCol, weeksCol, venueCol, natureCol, venueMapping, periodMapping, courseMapping, classMapping, teacherMapping])
 
   const extractUniqueValues = (column: string) => {
     const idx = headers.indexOf(column)
@@ -219,6 +245,18 @@ export default function ImportScheduleDrawer({
     return Array.from(values)
   }
 
+  const externalCourseValues = useMemo(
+    () => (courseCol ? extractUniqueValues(courseCol) : []),
+    [courseCol, headers, rows]
+  )
+  const externalClassValues = useMemo(
+    () => (classCol ? extractUniqueValues(classCol) : []),
+    [classCol, headers, rows]
+  )
+  const externalTeacherValues = useMemo(
+    () => (teacherCol ? extractUniqueValues(teacherCol) : []),
+    [teacherCol, headers, rows]
+  )
   const externalVenueValues = useMemo(
     () => (venueCol ? extractUniqueValues(venueCol) : []),
     [venueCol, headers, rows]
@@ -228,6 +266,18 @@ export default function ImportScheduleDrawer({
     [periodCol, headers, rows]
   )
 
+  const unmappedCourses = useMemo(
+    () => externalCourseValues.filter((v) => !courseMapping[v]),
+    [externalCourseValues, courseMapping]
+  )
+  const unmappedClasses = useMemo(
+    () => externalClassValues.filter((v) => !classMapping[v]),
+    [externalClassValues, classMapping]
+  )
+  const unmappedTeachers = useMemo(
+    () => externalTeacherValues.filter((v) => !teacherMapping[v]),
+    [externalTeacherValues, teacherMapping]
+  )
   const unmappedVenues = useMemo(
     () => externalVenueValues.filter((v) => !venueMapping[v]),
     [externalVenueValues, venueMapping]
@@ -239,6 +289,24 @@ export default function ImportScheduleDrawer({
       ),
     [externalPeriodValues, periodMapping]
   )
+
+  const courseMapById = useMemo(() => {
+    const map = new Map<string, (typeof coursePool)[number]>()
+    coursePool.forEach((c) => map.set(c.id, c))
+    return map
+  }, [])
+
+  const classMapById = useMemo(() => {
+    const map = new Map<string, (typeof classes)[number]>()
+    classes.forEach((c) => map.set(c.id, c))
+    return map
+  }, [])
+
+  const teacherMapById = useMemo(() => {
+    const map = new Map<string, (typeof faculty)[number]>()
+    faculty.forEach((f) => map.set(f.id, f))
+    return map
+  }, [])
 
   const venueMapById = useMemo(() => {
     const map = new Map<string, Venue>()
@@ -278,23 +346,33 @@ export default function ImportScheduleDrawer({
 
     const result: ParsedRow[] = []
     sourceRows.forEach((row, idx) => {
-      const courseName = getValue(row, courseCol)
-      const className = getValue(row, classCol)
-      const teacherName = getValue(row, teacherCol)
+      const externalCourse = getValue(row, courseCol)
+      const externalClass = getValue(row, classCol)
+      const externalTeacher = getValue(row, teacherCol)
       const dayRaw = getValue(row, dayCol)
       const periodRaw = getValue(row, periodCol)
       const weeksRaw = getValue(row, weeksCol)
       const venueRaw = getValue(row, venueCol)
       const natureRaw = getValue(row, natureCol)
 
-      if (!courseName && !className && !teacherName) return
+      if (!externalCourse && !externalClass && !externalTeacher) return
+
+      const courseId = courseMapping[externalCourse]
+      const course = courseMapById.get(courseId)
+      const courseName = course?.name || externalCourse || '-'
+
+      const classId = classMapping[externalClass]
+      const cls = classMapById.get(classId)
+      const className = cls?.name || externalClass || '-'
+
+      const facultyId = teacherMapping[externalTeacher]
+      const fac = teacherMapById.get(facultyId)
+      const teacherName = fac?.name || externalTeacher || '-'
 
       const dayOfWeek = dayToNumber(dayRaw)
       const mappedPeriods = currentPeriodMapping[periodRaw] || []
       const venueId = currentVenueMapping[venueRaw]
       const venue = venues.find((v) => v.id === venueId)
-      const cls = classes.find((c) => c.name === className)
-      const fac = faculty.find((f) => f.name === teacherName)
 
       const reasons: string[] = []
       if (!courseName) reasons.push('缺少课程名')
@@ -307,9 +385,9 @@ export default function ImportScheduleDrawer({
 
       result.push({
         rowIndex: idx + 2,
-        courseName: courseName || '-',
-        className: className || '-',
-        teacherName: teacherName || '-',
+        courseName,
+        className,
+        teacherName,
         dayOfWeek,
         periods: mappedPeriods,
         weeks: weeksRaw ? (weeksRaw.endsWith('周') ? weeksRaw : `${weeksRaw}周`) : '-',
@@ -444,6 +522,213 @@ export default function ImportScheduleDrawer({
 
             {headers.length > 0 && (
               <>
+                {/* 课程名称对齐 */}
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-emerald-600" />
+                      课程名称对齐
+                      {unmappedCourses.length > 0 && (
+                        <Badge variant="secondary" className="text-amber-600">
+                          待完成 {unmappedCourses.length}
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 pt-0 space-y-3">
+                    {externalCourseValues.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">未识别到课程数据</p>
+                    ) : (
+                      externalCourseValues.map((val) => {
+                        const mappedId = courseMapping[val]
+                        const mappedCourse = mappedId ? courseMapById.get(mappedId) : undefined
+                        return (
+                          <div
+                            key={val}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div className="space-y-0.5">
+                              <div className="text-sm font-medium">{val}</div>
+                              {mappedCourse ? (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  已映射
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  未映射
+                                </Badge>
+                              )}
+                            </div>
+                            <Select
+                              value={mappedId || ''}
+                              onValueChange={(id) =>
+                                setCourseMapping((prev) => ({ ...prev, [val]: id }))
+                              }
+                            >
+                              <SelectTrigger className="w-[220px] h-9 text-xs">
+                                <SelectValue placeholder="选择课程" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {coursePool.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )
+                      })
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* 班级对齐 */}
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="h-4 w-4 text-cyan-600" />
+                      班级对齐
+                      {unmappedClasses.length > 0 && (
+                        <Badge variant="secondary" className="text-amber-600">
+                          待完成 {unmappedClasses.length}
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 pt-0 space-y-3">
+                    {externalClassValues.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">未识别到班级数据</p>
+                    ) : (
+                      externalClassValues.map((val) => {
+                        const mappedId = classMapping[val]
+                        const mappedClass = mappedId ? classMapById.get(mappedId) : undefined
+                        return (
+                          <div
+                            key={val}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div className="space-y-0.5">
+                              <div className="text-sm font-medium">{val}</div>
+                              {mappedClass ? (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  已映射
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  未映射
+                                </Badge>
+                              )}
+                            </div>
+                            <Select
+                              value={mappedId || ''}
+                              onValueChange={(id) =>
+                                setClassMapping((prev) => ({ ...prev, [val]: id }))
+                              }
+                            >
+                              <SelectTrigger className="w-[220px] h-9 text-xs">
+                                <SelectValue placeholder="选择班级" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {classes.map((c) => (
+                                  <SelectItem key={c.id} value={c.id}>
+                                    {c.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )
+                      })
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* 教师对齐 */}
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <User className="h-4 w-4 text-violet-600" />
+                      教师对齐
+                      {unmappedTeachers.length > 0 && (
+                        <Badge variant="secondary" className="text-amber-600">
+                          待完成 {unmappedTeachers.length}
+                        </Badge>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 pt-0 space-y-3">
+                    {externalTeacherValues.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">未识别到教师数据</p>
+                    ) : (
+                      externalTeacherValues.map((val) => {
+                        const mappedId = teacherMapping[val]
+                        const mappedTeacher = mappedId ? teacherMapById.get(mappedId) : undefined
+                        return (
+                          <div
+                            key={val}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
+                            <div className="space-y-0.5">
+                              <div className="text-sm font-medium">{val}</div>
+                              {mappedTeacher ? (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
+                                >
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  已映射
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
+                                >
+                                  <AlertTriangle className="h-3 w-3" />
+                                  未映射
+                                </Badge>
+                              )}
+                            </div>
+                            <Select
+                              value={mappedId || ''}
+                              onValueChange={(id) =>
+                                setTeacherMapping((prev) => ({ ...prev, [val]: id }))
+                              }
+                            >
+                              <SelectTrigger className="w-[220px] h-9 text-xs">
+                                <SelectValue placeholder="选择教师" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {faculty.map((f) => (
+                                  <SelectItem key={f.id} value={f.id}>
+                                    {f.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )
+                      })
+                    )}
+                  </CardContent>
+                </Card>
+
                 {/* 场地对齐 */}
                 <Card>
                   <CardHeader className="pb-4">
