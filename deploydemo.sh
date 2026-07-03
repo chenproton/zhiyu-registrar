@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# deploydemo.sh - 演示环境一键部署脚本（优化版）
-# 在项目目录构建演示环境产物，构建前备份本地 .next，部署完成后还原，
+# deploydemo.sh - 演示环境一键部署脚本
+# 在 /dev/shm 独立目录构建演示环境产物，完全不触及本地 .next，
 # 确保演示环境链接正确且不影响本地 deploy.sh 部署的服务。
 #
 set -euo pipefail
@@ -20,15 +20,8 @@ PORT=3007
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REMOTE_BASE="/var/www"
 REMOTE_DIR="$REMOTE_BASE/$SITE_NAME"
-STANDALONE_DIR="$SCRIPT_DIR/.next/standalone"
-STATIC_DIR="$SCRIPT_DIR/.next/static"
-PUBLIC_DIR="$SCRIPT_DIR/public"
-SERVER_DIR="$SCRIPT_DIR/.next/server"
-DEMO_PKG_DIR="/tmp/${SITE_NAME}-demo-pkg"
+DEMO_BUILD_DIR="/dev/shm/${SITE_NAME}-demo-build"
 SSH_PORT="${SSH_PORT:-22}"
-
-# 本地构建产物备份目录（放在 /tmp 下，避免污染源码）
-LOCAL_BUILD_BACKUP_DIR="/tmp/${SITE_NAME}-local-build-backup"
 
 # 安全提示
 if [ -z "${DEMO_PASS:-}" ]; then
@@ -98,44 +91,15 @@ restore_ip() {
   done
 }
 
-backup_local_build() {
-  # 先停止本地 PM2 服务，避免 .next 中的文件被占用导致无法备份/还原
-  if command -v pm2 &>/dev/null; then
-    pm2 stop "$SITE_NAME" >/dev/null 2>&1 || true
-  fi
-  # 等待文件句柄释放
-  sleep 1
-
-  if [ -d "$SCRIPT_DIR/.next" ]; then
-    echo ">>> 备份本地构建产物到 $LOCAL_BUILD_BACKUP_DIR ..."
-    rm -rf "$LOCAL_BUILD_BACKUP_DIR"
-    cp -a "$SCRIPT_DIR/.next" "$LOCAL_BUILD_BACKUP_DIR"
+# 脚本退出时还原源码 IP 并清理临时构建目录
+cleanup() {
+  restore_ip
+  if [ -d "$DEMO_BUILD_DIR" ]; then
+    echo ">>> 清理临时构建目录 $DEMO_BUILD_DIR ..."
+    rm -rf "$DEMO_BUILD_DIR"
   fi
 }
-
-restore_local_build() {
-  if [ -n "${LOCAL_BUILD_BACKUP_DIR:-}" ] && [ -d "$LOCAL_BUILD_BACKUP_DIR" ]; then
-    echo ""
-    echo ">>> 还原本地构建产物..."
-    # 先停止本地 PM2 服务，确保 .next 可以被完整替换
-    if command -v pm2 &>/dev/null; then
-      pm2 stop "$SITE_NAME" >/dev/null 2>&1 || true
-    fi
-    sleep 1
-
-    rm -rf "$SCRIPT_DIR/.next"
-    cp -a "$LOCAL_BUILD_BACKUP_DIR" "$SCRIPT_DIR/.next"
-    rm -rf "$LOCAL_BUILD_BACKUP_DIR"
-
-    # 重启本地 PM2 服务
-    if command -v pm2 &>/dev/null; then
-      pm2 restart "$SITE_NAME" --update-env >/dev/null 2>&1 || true
-    fi
-  fi
-}
-
-# 脚本退出时还原源码 IP 和本地构建产物
-trap 'restore_ip; restore_local_build' EXIT
+trap 'cleanup' EXIT
 
 # 清理上次残留的备份文件
 find . -maxdepth 3 -name '*.demo-bak' -type f -delete 2>/dev/null || true
@@ -145,28 +109,44 @@ echo ""
 echo "🚀 启动演示环境部署: [$SITE_NAME] -> http://$DEMO_HOST:$PORT"
 echo ""
 
-echo "[1/5] 替换源码中的旧 IP ($OLD_IP -> $DEMO_HOST)..."
+echo "[1/5] 复制源码到临时构建目录 $DEMO_BUILD_DIR ..."
+rm -rf "$DEMO_BUILD_DIR"
+mkdir -p "$DEMO_BUILD_DIR"
+rsync -a \
+  --exclude='.git' \
+  --exclude='node_modules' \
+  --exclude='.next' \
+  --exclude='dist' \
+  --exclude='*.demo-bak' \
+  --exclude='*.log' \
+  --exclude='logs/' \
+  "$SCRIPT_DIR/" "$DEMO_BUILD_DIR/"
+
+# 链接 node_modules，避免复制大目录
+# 注意：此链接仅在构建阶段使用，构建完成后会删除，防止 rsync 到远程时带上指向本地的符号链接
+ln -s "$SCRIPT_DIR/node_modules" "$DEMO_BUILD_DIR/node_modules"
+
+cd "$DEMO_BUILD_DIR"
+
+echo ""
+echo "[2/5] 替换源码中的旧 IP ($OLD_IP -> $DEMO_HOST)..."
 replace_ip "$OLD_IP" "$DEMO_HOST"
-
-echo ""
-echo "[1.5/5] 备份本地构建产物..."
-backup_local_build
-
-echo ""
-echo "[2/5] 清理旧构建..."
-rm -rf "$STANDALONE_DIR" "$STATIC_DIR" "$SERVER_DIR"
 
 echo ""
 echo "[3/5] 安装依赖并构建（使用 webpack 以绕过 Turbopack standalone 问题）..."
 if [ ! -d "node_modules" ] || [ "${FORCE_INSTALL:-0}" = "1" ]; then
-  pnpm install --prefer-offline --no-frozen-lockfile
-else
-  echo "node_modules 已存在，跳过依赖安装（设置 FORCE_INSTALL=1 可强制重新安装）"
+  echo "node_modules 不存在，需要在原项目目录安装依赖"
+  exit 1
 fi
 pnpm exec next build --webpack
 
 echo ""
 echo "[4/5] 组装 standalone 产物..."
+STANDALONE_DIR="$DEMO_BUILD_DIR/.next/standalone"
+STATIC_DIR="$DEMO_BUILD_DIR/.next/static"
+PUBLIC_DIR="$DEMO_BUILD_DIR/public"
+SERVER_DIR="$DEMO_BUILD_DIR/.next/server"
+
 if [ -d "$SERVER_DIR" ]; then
   mkdir -p "$STANDALONE_DIR/.next/server"
   rsync -a --delete --exclude="*.map" "$SERVER_DIR/" "$STANDALONE_DIR/.next/server/"
@@ -180,14 +160,15 @@ if [ -d "$PUBLIC_DIR" ]; then
   rsync -a --delete --exclude="*.map" "$PUBLIC_DIR/" "$STANDALONE_DIR/public/"
 fi
 
-echo ""
-echo "[4.5/5] 复制产物到打包目录..."
-rm -rf "$DEMO_PKG_DIR"
-rsync -a --delete --exclude="*.map" "$STANDALONE_DIR/" "$DEMO_PKG_DIR/"
-# 同时复制 data 目录中的配置（如平台链接等）
-if [ -d "$SCRIPT_DIR/data" ]; then
+# 复制 data 目录中的配置（如平台链接等）
+if [ -d "$DEMO_BUILD_DIR/data" ]; then
   echo ">>> 复制 data 目录..."
-  rsync -a "$SCRIPT_DIR/data/" "$DEMO_PKG_DIR/data/"
+  rsync -a "$DEMO_BUILD_DIR/data/" "$STANDALONE_DIR/data/"
+fi
+
+# 删除构建时使用的根目录 node_modules 符号链接，避免 rsync 到远程后形成无效链接
+if [ -L "$DEMO_BUILD_DIR/node_modules" ]; then
+  rm -f "$DEMO_BUILD_DIR/node_modules"
 fi
 
 echo ""
@@ -202,7 +183,7 @@ rsync -az --delete \
   --exclude='*.map' \
   --exclude='*.log' \
   --exclude='logs/' \
-  "$DEMO_PKG_DIR/" \
+  "$STANDALONE_DIR/" \
   "$DEMO_USER@$DEMO_HOST:$REMOTE_DIR/"
 
 $SSH_CMD $SSH_OPTS "$DEMO_USER@$DEMO_HOST" \

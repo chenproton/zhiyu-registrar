@@ -38,6 +38,9 @@ import {
 } from '@/components/ui/table'
 
 import { ScrollArea } from '@/components/ui/scroll-area'
+import ImportScheduleDrawer from './import-schedule-drawer'
+import VenueManagementDialog from './venue-management-dialog'
+import PeriodSettingsDialog from './period-settings-dialog'
 import {
   Plus,
   AlertTriangle,
@@ -50,20 +53,24 @@ import {
   ChevronRight,
   Download,
   Settings2,
+  Upload,
+  Clock,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   classes,
   faculty,
-  venues,
+  venues as defaultVenues,
+  venueTypes as defaultVenueTypes,
   grades,
   tasks,
   courseAssignments,
   trainingPrograms,
   curriculumCoursePool,
   curriculumPracticePool,
-  allPeriods,
+  allPeriods as defaultPeriods,
   type Task,
+  type Venue,
 } from '@/lib/mock-data'
 
 const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
@@ -129,10 +136,12 @@ function ScheduleGrid({
   taskList,
   onEditTask,
   onCreateTask,
+  periods,
 }: {
   taskList: Task[]
   onEditTask: (task: Task) => void
   onCreateTask?: () => void
+  periods: string[]
 }) {
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -144,7 +153,7 @@ function ScheduleGrid({
           </div>
         ))}
       </div>
-      {allPeriods.map((p) => (
+      {periods.map((p) => (
         <div key={p} className="grid grid-cols-8 border-t">
           <div className="p-3 text-sm text-muted-foreground border-r bg-muted/30">{p}</div>
           {[1, 2, 3, 4, 5, 6, 7].map((d) => {
@@ -473,7 +482,17 @@ function SearchableSelect({
 }
 
 // ==================== New Task Dialog ====================
-function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function NewTaskDialog({
+  open,
+  onClose,
+  periods,
+  venues,
+}: {
+  open: boolean
+  onClose: () => void
+  periods: string[]
+  venues: Venue[]
+}) {
   const [taskType, setTaskType] = useState<'course' | 'practice'>('course')
   const [linkedItemId, setLinkedItemId] = useState('')
   const [selectedClassId, setSelectedClassId] = useState('')
@@ -620,7 +639,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
             <div className="space-y-2">
               <Label>节次（可多选）</Label>
               <div className="flex flex-wrap gap-2">
-                {allPeriods.map((p) => (
+                {periods.map((p) => (
                   <button
                     key={p}
                     type="button"
@@ -677,12 +696,16 @@ function EditTaskDialog({
   task,
   allTasks,
   onAdjust,
+  periods,
+  venues,
 }: {
   open: boolean
   onClose: () => void
   task: Task | null
   allTasks: Task[]
   onAdjust: (removedTaskId: string, newTask: Task) => void
+  periods: string[]
+  venues: Venue[]
 }) {
   const [adjustOpen, setAdjustOpen] = useState(false)
 
@@ -766,6 +789,8 @@ function EditTaskDialog({
         onClose={() => setAdjustOpen(false)}
         task={task}
         allTasks={allTasks}
+        periods={periods}
+        venues={venues}
         onConfirm={(removedTaskId, newTask) => {
           onAdjust(removedTaskId, newTask)
           setAdjustOpen(false)
@@ -808,24 +833,28 @@ function AdjustTaskDialog({
   task,
   allTasks,
   onConfirm,
+  periods,
+  venues,
 }: {
   open: boolean
   onClose: () => void
   task: Task
   allTasks: Task[]
   onConfirm: (removedTaskId: string, newTask: Task) => void
+  periods: string[]
+  venues: Venue[]
 }) {
   const [venueId, setVenueId] = useState(task.venueId)
   const [week, setWeek] = useState(1)
   const [dayOfWeek, setDayOfWeek] = useState(task.dayOfWeek)
-  const [period, setPeriod] = useState(task.periods[0] || allPeriods[0])
+  const [period, setPeriod] = useState(task.periods[0] || periods[0])
 
   useEffect(() => {
     if (open) {
       setVenueId(task.venueId)
       setWeek(1)
       setDayOfWeek(task.dayOfWeek)
-      setPeriod(task.periods[0] || allPeriods[0])
+      setPeriod(task.periods[0] || periods[0])
     }
   }, [open, task])
 
@@ -955,7 +984,7 @@ function AdjustTaskDialog({
                     </div>
                   ))}
                 </div>
-                {allPeriods.map((p) => (
+                {periods.map((p) => (
                   <div key={p} className="grid grid-cols-8 border-t">
                     <div className="p-2 text-xs text-muted-foreground border-r bg-muted/30 flex items-center">{p}</div>
                     {[1, 2, 3, 4, 5, 6, 7].map((d) => {
@@ -1125,9 +1154,11 @@ function SidebarNav({
 export default function TaskOrchestrationTab({
   selectedGrade,
   importedTasks,
+  importMode,
 }: {
   selectedGrade: string
   importedTasks?: Task[]
+  importMode?: boolean
 }) {
   // 固定按场地查看，不再切换视图
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('venue')
@@ -1141,6 +1172,20 @@ export default function TaskOrchestrationTab({
   const baseTasks = importedTasks?.length ? importedTasks : tasks
   const [localTasks, setLocalTasks] = useState<Task[]>(baseTasks)
   const totalWeeks = 16
+
+  // 节次、场地配置状态
+  const [periods, setPeriods] = useState<string[]>(defaultPeriods)
+  const [venues, setVenues] = useState<Venue[]>(defaultVenues)
+  const [venueTypes, setVenueTypes] = useState<string[]>(defaultVenueTypes)
+
+  // 抽屉 / 弹窗状态
+  const [importDrawerOpen, setImportDrawerOpen] = useState(importMode || false)
+  const [periodDialogOpen, setPeriodDialogOpen] = useState(false)
+  const [venueDialogOpen, setVenueDialogOpen] = useState(false)
+
+  useEffect(() => {
+    setImportDrawerOpen(importMode || false)
+  }, [importMode])
 
   useEffect(() => {
     setLocalTasks(importedTasks?.length ? importedTasks : tasks)
@@ -1286,6 +1331,46 @@ export default function TaskOrchestrationTab({
       <div className="flex gap-4">
         <SidebarNav {...sidebarProps} />
         <div className="flex-1 min-w-0 space-y-4">
+          {/* 顶部工具栏 */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setImportDrawerOpen(true)}
+              >
+                <Upload className="h-4 w-4" />
+                导入外部课表
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setVenueDialogOpen(true)}
+              >
+                <MapPin className="h-4 w-4" />
+                场地管理
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setPeriodDialogOpen(true)}
+              >
+                <Clock className="h-4 w-4" />
+                节次设置
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              {importedTasks && importedTasks.length > 0 && (
+                <Badge variant="outline" className="text-green-600 border-green-300">
+                  已导入 {importedTasks.length} 条
+                </Badge>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between">
             {currentTitle && (
               <div className="font-medium text-sm text-muted-foreground">
@@ -1322,12 +1407,18 @@ export default function TaskOrchestrationTab({
             taskList={currentTasks}
             onEditTask={handleEditTask}
             onCreateTask={() => setNewTaskDialogOpen(true)}
+            periods={periods}
           />
         </div>
       </div>
 
       {/* 新建任务弹窗 */}
-      <NewTaskDialog open={newTaskDialogOpen} onClose={() => setNewTaskDialogOpen(false)} />
+      <NewTaskDialog
+        open={newTaskDialogOpen}
+        onClose={() => setNewTaskDialogOpen(false)}
+        periods={periods}
+        venues={venues}
+      />
 
       {/* 编辑弹窗 */}
       <EditTaskDialog
@@ -1336,6 +1427,40 @@ export default function TaskOrchestrationTab({
         task={selectedTask}
         allTasks={localTasks}
         onAdjust={handleAdjustTask}
+        periods={periods}
+        venues={venues}
+      />
+
+      {/* 导入抽屉 */}
+      <ImportScheduleDrawer
+        open={importDrawerOpen}
+        onOpenChange={setImportDrawerOpen}
+        venues={venues}
+        venueTypes={venueTypes}
+        periods={periods}
+        onImported={(imported) => {
+          setLocalTasks(imported)
+          setImportDrawerOpen(false)
+        }}
+      />
+
+      {/* 场地管理弹窗 */}
+      <VenueManagementDialog
+        open={venueDialogOpen}
+        onOpenChange={setVenueDialogOpen}
+        venues={venues}
+        venueTypes={venueTypes}
+        onChange={(state) => {
+          setVenues(state.venues as Venue[])
+          setVenueTypes(state.venueTypes)
+        }}
+      />
+
+      {/* 节次设置弹窗 */}
+      <PeriodSettingsDialog
+        open={periodDialogOpen}
+        onOpenChange={setPeriodDialogOpen}
+        onChange={(rows) => setPeriods(rows.map((r) => r.name))}
       />
     </div>
   )

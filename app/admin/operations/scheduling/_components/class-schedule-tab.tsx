@@ -32,7 +32,7 @@ interface ScheduleCell {
   endTime: string
 }
 
-interface PeriodRow {
+export interface PeriodRow {
   id: string
   name: string
   sequence: number
@@ -168,7 +168,11 @@ const defaultSettings: PeriodSettings = {
 }
 
 // ==================== Main Component ====================
-export default function ClassScheduleTab() {
+interface ClassScheduleTabProps {
+  onChange?: (rows: PeriodRow[]) => void
+}
+
+export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {}) {
   const [settings, setSettings] = useState<PeriodSettings>(defaultSettings)
   const [rows, setRows] = useState<PeriodRow[]>(() => generateRows(defaultSettings))
   const [editOpen, setEditOpen] = useState(false)
@@ -179,8 +183,10 @@ export default function ClassScheduleTab() {
 
   const handleSettingsChange = useCallback((next: PeriodSettings) => {
     setSettings(next)
-    setRows(generateRows(next))
-  }, [])
+    const nextRows = generateRows(next)
+    setRows(nextRows)
+    onChange?.(nextRows)
+  }, [onChange])
 
   const handleCellClick = (row: PeriodRow, dayOfWeek: number) => {
     const cell = row.cells.find((c) => c.dayOfWeek === dayOfWeek)
@@ -194,8 +200,9 @@ export default function ClassScheduleTab() {
 
   const handleSaveCell = () => {
     if (!editingCell) return
-    setRows((prev) =>
-      prev.map((row) =>
+    let nextRows: PeriodRow[] = []
+    setRows((prev) => {
+      nextRows = prev.map((row) =>
         row.id === editingCell.rowId
           ? {
               ...row,
@@ -207,7 +214,9 @@ export default function ClassScheduleTab() {
             }
           : row
       )
-    )
+      return nextRows
+    })
+    onChange?.(nextRows)
     setEditOpen(false)
     toast.success('时间设置已保存')
   }

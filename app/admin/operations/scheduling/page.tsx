@@ -1,18 +1,15 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import * as XLSX from 'xlsx'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import ClassScheduleTab from './_components/class-schedule-tab'
 import CourseManagementTab from './_components/course-management-tab'
 import TeachingPlanTab from './_components/teaching-plan-tab'
 import TaskOrchestrationTab from './_components/task-orchestration-tab'
-import VenuePeriodAlignmentTab, { type AlignmentState } from './_components/venue-period-alignment-tab'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
@@ -87,15 +84,12 @@ import {
   type ClassPeriod,
   type CourseAssignment,
   courseAssignments,
-  venueTypes as initialVenueTypes,
 } from '@/lib/mock-data'
 
 // ============================================
 // 步骤导航组件
 // ============================================
 const steps = [
-  { id: 'schedule', label: '教学节次配置', icon: Clock },
-  { id: 'align', label: '场地节次对齐', icon: MapPin },
   { id: 'import', label: '导入排课结果', icon: FileSpreadsheet },
   { id: 'custom', label: '自定义排课', icon: Settings2 },
   { id: 'export', label: '课表同步推送', icon: Download },
@@ -579,376 +573,6 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 // ============================================
-// Step 2: 导入排课结果
-// ============================================
-interface ParsedRow {
-  rowIndex: number
-  courseName: string
-  className: string
-  teacherName: string
-  dayOfWeek: number
-  periods: string[]
-  weeks: string
-  venueName: string
-  type: Task['type']
-  classId?: string
-  facultyId?: string
-  venueId?: string
-  venueUnmapped: boolean
-  periodUnmapped: boolean
-  invalidReason?: string
-}
-
-function ImportScheduleTab({
-  alignment,
-  onImported,
-  onRequestAlignment,
-}: {
-  alignment: AlignmentState
-  onImported?: (tasks: Task[]) => void
-  onRequestAlignment?: () => void
-}) {
-  const [imported, setImported] = useState(false)
-  const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
-
-  const excel = alignment.excel
-  const headers = excel?.headers || []
-  const rows = excel?.rows || []
-
-  const [courseCol, setCourseCol] = useState('')
-  const [classCol, setClassCol] = useState('')
-  const [teacherCol, setTeacherCol] = useState('')
-  const [dayCol, setDayCol] = useState('')
-  const [periodCol, setPeriodCol] = useState(excel?.periodColumn || '')
-  const [weeksCol, setWeeksCol] = useState('')
-  const [venueCol, setVenueCol] = useState(excel?.venueColumn || '')
-  const [natureCol, setNatureCol] = useState('')
-
-  const detectColumn = (candidates: string[]) => {
-    for (const h of headers) {
-      const lower = h.toLowerCase()
-      if (candidates.some((c) => lower.includes(c))) return h
-    }
-    return ''
-  }
-
-  useEffect(() => {
-    if (!excel) {
-      setParsedRows([])
-      return
-    }
-    setCourseCol(detectColumn(['课程名', '课程名称', 'course']))
-    setClassCol(detectColumn(['班级', '教学班', 'class']))
-    setTeacherCol(detectColumn(['教师', '主讲教师', 'teacher', '老师']))
-    setDayCol(detectColumn(['星期', '周几', '星期几', 'day']))
-    setWeeksCol(detectColumn(['周次', '周数', 'weeks']))
-    setNatureCol(detectColumn(['课程性质', '类型', 'nature', '性质']))
-    setPeriodCol(excel.periodColumn || '')
-    setVenueCol(excel.venueColumn || '')
-    setParsedRows([])
-  }, [excel])
-
-  const dayToNumber = (val: string): number => {
-    const map: Record<string, number> = {
-      周一: 1, 星期二: 2, 周二: 2, 星期三: 3, 周三: 3,
-      星期四: 4, 周四: 4, 星期五: 5, 周五: 5, 星期六: 6, 周六: 6,
-      星期日: 7, 周日: 7, 星期天: 7,
-    }
-    const num = Number(val)
-    if (!isNaN(num) && num >= 1 && num <= 7) return num
-    return map[val.trim()] || 0
-  }
-
-  const parseNature = (val: string): Task['type'] => {
-    const v = String(val || '').trim()
-    if (v.includes('场景')) return 'scene'
-    if (v.includes('实践') || v.includes('实验') || v.includes('实训')) return 'scene'
-    return 'traditional'
-  }
-
-  const parseRows = () => {
-    const getValue = (row: unknown[], col: string) => {
-      const idx = headers.indexOf(col)
-      if (idx < 0) return ''
-      const val = row[idx]
-      return val === undefined || val === null ? '' : String(val).trim()
-    }
-
-    const result: ParsedRow[] = []
-    rows.forEach((row, idx) => {
-      const courseName = getValue(row, courseCol)
-      const className = getValue(row, classCol)
-      const teacherName = getValue(row, teacherCol)
-      const dayRaw = getValue(row, dayCol)
-      const periodRaw = getValue(row, periodCol)
-      const weeksRaw = getValue(row, weeksCol)
-      const venueRaw = getValue(row, venueCol)
-      const natureRaw = getValue(row, natureCol)
-
-      if (!courseName && !className && !teacherName) return
-
-      const dayOfWeek = dayToNumber(dayRaw)
-      const periods = alignment.periodMapping[periodRaw] || []
-      const venueId = alignment.venueMapping[venueRaw]
-      const venue = alignment.venues.find((v) => v.id === venueId)
-      const cls = classes.find((c) => c.name === className)
-      const fac = faculty.find((f) => f.name === teacherName)
-
-      const reasons: string[] = []
-      if (!courseName) reasons.push('缺少课程名')
-      if (!className) reasons.push('缺少班级')
-      if (!teacherName) reasons.push('缺少教师')
-      if (dayOfWeek === 0) reasons.push('星期无法识别')
-      if (!weeksRaw) reasons.push('缺少周次')
-      if (!cls) reasons.push(`班级未匹配: ${className}`)
-      if (!fac) reasons.push(`教师未匹配: ${teacherName}`)
-
-      result.push({
-        rowIndex: idx + 2,
-        courseName: courseName || '-',
-        className: className || '-',
-        teacherName: teacherName || '-',
-        dayOfWeek,
-        periods,
-        weeks: weeksRaw ? (weeksRaw.endsWith('周') ? weeksRaw : `${weeksRaw}周`) : '-',
-        venueName: venue?.name || venueRaw || '-',
-        type: parseNature(natureRaw),
-        classId: cls?.id,
-        facultyId: fac?.id,
-        venueId,
-        venueUnmapped: !!venueRaw && !venueId,
-        periodUnmapped: !!periodRaw && periods.length === 0,
-        invalidReason: reasons.length > 0 ? reasons.join('；') : undefined,
-      })
-    })
-    setParsedRows(result)
-  }
-
-  const validRows = parsedRows.filter(
-    (r) => !r.venueUnmapped && !r.periodUnmapped && !r.invalidReason
-  )
-
-  const handleImport = () => {
-    const generated: Task[] = validRows.map((r, i) => {
-      const cls = classes.find((c) => c.id === r.classId)!
-      const fac = faculty.find((f) => f.id === r.facultyId)!
-      const venue = alignment.venues.find((v) => v.id === r.venueId)!
-      return {
-        id: `imported-${Date.now()}-${i}`,
-        code: `T-${cls.code}-${Date.now()}-${i}`,
-        name: `${cls.name}-${r.courseName}`,
-        type: r.type,
-        source: 'imported',
-        status: 'draft',
-        termId: 't1',
-        courseName: r.courseName,
-        classId: cls.id,
-        className: cls.name,
-        facultyId: fac.id,
-        facultyName: fac.name,
-        dayOfWeek: r.dayOfWeek,
-        periods: r.periods,
-        weeks: r.weeks,
-        venueId: venue.id,
-        venueName: venue.name,
-        resources: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as Task
-    })
-    setImported(true)
-    onImported?.(generated)
-    toast.success(`成功导入 ${generated.length} 条排课记录`)
-  }
-
-  if (!excel) {
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-green-600" />
-              导入排课结果
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="rounded-lg border bg-amber-50 p-4 text-sm text-amber-700 flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">尚未上传排课 Excel</p>
-                <p className="mt-1">请先在“场地节次对齐”步骤上传外部排课 Excel 并完成场地/节次映射。</p>
-              </div>
-            </div>
-            <Button onClick={onRequestAlignment}>返回“场地节次对齐”</Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-green-600" />
-            导入排课结果
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <p className="text-sm text-muted-foreground">
-            数据来自对齐步骤上传的 <strong>{excel.fileName}</strong>（{rows.length} 行）。
-            请确认其余列映射，系统将使用已保存的场地/节次对齐规则自动转换。
-          </p>
-          {imported && (
-            <div className="rounded-lg border bg-green-50 p-4 text-sm text-green-700 flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">导入成功</p>
-                <p className="text-green-600 mt-1">请点击下方步骤导航的“下一步”，进入“自定义排课”继续调整。</p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm font-medium mb-3">列映射</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: '课程名', value: courseCol, onChange: setCourseCol },
-              { label: '班级', value: classCol, onChange: setClassCol },
-              { label: '教师', value: teacherCol, onChange: setTeacherCol },
-              { label: '星期', value: dayCol, onChange: setDayCol },
-              { label: '节次（已对齐）', value: periodCol, onChange: setPeriodCol, disabled: true },
-              { label: '周次', value: weeksCol, onChange: setWeeksCol },
-              { label: '场地（已对齐）', value: venueCol, onChange: setVenueCol, disabled: true },
-              { label: '课程性质', value: natureCol, onChange: setNatureCol },
-            ].map((col) => (
-              <div key={col.label} className="space-y-1.5">
-                <Label className="text-xs">{col.label}</Label>
-                <Select
-                  value={col.value}
-                  onValueChange={col.onChange}
-                  disabled={col.disabled}
-                >
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="选择列" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">不导入</SelectItem>
-                    {headers.map((h) => (
-                      <SelectItem key={h} value={h}>
-                        {h}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex items-center gap-2">
-            <Button size="sm" onClick={parseRows}>
-              解析预览
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              将根据“场地节次对齐”中的映射规则转换场地和节次
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {parsedRows.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center justify-between">
-              <span>导入预览</span>
-              <div className="flex items-center gap-2 text-sm font-normal">
-                <Badge variant="outline" className="text-green-600 border-green-300">
-                  可导入 {validRows.length}
-                </Badge>
-                <Badge variant="outline" className="text-red-600 border-red-300">
-                  异常 {parsedRows.length - validRows.length}
-                </Badge>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">行号</TableHead>
-                    <TableHead>课程</TableHead>
-                    <TableHead>班级</TableHead>
-                    <TableHead>教师</TableHead>
-                    <TableHead>星期</TableHead>
-                    <TableHead>节次</TableHead>
-                    <TableHead>周次</TableHead>
-                    <TableHead>场地</TableHead>
-                    <TableHead>类型</TableHead>
-                    <TableHead>状态</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {parsedRows.map((r) => {
-                    const ok = !r.venueUnmapped && !r.periodUnmapped && !r.invalidReason
-                    return (
-                      <TableRow key={r.rowIndex}>
-                        <TableCell className="text-xs text-muted-foreground">{r.rowIndex}</TableCell>
-                        <TableCell>{r.courseName}</TableCell>
-                        <TableCell>{r.className}</TableCell>
-                        <TableCell>{r.teacherName}</TableCell>
-                        <TableCell>{r.dayOfWeek > 0 ? ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'][r.dayOfWeek] : '-'}</TableCell>
-                        <TableCell>{r.periods.join('、') || '-'}</TableCell>
-                        <TableCell>{r.weeks}</TableCell>
-                        <TableCell>{r.venueName}</TableCell>
-                        <TableCell>{r.type === 'scene' ? '场景' : '传统'}</TableCell>
-                        <TableCell>
-                          {ok ? (
-                            <Badge variant="outline" className="text-green-600 border-green-300">正常</Badge>
-                          ) : (
-                            <div className="space-y-1">
-                              {r.venueUnmapped && <Badge variant="outline" className="text-red-600 border-red-300">场地未映射</Badge>}
-                              {r.periodUnmapped && <Badge variant="outline" className="text-red-600 border-red-300">节次未映射</Badge>}
-                              {r.invalidReason && <span className="text-xs text-red-600 block">{r.invalidReason}</span>}
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-
-            {parsedRows.some((r) => r.venueUnmapped || r.periodUnmapped) && (
-              <div className="rounded-lg border bg-amber-50 p-3 text-sm text-amber-700 flex items-start gap-2">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <div>
-                  <p className="font-medium">存在未映射的场地或节次</p>
-                  <p>请先返回“场地节次对齐”步骤补充映射规则。</p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-end">
-              <Button
-                disabled={validRows.length === 0}
-                onClick={handleImport}
-              >
-                确认导入（{validRows.length} 条）
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
-}
-
-// ============================================
 // Step 4: 课表导出
 // ============================================
 function ExportTab({ selectedGrade }: { selectedGrade: string }) {
@@ -1243,13 +867,6 @@ function getProgramIdFromUrl(): string | null {
 
 export default function SchedulingCenterPage() {
   const [currentStep, setCurrentStep] = useState(0)
-  const [alignmentState, setAlignmentState] = useState<AlignmentState>({
-    venues,
-    venueTypes: initialVenueTypes,
-    venueMapping: {},
-    periodMapping: {},
-  })
-  const [importedTasks, setImportedTasks] = useState<Task[]>([])
   // 默认：计算机科学与技术学院 / 2029级 / 软件工程 / 全部学期
   const [selectedDept, setSelectedDept] = useState<string>('d1')
   const [selectedGradeId, setSelectedGradeId] = useState<string>('g2029')
@@ -1409,11 +1026,9 @@ export default function SchedulingCenterPage() {
           </div>
         ) : (
           <>
-            {currentStep === 0 && <ClassScheduleTab />}
-            {currentStep === 1 && <VenuePeriodAlignmentTab onChange={setAlignmentState} />}
-            {currentStep === 2 && <ImportScheduleTab alignment={alignmentState} onImported={setImportedTasks} onRequestAlignment={() => setCurrentStep(1)} />}
-            {currentStep === 3 && <TaskOrchestrationTab selectedGrade={selectedGrade} importedTasks={importedTasks} />}
-            {currentStep === 4 && <ExportTab selectedGrade={selectedGrade} />}
+            {currentStep === 0 && <TaskOrchestrationTab selectedGrade={selectedGrade} importMode />}
+            {currentStep === 1 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
+            {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
           </>
         )}
       </div>
