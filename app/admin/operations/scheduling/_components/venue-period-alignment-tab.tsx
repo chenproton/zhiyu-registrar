@@ -337,6 +337,7 @@ export default function VenuePeriodAlignmentTab({
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Input
+                    id="manual-venue-input"
                     placeholder="手动添加外部场地名称"
                     className="w-[240px]"
                     onKeyDown={(e) => {
