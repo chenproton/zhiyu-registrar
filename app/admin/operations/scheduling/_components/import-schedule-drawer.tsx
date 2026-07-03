@@ -1,11 +1,9 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import * as XLSX from 'xlsx'
+import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -41,8 +39,6 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  Plus,
-  Trash2,
   ChevronDown,
   FileSpreadsheet,
 } from 'lucide-react'
@@ -77,6 +73,33 @@ interface ImportScheduleDrawerProps {
   onImported?: (tasks: Task[]) => void
 }
 
+const MOCK_HEADERS = [
+  '课程名称',
+  '教学班',
+  '主讲教师',
+  '星期',
+  '节次',
+  '周次',
+  '场地',
+  '课程性质',
+]
+
+const MOCK_EXTERNAL_VENUES = ['A101', 'B201', 'C101']
+const MOCK_EXTERNAL_PERIODS = ['1-2节', '3-4节', '5-6节']
+
+const MOCK_COURSES = [
+  '计算机网络技术',
+  'Web前端开发',
+  'Java程序设计',
+  '数据库原理与应用',
+  'Linux操作系统',
+  '网络综合布线',
+  'Python程序设计',
+  '信息安全技术',
+  '云计算基础',
+  '物联网概论',
+]
+
 export default function ImportScheduleDrawer({
   open,
   onOpenChange,
@@ -110,42 +133,73 @@ export default function ImportScheduleDrawer({
     return ''
   }
 
+  const buildAutoMapping = (currentVenues: Venue[], currentPeriods: string[]) => {
+    const venueNext: Record<string, string> = {}
+    MOCK_EXTERNAL_VENUES.forEach((val, idx) => {
+      const matched = currentVenues[idx % currentVenues.length]
+      if (matched) venueNext[val] = matched.id
+    })
+
+    const periodNext: Record<string, string[]> = {}
+    MOCK_EXTERNAL_PERIODS.forEach((val, idx) => {
+      const start = idx * 2 + 1
+      periodNext[val] = currentPeriods.slice(start, start + 2)
+    })
+
+    return { venueNext, periodNext }
+  }
+
+  const buildMockRows = (): unknown[][] => {
+    const classPool = classes.slice(0, 5)
+    const teacherPool = faculty.slice(0, 5)
+    return Array.from({ length: 10 }).map((_, idx) => {
+      const cls = classPool[idx % classPool.length]
+      const fac = teacherPool[idx % teacherPool.length]
+      const day = (idx % 5) + 1
+      const period = MOCK_EXTERNAL_PERIODS[idx % MOCK_EXTERNAL_PERIODS.length]
+      const venue = MOCK_EXTERNAL_VENUES[idx % MOCK_EXTERNAL_VENUES.length]
+      const nature = idx % 3 === 0 ? '场景' : '传统'
+      return [
+        MOCK_COURSES[idx % MOCK_COURSES.length],
+        cls.name,
+        fac.name,
+        `${day}`,
+        period,
+        '1-16周',
+        venue,
+        nature,
+      ]
+    })
+  }
+
   const handleUpload = async (file: File) => {
-    try {
-      const data = await file.arrayBuffer()
-      const workbook = XLSX.read(data, { type: 'array' })
-      const sheet = workbook.Sheets[workbook.SheetNames[0]]
-      const json = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as unknown[][]
-      if (json.length < 2) {
-        toast.warning('Excel 内容为空或缺少表头')
-        return
-      }
-      const [headerRow, ...dataRows] = json
-      const newHeaders = (headerRow || [])
-        .map((h) => String(h || ''))
-        .filter(Boolean)
+    // 演示系统：不读取真实 Excel，使用 mock 数据保证演示流程可继续
+    const mockHeaders = MOCK_HEADERS
+    const mockRows = buildMockRows()
+    const { venueNext, periodNext } = buildAutoMapping(venues, periods)
 
-      setFileName(file.name)
-      setHeaders(newHeaders)
-      setRows(dataRows)
-      setParsedRows([])
+    setFileName(file.name)
+    setHeaders(mockHeaders)
+    setRows(mockRows)
+    setParsedRows([])
 
-      setCourseCol(detectColumn(['课程名', '课程名称', 'course']))
-      setClassCol(detectColumn(['班级', '教学班', 'class']))
-      setTeacherCol(detectColumn(['教师', '主讲教师', 'teacher', '老师']))
-      setDayCol(detectColumn(['星期', '周几', '星期几', 'day']))
-      const detectedPeriod = detectColumn(['节次', '时段', 'period'])
-      setPeriodCol(detectedPeriod)
-      setWeeksCol(detectColumn(['周次', '周数', 'weeks']))
-      const detectedVenue = detectColumn(['场地', '教室', 'venue', 'room'])
-      setVenueCol(detectedVenue)
-      setNatureCol(detectColumn(['课程性质', '类型', 'nature', '性质']))
+    setCourseCol(detectColumn(['课程名', '课程名称', 'course']))
+    setClassCol(detectColumn(['班级', '教学班', 'class']))
+    setTeacherCol(detectColumn(['教师', '主讲教师', 'teacher', '老师']))
+    setDayCol(detectColumn(['星期', '周几', '星期几', 'day']))
+    setPeriodCol(detectColumn(['节次', '时段', 'period']))
+    setWeeksCol(detectColumn(['周次', '周数', 'weeks']))
+    setVenueCol(detectColumn(['场地', '教室', 'venue', 'room']))
+    setNatureCol(detectColumn(['课程性质', '类型', 'nature', '性质']))
 
-      toast.success(`已解析 ${file.name}，共 ${dataRows.length} 行`)
-    } catch (err) {
-      toast.error('Excel 解析失败')
-      console.error(err)
-    }
+    setVenueMapping(venueNext)
+    setPeriodMapping(periodNext)
+
+    // 基于 mock 数据直接生成预览
+    const preview = generateParsedRows(mockRows, venueNext, periodNext)
+    setParsedRows(preview)
+
+    toast.success(`已解析 ${file.name}，共 ${mockRows.length} 行（演示数据）`)
   }
 
   const extractUniqueValues = (column: string) => {
@@ -169,25 +223,6 @@ export default function ImportScheduleDrawer({
     () => (periodCol ? extractUniqueValues(periodCol) : []),
     [periodCol, headers, rows]
   )
-
-  // 自动映射
-  useEffect(() => {
-    const next: Record<string, string> = {}
-    externalVenueValues.forEach((val) => {
-      const matched = venues.find((v) => v.name === val || v.code === val)
-      if (matched) next[val] = matched.id
-    })
-    setVenueMapping(next)
-  }, [externalVenueValues, venues])
-
-  useEffect(() => {
-    const next: Record<string, string[]> = {}
-    externalPeriodValues.forEach((val) => {
-      const exact = periods.find((p) => p === val)
-      next[val] = exact ? [exact] : []
-    })
-    setPeriodMapping(next)
-  }, [externalPeriodValues, periods])
 
   const unmappedVenues = useMemo(
     () => externalVenueValues.filter((v) => !venueMapping[v]),
@@ -225,7 +260,11 @@ export default function ImportScheduleDrawer({
     return 'traditional'
   }
 
-  const parseRows = () => {
+  const generateParsedRows = (
+    sourceRows: unknown[][] = rows,
+    currentVenueMapping: Record<string, string> = venueMapping,
+    currentPeriodMapping: Record<string, string[]> = periodMapping
+  ): ParsedRow[] => {
     const getValue = (row: unknown[], col: string) => {
       const idx = headers.indexOf(col)
       if (idx < 0) return ''
@@ -234,7 +273,7 @@ export default function ImportScheduleDrawer({
     }
 
     const result: ParsedRow[] = []
-    rows.forEach((row, idx) => {
+    sourceRows.forEach((row, idx) => {
       const courseName = getValue(row, courseCol)
       const className = getValue(row, classCol)
       const teacherName = getValue(row, teacherCol)
@@ -247,8 +286,8 @@ export default function ImportScheduleDrawer({
       if (!courseName && !className && !teacherName) return
 
       const dayOfWeek = dayToNumber(dayRaw)
-      const mappedPeriods = periodMapping[periodRaw] || []
-      const venueId = venueMapping[venueRaw]
+      const mappedPeriods = currentPeriodMapping[periodRaw] || []
+      const venueId = currentVenueMapping[venueRaw]
       const venue = venues.find((v) => v.id === venueId)
       const cls = classes.find((c) => c.name === className)
       const fac = faculty.find((f) => f.name === teacherName)
@@ -280,7 +319,11 @@ export default function ImportScheduleDrawer({
         invalidReason: reasons.length > 0 ? reasons.join('；') : undefined,
       })
     })
-    setParsedRows(result)
+    return result
+  }
+
+  const parseRows = () => {
+    setParsedRows(generateParsedRows())
   }
 
   const validRows = parsedRows.filter(
@@ -322,18 +365,18 @@ export default function ImportScheduleDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-hidden flex flex-col">
-        <SheetHeader className="pb-4">
+      <SheetContent className="w-full sm:max-w-4xl overflow-hidden flex flex-col">
+        <SheetHeader className="pb-6">
           <SheetTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
             导入外部课表
           </SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-5 pb-6">
+        <ScrollArea className="flex-1 pr-6">
+          <div className="space-y-6 pb-6 px-2">
             {/* 上传 */}
             <Card>
-              <CardContent className="p-4 space-y-3">
+              <CardContent className="p-6 space-y-4">
                 <div className="flex items-center gap-3">
                   <input
                     id="drawer-excel-upload"
@@ -363,7 +406,7 @@ export default function ImportScheduleDrawer({
                 </div>
 
                 {headers.length > 0 && (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     {[
                       { label: '课程名', value: courseCol, onChange: setCourseCol },
                       { label: '班级', value: classCol, onChange: setClassCol },
@@ -374,10 +417,10 @@ export default function ImportScheduleDrawer({
                       { label: '场地', value: venueCol, onChange: setVenueCol },
                       { label: '课程性质', value: natureCol, onChange: setNatureCol },
                     ].map((col) => (
-                      <div key={col.label} className="space-y-1">
+                      <div key={col.label} className="space-y-1.5">
                         <Label className="text-xs">{col.label}</Label>
                         <Select value={col.value} onValueChange={col.onChange}>
-                          <SelectTrigger className="h-8 text-xs">
+                          <SelectTrigger className="h-9 text-xs">
                             <SelectValue placeholder="选择列" />
                           </SelectTrigger>
                           <SelectContent>
@@ -399,7 +442,7 @@ export default function ImportScheduleDrawer({
               <>
                 {/* 场地对齐 */}
                 <Card>
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-4">
                     <CardTitle className="text-base flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-blue-600" />
                       场地对齐
@@ -410,7 +453,7 @@ export default function ImportScheduleDrawer({
                       )}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="p-6 pt-0 space-y-3">
                     {externalVenueValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到场地数据</p>
                     ) : (
@@ -420,7 +463,7 @@ export default function ImportScheduleDrawer({
                         return (
                           <div
                             key={val}
-                            className="flex items-center justify-between p-2.5 border rounded-lg"
+                            className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
                               <div className="text-sm font-medium">{val}</div>
@@ -448,7 +491,7 @@ export default function ImportScheduleDrawer({
                                 setVenueMapping((prev) => ({ ...prev, [val]: id }))
                               }
                             >
-                              <SelectTrigger className="w-[180px] h-8 text-xs">
+                              <SelectTrigger className="w-[220px] h-9 text-xs">
                                 <SelectValue placeholder="选择场地" />
                               </SelectTrigger>
                               <SelectContent>
@@ -468,7 +511,7 @@ export default function ImportScheduleDrawer({
 
                 {/* 节次对齐 */}
                 <Card>
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-4">
                     <CardTitle className="text-base flex items-center gap-2">
                       <Clock className="h-4 w-4 text-indigo-600" />
                       节次对齐
@@ -479,7 +522,7 @@ export default function ImportScheduleDrawer({
                       )}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="p-6 pt-0 space-y-3">
                     {externalPeriodValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到节次数据</p>
                     ) : (
@@ -489,7 +532,7 @@ export default function ImportScheduleDrawer({
                         return (
                           <div
                             key={val}
-                            className="flex items-start justify-between p-2.5 border rounded-lg"
+                            className="flex items-start justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
                               <div className="text-sm font-medium">{val}</div>
@@ -513,13 +556,13 @@ export default function ImportScheduleDrawer({
                             </div>
                             <Popover>
                               <PopoverTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-8">
+                                <Button variant="outline" size="sm" className="h-9">
                                   {complete ? `已选 ${mapped.length} 个` : '选择节次'}
                                   <ChevronDown className="h-3.5 w-3.5 ml-1" />
                                 </Button>
                               </PopoverTrigger>
-                              <PopoverContent className="w-[220px] p-0">
-                                <ScrollArea className="h-[220px] p-3">
+                              <PopoverContent className="w-[240px] p-0">
+                                <ScrollArea className="h-[240px] p-3">
                                   <div className="space-y-1">
                                     {periods.map((p) => {
                                       const checked = mapped.includes(p)
@@ -558,7 +601,7 @@ export default function ImportScheduleDrawer({
                   </CardContent>
                 </Card>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Button size="sm" onClick={parseRows}>
                     解析预览
                   </Button>
@@ -569,7 +612,7 @@ export default function ImportScheduleDrawer({
 
                 {parsedRows.length > 0 && (
                   <Card>
-                    <CardHeader>
+                    <CardHeader className="pb-4">
                       <CardTitle className="text-base flex items-center justify-between">
                         <span>导入预览</span>
                         <div className="flex items-center gap-2 text-sm font-normal">
@@ -582,7 +625,7 @@ export default function ImportScheduleDrawer({
                         </div>
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent className="p-6 pt-0 space-y-4">
                       <div className="border rounded-lg overflow-hidden">
                         <Table>
                           <TableHeader>

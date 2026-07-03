@@ -1026,7 +1026,7 @@ export default function SchedulingCenterPage() {
           </div>
         ) : (
           <>
-            {currentStep === 0 && <TaskOrchestrationTab selectedGrade={selectedGrade} importMode />}
+            {currentStep === 0 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
             {currentStep === 1 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
             {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
           </>

@@ -1154,11 +1154,9 @@ function SidebarNav({
 export default function TaskOrchestrationTab({
   selectedGrade,
   importedTasks,
-  importMode,
 }: {
   selectedGrade: string
   importedTasks?: Task[]
-  importMode?: boolean
 }) {
   // 固定按场地查看，不再切换视图
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('venue')
@@ -1174,18 +1172,14 @@ export default function TaskOrchestrationTab({
   const totalWeeks = 16
 
   // 节次、场地配置状态
-  const [periods, setPeriods] = useState<string[]>(defaultPeriods)
+  const [periods, setPeriods] = useState<string[]>([...defaultPeriods])
   const [venues, setVenues] = useState<Venue[]>(defaultVenues)
   const [venueTypes, setVenueTypes] = useState<string[]>(defaultVenueTypes)
 
   // 抽屉 / 弹窗状态
-  const [importDrawerOpen, setImportDrawerOpen] = useState(importMode || false)
+  const [importDrawerOpen, setImportDrawerOpen] = useState(false)
   const [periodDialogOpen, setPeriodDialogOpen] = useState(false)
   const [venueDialogOpen, setVenueDialogOpen] = useState(false)
-
-  useEffect(() => {
-    setImportDrawerOpen(importMode || false)
-  }, [importMode])
 
   useEffect(() => {
     setLocalTasks(importedTasks?.length ? importedTasks : tasks)
