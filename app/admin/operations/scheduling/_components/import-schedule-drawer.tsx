@@ -125,8 +125,8 @@ export default function ImportScheduleDrawer({
 
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
 
-  const detectColumn = (candidates: string[]) => {
-    for (const h of headers) {
+  const detectColumn = (targetHeaders: string[], candidates: string[]) => {
+    for (const h of targetHeaders) {
       const lower = h.toLowerCase()
       if (candidates.some((c) => lower.includes(c))) return h
     }
@@ -184,14 +184,14 @@ export default function ImportScheduleDrawer({
     setRows(mockRows)
     setParsedRows([])
 
-    setCourseCol(detectColumn(['课程名', '课程名称', 'course']))
-    setClassCol(detectColumn(['班级', '教学班', 'class']))
-    setTeacherCol(detectColumn(['教师', '主讲教师', 'teacher', '老师']))
-    setDayCol(detectColumn(['星期', '周几', '星期几', 'day']))
-    setPeriodCol(detectColumn(['节次', '时段', 'period']))
-    setWeeksCol(detectColumn(['周次', '周数', 'weeks']))
-    setVenueCol(detectColumn(['场地', '教室', 'venue', 'room']))
-    setNatureCol(detectColumn(['课程性质', '类型', 'nature', '性质']))
+    setCourseCol(detectColumn(mockHeaders, ['课程名', '课程名称', 'course']))
+    setClassCol(detectColumn(mockHeaders, ['班级', '教学班', 'class']))
+    setTeacherCol(detectColumn(mockHeaders, ['教师', '主讲教师', 'teacher', '老师']))
+    setDayCol(detectColumn(mockHeaders, ['星期', '周几', '星期几', 'day']))
+    setPeriodCol(detectColumn(mockHeaders, ['节次', '时段', 'period']))
+    setWeeksCol(detectColumn(mockHeaders, ['周次', '周数', 'weeks']))
+    setVenueCol(detectColumn(mockHeaders, ['场地', '教室', 'venue', 'room']))
+    setNatureCol(detectColumn(mockHeaders, ['课程性质', '类型', 'nature', '性质']))
 
     setVenueMapping(venueNext)
     setPeriodMapping(periodNext)
