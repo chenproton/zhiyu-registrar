@@ -43,7 +43,7 @@ export default function ClassesPage() {
     department: 'all',
     major: 'all',
   })
-  const [selectedGradeId, setSelectedGradeId] = useState<string | null>(null)
+  const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
   const [treeFilter, setTreeFilter] = useState<'all' | 'teaching'>('all')
   const [editType, setEditType] = useState<'行政班' | '教学班（如订单班）'>('行政班')
 
@@ -68,11 +68,11 @@ export default function ClassesPage() {
       const major = majors.find((m) => m.id === c.majorId)
       if (filters.department !== 'all' && major?.departmentId !== filters.department) return false
       if (filters.major !== 'all' && c.majorId !== filters.major) return false
-      if (selectedGradeId && c.gradeId !== selectedGradeId) return false
+      if (selectedClassId && c.id !== selectedClassId) return false
       if (treeFilter === 'teaching' && c.type !== '教学班（如订单班）') return false
       return true
     })
-  }, [search, filters, selectedGradeId, treeFilter])
+  }, [search, filters, selectedClassId, treeFilter])
 
   const majorOptions = useMemo(() => {
     if (filters.department !== 'all') {
@@ -107,7 +107,7 @@ export default function ClassesPage() {
     router.push(`/admin/organization/students?classId=${classId}`)
   }
 
-  // 组织架构树数据（院系 → 专业 → 年级）
+  // 组织架构树数据（院系 → 专业 → 班级，届别作为班级标签）
   const treeData = useMemo(() => {
     return departments.map(dept => {
       const deptMajors = majors.filter(m => m.departmentId === dept.id)
@@ -115,10 +115,12 @@ export default function ClassesPage() {
         ...dept,
         majors: deptMajors.map(major => {
           const majorClasses = classes.filter(c => c.majorId === major.id)
-          const gradeIds = [...new Set(majorClasses.map(c => c.gradeId))]
           return {
             ...major,
-            grades: gradeIds.map(gid => grades.find(g => g.id === gid)!).filter(Boolean)
+            classes: majorClasses.map(c => ({
+              ...c,
+              gradeName: grades.find(g => g.id === c.gradeId)?.name || ''
+            }))
           }
         })
       }
@@ -157,19 +159,19 @@ export default function ClassesPage() {
             <ScrollArea className="h-[500px]">
               <div className="space-y-1">
                 <button
-                  onClick={() => { setSelectedGradeId(null); setTreeFilter('all') }}
+                  onClick={() => { setSelectedClassId(null); setTreeFilter('all') }}
                   className={cn(
                     'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
-                    selectedGradeId === null && treeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                    selectedClassId === null && treeFilter === 'all' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                   )}
                 >
                   全部班级
                 </button>
                 <button
-                  onClick={() => { setSelectedGradeId(null); setTreeFilter('teaching') }}
+                  onClick={() => { setSelectedClassId(null); setTreeFilter('teaching') }}
                   className={cn(
                     'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
-                    selectedGradeId === null && treeFilter === 'teaching' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                    selectedClassId === null && treeFilter === 'teaching' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                   )}
                 >
                   教学班
@@ -178,8 +180,8 @@ export default function ClassesPage() {
                   <DeptNode
                     key={dept.id}
                     dept={dept}
-                    selectedGradeId={selectedGradeId}
-                    onSelectGrade={setSelectedGradeId}
+                    selectedClassId={selectedClassId}
+                    onSelectClass={setSelectedClassId}
                   />
                 ))}
               </div>
@@ -472,8 +474,8 @@ export default function ClassesPage() {
   )
 }
 
-// 树形组件（院系 → 专业 → 年级）
-function DeptNode({ dept, selectedGradeId, onSelectGrade }: { dept: any, selectedGradeId: string | null, onSelectGrade: (id: string | null) => void }) {
+// 树形组件（院系 → 专业 → 班级，届别作为班级标签）
+function DeptNode({ dept, selectedClassId, onSelectClass }: { dept: any, selectedClassId: string | null, onSelectClass: (id: string | null) => void }) {
   const [open, setOpen] = useState(false)
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -486,7 +488,7 @@ function DeptNode({ dept, selectedGradeId, onSelectGrade }: { dept: any, selecte
       <CollapsibleContent>
         <div className="ml-4 space-y-1">
           {dept.majors.map((major: any) => (
-            <MajorNode key={major.id} major={major} selectedGradeId={selectedGradeId} onSelectGrade={onSelectGrade} />
+            <MajorNode key={major.id} major={major} selectedClassId={selectedClassId} onSelectClass={onSelectClass} />
           ))}
         </div>
       </CollapsibleContent>
@@ -494,7 +496,7 @@ function DeptNode({ dept, selectedGradeId, onSelectGrade }: { dept: any, selecte
   )
 }
 
-function MajorNode({ major, selectedGradeId, onSelectGrade }: { major: any, selectedGradeId: string | null, onSelectGrade: (id: string | null) => void }) {
+function MajorNode({ major, selectedClassId, onSelectClass }: { major: any, selectedClassId: string | null, onSelectClass: (id: string | null) => void }) {
   const [open, setOpen] = useState(false)
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
@@ -506,16 +508,17 @@ function MajorNode({ major, selectedGradeId, onSelectGrade }: { major: any, sele
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="ml-4 space-y-0.5">
-          {major.grades.map((grade: any) => (
+          {major.classes.map((cls: any) => (
             <button
-              key={grade.id}
-              onClick={() => onSelectGrade(grade.id)}
+              key={cls.id}
+              onClick={() => onSelectClass(cls.id)}
               className={cn(
-                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors truncate',
-                selectedGradeId === grade.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors truncate flex items-center gap-1',
+                selectedClassId === cls.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
               )}
             >
-              {grade.name}
+              <span className="truncate">{cls.name}</span>
+              <span className="shrink-0 text-[10px] px-1 rounded bg-muted-foreground/10">{cls.gradeName}</span>
             </button>
           ))}
         </div>

@@ -175,10 +175,6 @@ interface ClassScheduleTabProps {
 export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {}) {
   const [settings, setSettings] = useState<PeriodSettings>(defaultSettings)
   const [rows, setRows] = useState<PeriodRow[]>(() => generateRows(defaultSettings))
-  const [editOpen, setEditOpen] = useState(false)
-  const [editingCell, setEditingCell] = useState<{ rowId: string; dayOfWeek: number } | null>(null)
-  const [formStart, setFormStart] = useState('08:00')
-  const [formEnd, setFormEnd] = useState('08:45')
   const [showHelp, setShowHelp] = useState(false)
 
   const handleSettingsChange = useCallback((next: PeriodSettings) => {
@@ -187,39 +183,6 @@ export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {
     setRows(nextRows)
     onChange?.(nextRows)
   }, [onChange])
-
-  const handleCellClick = (row: PeriodRow, dayOfWeek: number) => {
-    const cell = row.cells.find((c) => c.dayOfWeek === dayOfWeek)
-    if (cell) {
-      setEditingCell({ rowId: row.id, dayOfWeek })
-      setFormStart(cell.startTime)
-      setFormEnd(cell.endTime)
-      setEditOpen(true)
-    }
-  }
-
-  const handleSaveCell = () => {
-    if (!editingCell) return
-    let nextRows: PeriodRow[] = []
-    setRows((prev) => {
-      nextRows = prev.map((row) =>
-        row.id === editingCell.rowId
-          ? {
-              ...row,
-              cells: row.cells.map((cell) =>
-                cell.dayOfWeek === editingCell.dayOfWeek
-                  ? { ...cell, startTime: formStart, endTime: formEnd }
-                  : cell
-              ),
-            }
-          : row
-      )
-      return nextRows
-    })
-    onChange?.(nextRows)
-    setEditOpen(false)
-    toast.success('时间设置已保存')
-  }
 
   const updateSetting = <K extends keyof PeriodSettings>(key: K, value: PeriodSettings[K]) => {
     handleSettingsChange({ ...settings, [key]: value })
@@ -273,8 +236,7 @@ export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {
                       {row.cells.map((cell) => (
                         <td
                           key={cell.dayOfWeek}
-                          className="border p-1.5 cursor-pointer hover:bg-muted/30 transition-colors"
-                          onClick={() => handleCellClick(row, cell.dayOfWeek)}
+                          className="border p-1.5"
                         >
                           <div
                             className={cn(
@@ -377,33 +339,6 @@ export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {
         </CardContent>
       </Card>
 
-      {/* Cell Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>设置节次时间</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>开始时间</Label>
-                <Input type="time" value={formStart} onChange={(e) => setFormStart(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>结束时间</Label>
-                <Input type="time" value={formEnd} onChange={(e) => setFormEnd(e.target.value)} />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleSaveCell}>保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Help Dialog */}
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
         <DialogContent className="max-w-md">
@@ -413,7 +348,6 @@ export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {
           <div className="space-y-3 text-sm text-muted-foreground py-2">
             <p>1. 在右侧面板配置各时段的节次数量，左侧表格会自动生成。</p>
             <p>2. 可设置课程时长、课间时长等参数，系统会自动推算每个节次的时间段。</p>
-            <p>3. 点击表格中的任意单元格，可单独调整该节次在当天的起止时间。</p>
             
           </div>
           <DialogFooter>

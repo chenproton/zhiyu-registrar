@@ -116,16 +116,12 @@ function StudentsPageContent() {
         ...dept,
         majors: deptMajors.map(major => {
           const majorClasses = classes.filter(c => c.majorId === major.id)
-          const gradeIds = [...new Set(majorClasses.map(c => c.gradeId))]
           return {
             ...major,
-            grades: gradeIds.map(gid => {
-              const grade = grades.find(g => g.id === gid)!
-              return {
-                ...grade,
-                classes: majorClasses.filter(c => c.gradeId === gid)
-              }
-            })
+            classes: majorClasses.map(c => ({
+              ...c,
+              gradeName: grades.find(g => g.id === c.gradeId)?.name || ''
+            }))
           }
         })
       }
@@ -537,38 +533,18 @@ function MajorNode({ major, selectedClassId, onSelectClass }: { major: any, sele
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="ml-4 space-y-1">
-          {major.grades.map((grade: any) => (
-            <GradeNode key={grade.id} grade={grade} selectedClassId={selectedClassId} onSelectClass={onSelectClass} />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
-
-function GradeNode({ grade, selectedClassId, onSelectClass }: { grade: any, selectedClassId: string | null, onSelectClass: (id: string | null) => void }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors">
-          {open ? <ChevronDown className="h-3.5 w-3.5 mr-1 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 mr-1 shrink-0" />}
-          <span className="truncate">{grade.name}</span>
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
         <div className="ml-4 space-y-0.5">
-          {grade.classes.map((cls: any) => (
+          {major.classes.map((cls: any) => (
             <button
               key={cls.id}
               onClick={() => onSelectClass(cls.id)}
               className={cn(
-                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors truncate',
+                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors truncate flex items-center gap-1',
                 selectedClassId === cls.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
               )}
             >
-              {cls.name}
+              <span className="truncate">{cls.name}</span>
+              <span className="shrink-0 text-[10px] px-1 rounded bg-muted-foreground/10">{cls.gradeName}</span>
             </button>
           ))}
         </div>

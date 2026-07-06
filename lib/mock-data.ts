@@ -93,17 +93,18 @@ export interface Grade {
   id: string
   name: string              // 如"2026级"
   entryYear: number         // 入学年份
+  graduationYear: number    // 毕业年份
   status: '在校' | '毕业' | '结业'
 }
 
 export const grades: Grade[] = [
-  { id: 'g2029', name: '2029级', entryYear: 2029, status: '在校' },
-  { id: 'g2028', name: '2028级', entryYear: 2028, status: '在校' },
-  { id: 'g2027', name: '2027级', entryYear: 2027, status: '在校' },
-  { id: 'g2026', name: '2026级', entryYear: 2026, status: '在校' },
-  { id: 'g2025', name: '2025级', entryYear: 2025, status: '在校' },
-  { id: 'g2024', name: '2024级', entryYear: 2024, status: '在校' },
-  { id: 'g2023', name: '2023级', entryYear: 2023, status: '毕业' },
+  { id: 'g2029', name: '2029级', entryYear: 2029, graduationYear: 2033, status: '在校' },
+  { id: 'g2028', name: '2028级', entryYear: 2028, graduationYear: 2032, status: '在校' },
+  { id: 'g2027', name: '2027级', entryYear: 2027, graduationYear: 2031, status: '在校' },
+  { id: 'g2026', name: '2026级', entryYear: 2026, graduationYear: 2030, status: '在校' },
+  { id: 'g2025', name: '2025级', entryYear: 2025, graduationYear: 2029, status: '在校' },
+  { id: 'g2024', name: '2024级', entryYear: 2024, graduationYear: 2028, status: '在校' },
+  { id: 'g2023', name: '2023级', entryYear: 2023, graduationYear: 2027, status: '毕业' },
 ]
 
 // ----- 2. 师资 -----
