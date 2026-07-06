@@ -126,6 +126,22 @@ export default function ImportScheduleDrawer({
 
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([])
 
+  // 模拟各课程版本号（演示用）
+  const courseVersionOptions = useMemo(() => {
+    const pool: Record<string, string[]> = {}
+    coursePool.forEach((c, i) => {
+      const count = (i % 4) + 1 // 每个课程 1-4 个版本
+      pool[c.id] = Array.from({ length: count }, (_, j) => {
+        const major = Math.floor(j / 2) + 1
+        const minor = j % 2
+        return `${major}.${minor}`
+      })
+    })
+    return pool
+  }, [])
+
+  const [courseVersions, setCourseVersions] = useState<Record<string, string>>({})
+
   const detectColumn = (targetHeaders: string[], candidates: string[]) => {
     for (const h of targetHeaders) {
       const lower = h.toLowerCase()
@@ -601,23 +617,19 @@ export default function ImportScheduleDrawer({
                     <CardTitle className="text-base flex items-center gap-2">
                       <BookOpen className="h-4 w-4 text-emerald-600" />
                        关联系统已有场景
-                      {unmappedCourses.length > 0 && (
-                        <Badge variant="secondary" className="text-amber-600">
-                          待完成 {unmappedCourses.length}
-                        </Badge>
-                      )}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
                       <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
-                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
+                      <span className="text-xs font-semibold text-muted-foreground">选择版本号</span>
                     </div>
                     {coursePool.length === 0 ? (
                       <p className="text-sm text-muted-foreground">暂无系统课程数据</p>
                     ) : (
                       coursePool.map((course) => {
-                        const extVal = courseReverseMap.get(course.id) || ''
+                        const ver = courseVersions[course.id] || ''
+                        const versions = courseVersionOptions[course.id] || []
                         return (
                           <div
                             key={course.id}
@@ -625,35 +637,27 @@ export default function ImportScheduleDrawer({
                           >
                             <div className="space-y-0.5">
                               <div className="text-sm font-medium">{course.name}</div>
-                              {extVal ? (
+                              {ver ? (
                                 <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
-                                  已映射
+                                  版本 {ver}
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="gap-1 text-red-600 border-red-300 text-[10px]">
-                                  <AlertTriangle className="h-3 w-3" />
-                                  未映射
+                                <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 text-[10px]">
+                                  未选择版本
                                 </Badge>
                               )}
                             </div>
                             <Select
-                              value={extVal}
-                              onValueChange={(val) =>
-                                setCourseMapping((prev) => {
-                                  const next = { ...prev }
-                                  Object.keys(next).forEach((k) => { if (next[k] === course.id) delete next[k] })
-                                  if (val) next[val] = course.id
-                                  return next
-                                })
-                              }
+                              value={ver}
+                              onValueChange={(v) => setCourseVersions((prev) => ({ ...prev, [course.id]: v }))}
                             >
-                              <SelectTrigger className="w-[220px] h-9 text-xs">
-                                <SelectValue placeholder="请选择" />
+                              <SelectTrigger className="w-[140px] h-9 text-xs">
+                                <SelectValue placeholder="选择版本" />
                               </SelectTrigger>
                               <SelectContent>
-                                {externalCourseValues.map((v) => (
-                                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                                {versions.map((v) => (
+                                  <SelectItem key={v} value={v}>v{v}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
