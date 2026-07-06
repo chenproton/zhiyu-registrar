@@ -25,20 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Upload,
   MapPin,
   Clock,
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
   FileSpreadsheet,
   BookOpen,
   Users,
@@ -313,6 +306,41 @@ export default function ImportScheduleDrawer({
     return map
   }, [venues])
 
+  const courseReverseMap = useMemo(() => {
+    const map = new Map<string, string>()
+    Object.entries(courseMapping).forEach(([ext, sysId]) => map.set(sysId, ext))
+    return map
+  }, [courseMapping])
+
+  const classReverseMap = useMemo(() => {
+    const map = new Map<string, string>()
+    Object.entries(classMapping).forEach(([ext, sysId]) => map.set(sysId, ext))
+    return map
+  }, [classMapping])
+
+  const teacherReverseMap = useMemo(() => {
+    const map = new Map<string, string>()
+    Object.entries(teacherMapping).forEach(([ext, sysId]) => map.set(sysId, ext))
+    return map
+  }, [teacherMapping])
+
+  const venueReverseMap = useMemo(() => {
+    const map = new Map<string, string>()
+    Object.entries(venueMapping).forEach(([ext, sysId]) => map.set(sysId, ext))
+    return map
+  }, [venueMapping])
+
+  const periodReverseMap = useMemo(() => {
+    const map = new Map<string, string[]>()
+    Object.entries(periodMapping).forEach(([ext, sysPeriods]) => {
+      sysPeriods.forEach((p) => {
+        const existing = map.get(p) || []
+        map.set(p, [...existing, ext])
+      })
+    })
+    return map
+  }, [periodMapping])
+
   const dayToNumber = (val: string): number => {
     const map: Record<string, number> = {
       周一: 1, 星期二: 2, 周二: 2, 星期三: 3, 周三: 3,
@@ -582,54 +610,50 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                       <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                     </div>
-                    {externalCourseValues.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">未识别到课程数据</p>
+                    {coursePool.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">暂无系统课程数据</p>
                     ) : (
-                      externalCourseValues.map((val) => {
-                        const mappedId = courseMapping[val]
-                        const mappedCourse = mappedId ? courseMapById.get(mappedId) : undefined
+                      coursePool.map((course) => {
+                        const extVal = courseReverseMap.get(course.id) || ''
                         return (
                           <div
-                            key={val}
+                            key={course.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
-                              <div className="text-sm font-medium">{val}</div>
-                              {mappedCourse ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
-                                >
+                              <div className="text-sm font-medium">{course.name}</div>
+                              {extVal ? (
+                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
                                   已映射
                                 </Badge>
                               ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
-                                >
+                                <Badge variant="outline" className="gap-1 text-red-600 border-red-300 text-[10px]">
                                   <AlertTriangle className="h-3 w-3" />
                                   未映射
                                 </Badge>
                               )}
                             </div>
                             <Select
-                              value={mappedId || ''}
-                              onValueChange={(id) =>
-                                setCourseMapping((prev) => ({ ...prev, [val]: id }))
+                              value={extVal}
+                              onValueChange={(val) =>
+                                setCourseMapping((prev) => {
+                                  const next = { ...prev }
+                                  Object.keys(next).forEach((k) => { if (next[k] === course.id) delete next[k] })
+                                  if (val) next[val] = course.id
+                                  return next
+                                })
                               }
                             >
                               <SelectTrigger className="w-[220px] h-9 text-xs">
-                                <SelectValue placeholder="选择课程" />
+                                <SelectValue placeholder="请选择" />
                               </SelectTrigger>
                               <SelectContent>
-                                {coursePool.map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {c.name}
-                                  </SelectItem>
+                                {externalCourseValues.map((v) => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -655,54 +679,50 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                       <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                     </div>
-                    {externalClassValues.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">未识别到班级数据</p>
+                    {classes.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">暂无系统班级数据</p>
                     ) : (
-                      externalClassValues.map((val) => {
-                        const mappedId = classMapping[val]
-                        const mappedClass = mappedId ? classMapById.get(mappedId) : undefined
+                      classes.map((cls) => {
+                        const extVal = classReverseMap.get(cls.id) || ''
                         return (
                           <div
-                            key={val}
+                            key={cls.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
-                              <div className="text-sm font-medium">{val}</div>
-                              {mappedClass ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
-                                >
+                              <div className="text-sm font-medium">{cls.name}</div>
+                              {extVal ? (
+                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
                                   已映射
                                 </Badge>
                               ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
-                                >
+                                <Badge variant="outline" className="gap-1 text-red-600 border-red-300 text-[10px]">
                                   <AlertTriangle className="h-3 w-3" />
                                   未映射
                                 </Badge>
                               )}
                             </div>
                             <Select
-                              value={mappedId || ''}
-                              onValueChange={(id) =>
-                                setClassMapping((prev) => ({ ...prev, [val]: id }))
+                              value={extVal}
+                              onValueChange={(val) =>
+                                setClassMapping((prev) => {
+                                  const next = { ...prev }
+                                  Object.keys(next).forEach((k) => { if (next[k] === cls.id) delete next[k] })
+                                  if (val) next[val] = cls.id
+                                  return next
+                                })
                               }
                             >
                               <SelectTrigger className="w-[220px] h-9 text-xs">
-                                <SelectValue placeholder="选择班级" />
+                                <SelectValue placeholder="请选择" />
                               </SelectTrigger>
                               <SelectContent>
-                                {classes.map((c) => (
-                                  <SelectItem key={c.id} value={c.id}>
-                                    {c.name}
-                                  </SelectItem>
+                                {externalClassValues.map((v) => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -728,54 +748,50 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                       <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                     </div>
-                    {externalTeacherValues.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">未识别到教师数据</p>
+                    {faculty.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">暂无系统教师数据</p>
                     ) : (
-                      externalTeacherValues.map((val) => {
-                        const mappedId = teacherMapping[val]
-                        const mappedTeacher = mappedId ? teacherMapById.get(mappedId) : undefined
+                      faculty.map((teacher) => {
+                        const extVal = teacherReverseMap.get(teacher.id) || ''
                         return (
                           <div
-                            key={val}
+                            key={teacher.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
-                              <div className="text-sm font-medium">{val}</div>
-                              {mappedTeacher ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
-                                >
+                              <div className="text-sm font-medium">{teacher.name}</div>
+                              {extVal ? (
+                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
                                   已映射
                                 </Badge>
                               ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
-                                >
+                                <Badge variant="outline" className="gap-1 text-red-600 border-red-300 text-[10px]">
                                   <AlertTriangle className="h-3 w-3" />
                                   未映射
                                 </Badge>
                               )}
                             </div>
                             <Select
-                              value={mappedId || ''}
-                              onValueChange={(id) =>
-                                setTeacherMapping((prev) => ({ ...prev, [val]: id }))
+                              value={extVal}
+                              onValueChange={(val) =>
+                                setTeacherMapping((prev) => {
+                                  const next = { ...prev }
+                                  Object.keys(next).forEach((k) => { if (next[k] === teacher.id) delete next[k] })
+                                  if (val) next[val] = teacher.id
+                                  return next
+                                })
                               }
                             >
                               <SelectTrigger className="w-[220px] h-9 text-xs">
-                                <SelectValue placeholder="选择教师" />
+                                <SelectValue placeholder="请选择" />
                               </SelectTrigger>
                               <SelectContent>
-                                {faculty.map((f) => (
-                                  <SelectItem key={f.id} value={f.id}>
-                                    {f.name}
-                                  </SelectItem>
+                                {externalTeacherValues.map((v) => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -801,54 +817,50 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                       <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                     </div>
-                    {externalVenueValues.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">未识别到场地数据</p>
+                    {venues.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">暂无系统场地数据</p>
                     ) : (
-                      externalVenueValues.map((val) => {
-                        const mappedId = venueMapping[val]
-                        const mappedVenue = mappedId ? venueMapById.get(mappedId) : undefined
+                      venues.map((venue) => {
+                        const extVal = venueReverseMap.get(venue.id) || ''
                         return (
                           <div
-                            key={val}
+                            key={venue.id}
                             className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
-                              <div className="text-sm font-medium">{val}</div>
-                              {mappedVenue ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
-                                >
+                              <div className="text-sm font-medium">{venue.name}</div>
+                              {extVal ? (
+                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
                                   已映射
                                 </Badge>
                               ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
-                                >
+                                <Badge variant="outline" className="gap-1 text-red-600 border-red-300 text-[10px]">
                                   <AlertTriangle className="h-3 w-3" />
                                   未映射
                                 </Badge>
                               )}
                             </div>
                             <Select
-                              value={mappedId || ''}
-                              onValueChange={(id) =>
-                                setVenueMapping((prev) => ({ ...prev, [val]: id }))
+                              value={extVal}
+                              onValueChange={(val) =>
+                                setVenueMapping((prev) => {
+                                  const next = { ...prev }
+                                  Object.keys(next).forEach((k) => { if (next[k] === venue.id) delete next[k] })
+                                  if (val) next[val] = venue.id
+                                  return next
+                                })
                               }
                             >
                               <SelectTrigger className="w-[220px] h-9 text-xs">
-                                <SelectValue placeholder="选择场地" />
+                                <SelectValue placeholder="请选择" />
                               </SelectTrigger>
                               <SelectContent>
-                                {venues.map((v) => (
-                                  <SelectItem key={v.id} value={v.id}>
-                                    {v.name}
-                                  </SelectItem>
+                                {externalVenueValues.map((v) => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -874,80 +886,57 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                       <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
                     </div>
-                    {externalPeriodValues.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">未识别到节次数据</p>
+                    {periods.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">暂无系统节次数据</p>
                     ) : (
-                      externalPeriodValues.map((val) => {
-                        const mapped = periodMapping[val] || []
-                        const complete = mapped.length > 0
+                      periods.map((p) => {
+                        const extVals = periodReverseMap.get(p) || []
+                        const mappedExt = extVals.length > 0 ? extVals[0] : ''
                         return (
                           <div
-                            key={val}
-                            className="flex items-start justify-between p-3 border rounded-lg"
+                            key={p}
+                            className="flex items-center justify-between p-3 border rounded-lg"
                           >
                             <div className="space-y-0.5">
-                              <div className="text-sm font-medium">{val}</div>
-                              {complete ? (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-green-600 border-green-300 text-[10px]"
-                                >
+                              <div className="text-sm font-medium">{p}</div>
+                              {mappedExt ? (
+                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
                                   已映射
                                 </Badge>
                               ) : (
-                                <Badge
-                                  variant="outline"
-                                  className="gap-1 text-red-600 border-red-300 text-[10px]"
-                                >
+                                <Badge variant="outline" className="gap-1 text-red-600 border-red-300 text-[10px]">
                                   <AlertTriangle className="h-3 w-3" />
                                   未映射
                                 </Badge>
                               )}
                             </div>
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-9">
-                                  {complete ? `已选 ${mapped.length} 个` : '选择节次'}
-                                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[240px] p-0">
-                                <ScrollArea className="h-[240px] p-3">
-                                  <div className="space-y-1">
-                                    {periods.map((p) => {
-                                      const checked = mapped.includes(p)
-                                      return (
-                                        <label
-                                          key={p}
-                                          className={cn(
-                                            'flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer hover:bg-muted',
-                                            checked && 'bg-primary/5'
-                                          )}
-                                        >
-                                          <Checkbox
-                                            checked={checked}
-                                            onCheckedChange={(c) => {
-                                              setPeriodMapping((prev) => {
-                                                const current = prev[val] || []
-                                                const next = c
-                                                  ? [...current, p]
-                                                  : current.filter((x) => x !== p)
-                                                return { ...prev, [val]: next }
-                                              })
-                                            }}
-                                          />
-                                          <span>{p}</span>
-                                        </label>
-                                      )
-                                    })}
-                                  </div>
-                                </ScrollArea>
-                              </PopoverContent>
-                            </Popover>
+                            <Select
+                              value={mappedExt}
+                              onValueChange={(val) =>
+                                setPeriodMapping((prev) => {
+                                  const next = { ...prev }
+                                  Object.keys(next).forEach((k) => {
+                                    next[k] = next[k].filter((x) => x !== p)
+                                    if (next[k].length === 0) delete next[k]
+                                  })
+                                  if (val) next[val] = [...(next[val] || []), p]
+                                  return next
+                                })
+                              }
+                            >
+                              <SelectTrigger className="w-[220px] h-9 text-xs">
+                                <SelectValue placeholder="请选择" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {externalPeriodValues.map((v) => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         )
                       })
