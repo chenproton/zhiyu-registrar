@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -448,13 +447,14 @@ export default function ImportScheduleDrawer({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-4xl overflow-hidden flex flex-col">
-        <SheetHeader className="pb-6">
+        <SheetHeader className="pb-6 shrink-0">
           <SheetTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
             导入外部课表
           </SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1 pr-6">
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className="h-full pr-6">
           <div className="space-y-6 pb-6 px-2">
             {/* 上传 */}
             <Card>
@@ -488,34 +488,63 @@ export default function ImportScheduleDrawer({
                 </div>
 
                 {headers.length > 0 && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { label: '课程名', value: courseCol, onChange: setCourseCol },
-                      { label: '班级', value: classCol, onChange: setClassCol },
-                      { label: '教师', value: teacherCol, onChange: setTeacherCol },
-                      { label: '星期', value: dayCol, onChange: setDayCol },
-                      { label: '节次', value: periodCol, onChange: setPeriodCol },
-                      { label: '周次', value: weeksCol, onChange: setWeeksCol },
-                      { label: '场地', value: venueCol, onChange: setVenueCol },
-                      { label: '课程性质', value: natureCol, onChange: setNatureCol },
-                    ].map((col) => (
-                      <div key={col.label} className="space-y-1.5">
-                        <Label className="text-xs">{col.label}</Label>
-                        <Select value={col.value} onValueChange={col.onChange}>
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue placeholder="选择列" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {headers.map((h) => (
-                              <SelectItem key={h} value={h}>
-                                {h}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ))}
-                  </div>
+                  <Card>
+                    <CardHeader className="pb-4">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        列字段对应
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 pt-0 space-y-3">
+                      {[
+                        { label: '课程名', value: courseCol, onChange: setCourseCol },
+                        { label: '班级', value: classCol, onChange: setClassCol },
+                        { label: '教师', value: teacherCol, onChange: setTeacherCol },
+                        { label: '星期', value: dayCol, onChange: setDayCol },
+                        { label: '节次', value: periodCol, onChange: setPeriodCol },
+                        { label: '周次', value: weeksCol, onChange: setWeeksCol },
+                        { label: '场地', value: venueCol, onChange: setVenueCol },
+                        { label: '课程性质', value: natureCol, onChange: setNatureCol },
+                      ].map((col) => (
+                        <div
+                          key={col.label}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="space-y-0.5">
+                            <div className="text-sm font-medium">系统字段：{col.label}</div>
+                            {col.value ? (
+                              <Badge
+                                variant="outline"
+                                className="gap-1 text-green-600 border-green-300 text-[10px]"
+                              >
+                                <CheckCircle2 className="h-3 w-3" />
+                                已映射到「{col.value}」
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="gap-1 text-red-600 border-red-300 text-[10px]"
+                              >
+                                <AlertTriangle className="h-3 w-3" />
+                                未映射
+                              </Badge>
+                            )}
+                          </div>
+                          <Select value={col.value} onValueChange={col.onChange}>
+                            <SelectTrigger className="w-[200px] h-9 text-xs">
+                              <SelectValue placeholder="选择 Excel 列" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {headers.map((h) => (
+                                <SelectItem key={h} value={h}>
+                                  {h}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
                 )}
               </CardContent>
             </Card>
@@ -974,6 +1003,7 @@ export default function ImportScheduleDrawer({
             )}
           </div>
         </ScrollArea>
+        </div>
       </SheetContent>
     </Sheet>
   )
