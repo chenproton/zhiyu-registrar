@@ -1155,10 +1155,18 @@ export default function TaskOrchestrationTab({
   selectedGrade,
   importedTasks,
   onImported,
+  venues: propVenues,
+  venueTypes: propVenueTypes,
+  periods: propPeriods,
+  hideManagementButtons,
 }: {
   selectedGrade: string
   importedTasks?: Task[]
   onImported?: (tasks: Task[]) => void
+  venues?: Venue[]
+  venueTypes?: string[]
+  periods?: string[]
+  hideManagementButtons?: boolean
 }) {
   // 固定按场地查看，不再切换视图
   const [viewMode, setViewMode] = useState<'class' | 'teacher' | 'venue'>('venue')
@@ -1173,10 +1181,14 @@ export default function TaskOrchestrationTab({
   const [localTasks, setLocalTasks] = useState<Task[]>(baseTasks)
   const totalWeeks = 16
 
-  // 节次、场地配置状态
-  const [periods, setPeriods] = useState<string[]>([...defaultPeriods])
-  const [venues, setVenues] = useState<Venue[]>(defaultVenues)
-  const [venueTypes, setVenueTypes] = useState<string[]>(defaultVenueTypes)
+  // 节次、场地配置状态（优先使用外部传入的值，否则本地管理）
+  const [localVenues, setLocalVenues] = useState<Venue[]>(defaultVenues)
+  const [localVenueTypes, setLocalVenueTypes] = useState<string[]>(defaultVenueTypes)
+  const [localPeriods, setLocalPeriods] = useState<string[]>([...defaultPeriods])
+
+  const venues = propVenues ?? localVenues
+  const venueTypes = propVenueTypes ?? localVenueTypes
+  const periods = propPeriods ?? localPeriods
 
   // 抽屉 / 弹窗状态
   const [importDrawerOpen, setImportDrawerOpen] = useState(false)
@@ -1264,7 +1276,7 @@ export default function TaskOrchestrationTab({
           label: v.name,
           badge: `${filteredTasks.filter((t) => t.venueId === v.id).length}节`,
         })),
-    [filteredTasks]
+    [venues, filteredTasks]
   )
 
   // Auto-select first item when viewMode changes or current selection becomes invalid
@@ -1300,7 +1312,7 @@ export default function TaskOrchestrationTab({
     }
     const v = venues.find((x) => x.id === selectedVenueId)
     return v ? v.name : ''
-  }, [viewMode, selectedClassId, selectedFacultyId, selectedVenueId])
+  }, [viewMode, selectedClassId, selectedFacultyId, selectedVenueId, venues])
 
   const sidebarProps = useMemo(() => {
     if (viewMode === 'class')
@@ -1342,24 +1354,28 @@ export default function TaskOrchestrationTab({
                 <Upload className="h-4 w-4" />
                 导入外部课表
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setVenueDialogOpen(true)}
-              >
-                <MapPin className="h-4 w-4" />
-                场地管理
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setPeriodDialogOpen(true)}
-              >
-                <Clock className="h-4 w-4" />
-                节次设置
-              </Button>
+              {!hideManagementButtons && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setVenueDialogOpen(true)}
+                  >
+                    <MapPin className="h-4 w-4" />
+                    场地管理
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setPeriodDialogOpen(true)}
+                  >
+                    <Clock className="h-4 w-4" />
+                    节次设置
+                  </Button>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {importedTasks && importedTasks.length > 0 && (
@@ -1445,23 +1461,27 @@ export default function TaskOrchestrationTab({
       />
 
       {/* 场地管理弹窗 */}
-      <VenueManagementDialog
-        open={venueDialogOpen}
-        onOpenChange={setVenueDialogOpen}
-        venues={venues}
-        venueTypes={venueTypes}
-        onChange={(state) => {
-          setVenues(state.venues as Venue[])
-          setVenueTypes(state.venueTypes)
-        }}
-      />
+      {!hideManagementButtons && (
+        <VenueManagementDialog
+          open={venueDialogOpen}
+          onOpenChange={setVenueDialogOpen}
+          venues={localVenues}
+          venueTypes={localVenueTypes}
+          onChange={(state) => {
+            setLocalVenues(state.venues as Venue[])
+            setLocalVenueTypes(state.venueTypes)
+          }}
+        />
+      )}
 
       {/* 节次设置弹窗 */}
-      <PeriodSettingsDialog
-        open={periodDialogOpen}
-        onOpenChange={setPeriodDialogOpen}
-        onChange={(rows) => setPeriods(rows.map((r) => r.name))}
-      />
+      {!hideManagementButtons && (
+        <PeriodSettingsDialog
+          open={periodDialogOpen}
+          onOpenChange={setPeriodDialogOpen}
+          onChange={(rows) => setLocalPeriods(rows.map((r) => r.name))}
+        />
+      )}
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import CourseManagementTab from './_components/course-management-tab'
 import TeachingPlanTab from './_components/teaching-plan-tab'
 import TaskOrchestrationTab from './_components/task-orchestration-tab'
+import VenuePeriodConfigTab from './_components/venue-period-config-tab'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
@@ -70,7 +71,7 @@ import {
   classSchedules,
   classes,
   faculty,
-  venues,
+  venues as defaultVenues,
   departments,
   majors,
   grades,
@@ -78,11 +79,13 @@ import {
   teachingPlans,
   trainingPrograms,
   tasks,
-  allPeriods,
+  allPeriods as defaultPeriods,
+  venueTypes as defaultVenueTypes,
   type Task,
   type ClassSchedule,
   type ClassPeriod,
   type CourseAssignment,
+  type Venue,
   courseAssignments,
 } from '@/lib/mock-data'
 
@@ -90,7 +93,7 @@ import {
 // 步骤导航组件
 // ============================================
 const steps = [
-  { id: 'import', label: '导入排课结果', icon: FileSpreadsheet },
+  { id: 'import', label: '场地节次配置', icon: MapPin },
   { id: 'custom', label: '自定义排课', icon: Settings2 },
   { id: 'export', label: '课表同步推送', icon: Download },
 ]
@@ -876,6 +879,11 @@ export default function SchedulingCenterPage() {
   // 导入的排课结果提升到页面级，便于步骤间共享
   const [importedTasks, setImportedTasks] = useState<Task[]>([])
 
+  // 场地和节次配置提升到页面级，便于步骤间共享
+  const [venues, setVenues] = useState<Venue[]>(defaultVenues)
+  const [venueTypes, setVenueTypes] = useState<string[]>(defaultVenueTypes)
+  const [periods, setPeriods] = useState<string[]>([...defaultPeriods])
+
   // 根据专业自动匹配培养方案（模拟对应关系）
   const matchedProgram = useMemo(() => {
     if (!selectedMajorId) return null
@@ -1030,21 +1038,25 @@ export default function SchedulingCenterPage() {
         ) : (
           <>
             {currentStep === 0 && (
-              <TaskOrchestrationTab
-                selectedGrade={selectedGrade}
-                importedTasks={importedTasks}
-                onImported={(tasks) => {
-                  setImportedTasks(tasks)
-                  // 根据导入数据中的班级自动切换到对应年级，确保网格能显示
-                  const firstClass = tasks[0] ? classes.find((c) => c.id === tasks[0].classId) : null
-                  if (firstClass) {
-                    setSelectedGradeId(firstClass.gradeId)
-                  }
+              <VenuePeriodConfigTab
+                venues={venues}
+                venueTypes={venueTypes}
+                onVenuesChange={(v, vt) => {
+                  setVenues(v)
+                  setVenueTypes(vt)
                 }}
+                onPeriodsChange={setPeriods}
               />
             )}
             {currentStep === 1 && (
-              <TaskOrchestrationTab selectedGrade={selectedGrade} importedTasks={importedTasks} />
+              <TaskOrchestrationTab
+                selectedGrade={selectedGrade}
+                importedTasks={importedTasks}
+                venues={venues}
+                venueTypes={venueTypes}
+                periods={periods}
+                hideManagementButtons
+              />
             )}
             {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
           </>
