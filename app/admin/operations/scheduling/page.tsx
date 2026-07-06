@@ -71,7 +71,7 @@ import {
   classSchedules,
   classes,
   faculty,
-  venues as defaultVenues,
+  venues as mockVenues,
   departments,
   majors,
   grades,
@@ -79,8 +79,8 @@ import {
   teachingPlans,
   trainingPrograms,
   tasks,
-  allPeriods as defaultPeriods,
-  venueTypes as defaultVenueTypes,
+  allPeriods,
+  venueTypes as mockVenueTypes,
   type Task,
   type ClassSchedule,
   type ClassPeriod,
@@ -554,7 +554,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
                   <SelectValue placeholder="选择场地" />
                 </SelectTrigger>
                 <SelectContent>
-                  {venues.map((v) => (
+                  {mockVenues.map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -753,7 +753,7 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
   )
 
   // 场地课表
-  const venueItems = venues
+  const venueItems = mockVenues
     .filter((v) => gradeTasks.some((t) => t.venueId === v.id))
     .map((v) => ({ id: v.id, name: v.name }))
   const venueTable = renderPeriodTable(
@@ -880,9 +880,9 @@ export default function SchedulingCenterPage() {
   const [importedTasks, setImportedTasks] = useState<Task[]>([])
 
   // 场地和节次配置提升到页面级，便于步骤间共享
-  const [venues, setVenues] = useState<Venue[]>(defaultVenues)
-  const [venueTypes, setVenueTypes] = useState<string[]>(defaultVenueTypes)
-  const [periods, setPeriods] = useState<string[]>([...defaultPeriods])
+  const [venues, setVenues] = useState<Venue[]>(mockVenues)
+  const [venueTypes, setVenueTypes] = useState<string[]>(mockVenueTypes)
+  const [periods, setPeriods] = useState<string[]>([...allPeriods])
 
   // 根据专业自动匹配培养方案（模拟对应关系）
   const matchedProgram = useMemo(() => {
