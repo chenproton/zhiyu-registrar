@@ -905,6 +905,17 @@ export default function SchedulingCenterPage() {
     return majors.filter((m) => m.departmentId === selectedDept)
   }, [selectedDept])
 
+  // 专业过滤年级
+  const matchedGrades = useMemo(() => {
+    if (!selectedMajorId) return []
+    const validEntryYears = new Set(
+      trainingPrograms
+        .filter((tp) => tp.majorId === selectedMajorId)
+        .map((tp) => tp.entryYear)
+    )
+    return grades.filter((g) => validEntryYears.has(g.entryYear))
+  }, [selectedMajorId])
+
   // 学期选项
   const semesterOptions = useMemo(() => {
     if (!matchedProgram) return []
@@ -954,40 +965,20 @@ export default function SchedulingCenterPage() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">选择年级</Label>
-              <Select
-                value={selectedGradeId}
-                onValueChange={(v) => {
-                  setSelectedGradeId(v)
-                  setSelectedMajorId('')
-                  setSelectedSemester('all')
-                }}
-                disabled={!selectedDept}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={selectedDept ? '请选择年级' : '先选院系'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {grades.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs">选择专业</Label>
               <Select
                 value={selectedMajorId}
                 onValueChange={(v) => {
                   setSelectedMajorId(v)
+                  setSelectedGradeId('')
                   setSelectedSemester('all')
                 }}
-                disabled={!selectedGradeId || matchedMajors.length === 0}
+                disabled={!selectedDept || matchedMajors.length === 0}
               >
                 <SelectTrigger className="w-[220px]">
                   <SelectValue placeholder={
-                    !selectedGradeId
-                      ? '先选年级'
+                    !selectedDept
+                      ? '先选院系'
                       : matchedMajors.length === 0
                         ? '无可用专业'
                         : '请选择专业'
@@ -996,6 +987,32 @@ export default function SchedulingCenterPage() {
                 <SelectContent>
                   {matchedMajors.map((m) => (
                     <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">选择年级</Label>
+              <Select
+                value={selectedGradeId}
+                onValueChange={(v) => {
+                  setSelectedGradeId(v)
+                  setSelectedSemester('all')
+                }}
+                disabled={!selectedMajorId || matchedGrades.length === 0}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={
+                    !selectedMajorId
+                      ? '先选专业'
+                      : matchedGrades.length === 0
+                        ? '无可用年级'
+                        : '请选择年级'
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {matchedGrades.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

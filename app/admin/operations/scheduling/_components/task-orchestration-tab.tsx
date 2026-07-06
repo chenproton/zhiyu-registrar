@@ -483,213 +483,6 @@ function SearchableSelect({
 }
 
 // ==================== New Task Dialog ====================
-function NewTaskDialog({
-  open,
-  onClose,
-  periods,
-  venues,
-}: {
-  open: boolean
-  onClose: () => void
-  periods: string[]
-  venues: Venue[]
-}) {
-  const [taskType, setTaskType] = useState<'course' | 'practice'>('course')
-  const [linkedItemId, setLinkedItemId] = useState('')
-  const [selectedClassId, setSelectedClassId] = useState('')
-  const [selectedFacultyId, setSelectedFacultyId] = useState('')
-  const [selectedDay, setSelectedDay] = useState('1')
-  const [selectedPeriods, setSelectedPeriods] = useState<string[]>([])
-  const [selectedVenueId, setSelectedVenueId] = useState('')
-
-  const courseOptions = useMemo(
-    () =>
-      (trainingPrograms[0]?.courses ?? []).map((c) => ({
-        value: c.id,
-        label: `${c.name} (${c.code})`,
-      })),
-    []
-  )
-
-  const practiceOptions = useMemo(
-    () =>
-      curriculumPracticePool.map((p) => ({
-        value: p.id,
-        label: `${p.name} (${p.code})`,
-      })),
-    []
-  )
-
-  const selectedItemVersion = useMemo(() => {
-    const pool = taskType === 'course' ? curriculumCoursePool : curriculumPracticePool
-    return pool.find((p) => p.id === linkedItemId)?.version
-  }, [taskType, linkedItemId])
-
-  const classOptions = useMemo(
-    () => classes.map((c) => ({ value: c.id, label: c.name })),
-    []
-  )
-
-  const facultyOptions = useMemo(
-    () =>
-      faculty.map((f) => ({
-        value: f.id,
-        label: `${f.name} (${f.title})`,
-      })),
-    []
-  )
-
-  const venueOptions = useMemo(
-    () => venues.map((v) => ({ value: v.id, label: v.name })),
-    []
-  )
-
-  // Reset linked item when task type changes
-  useMemo(() => {
-    setLinkedItemId('')
-  }, [taskType])
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            新建任务
-          </DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-5 py-2">
-            {/* 任务类型 */}
-            <div className="space-y-2">
-              <Label>任务类型</Label>
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="taskType"
-                    checked={taskType === 'course'}
-                    onChange={() => setTaskType('course')}
-                    className="accent-primary h-4 w-4"
-                  />
-                  <span className="text-sm">课程</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="taskType"
-                    checked={taskType === 'practice'}
-                    onChange={() => setTaskType('practice')}
-                    className="accent-primary h-4 w-4"
-                  />
-                  <span className="text-sm">岗位</span>
-                </label>
-              </div>
-            </div>
-
-            {/* 关联课程/岗位 */}
-            <SearchableSelect
-              label={`关联${taskType === 'course' ? '课程' : '岗位'}`}
-              value={linkedItemId}
-              onChange={setLinkedItemId}
-              options={taskType === 'course' ? courseOptions : practiceOptions}
-              placeholder={`请选择${taskType === 'course' ? '课程' : '岗位'}`}
-            />
-            {selectedItemVersion && (
-              <div className="text-xs text-muted-foreground mt-1">
-                版本号: <span className="font-medium text-foreground">{selectedItemVersion}</span>
-              </div>
-            )}
-
-            {/* 参与班级 */}
-            <SearchableSelect
-              label="参与班级"
-              value={selectedClassId}
-              onChange={setSelectedClassId}
-              options={classOptions}
-              placeholder="请选择班级"
-            />
-
-            {/* 任课教师 */}
-            <SearchableSelect
-              label="任课教师"
-              value={selectedFacultyId}
-              onChange={setSelectedFacultyId}
-              options={facultyOptions}
-              placeholder="请选择教师"
-            />
-
-            {/* 节次 - 二级联动 */}
-            <div className="space-y-2">
-              <Label>星期</Label>
-              <Select value={selectedDay} onValueChange={setSelectedDay}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">周一</SelectItem>
-                  <SelectItem value="2">周二</SelectItem>
-                  <SelectItem value="3">周三</SelectItem>
-                  <SelectItem value="4">周四</SelectItem>
-                  <SelectItem value="5">周五</SelectItem>
-                  <SelectItem value="6">周六</SelectItem>
-                  <SelectItem value="7">周日</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>节次（可多选）</Label>
-              <div className="flex flex-wrap gap-2">
-                {periods.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => {
-                      setSelectedPeriods((prev) =>
-                        prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
-                      )
-                    }}
-                    className={cn(
-                      'px-3 py-1.5 text-xs rounded-md border transition-colors',
-                      selectedPeriods.includes(p)
-                        ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-background text-muted-foreground border-border hover:border-primary/50'
-                    )}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 上课场地 */}
-            <SearchableSelect
-              label="上课场地"
-              value={selectedVenueId}
-              onChange={setSelectedVenueId}
-              options={venueOptions}
-              placeholder="请选择场地"
-            />
-          </div>
-        </ScrollArea>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            取消
-          </Button>
-          <Button
-            onClick={() => {
-              onClose()
-              toast.success('任务创建成功')
-            }}
-          >
-            创建任务
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 // ==================== View Dialog ====================
 function EditTaskDialog({
   open,
@@ -1175,7 +968,6 @@ export default function TaskOrchestrationTab({
   const [selectedFacultyId, setSelectedFacultyId] = useState('')
   const [selectedVenueId, setSelectedVenueId] = useState('')
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [currentWeek, setCurrentWeek] = useState(1)
   const baseTasks = importedTasks?.length ? importedTasks : tasks
@@ -1446,19 +1238,10 @@ export default function TaskOrchestrationTab({
           <ScheduleGrid
             taskList={currentTasks}
             onEditTask={handleEditTask}
-            onCreateTask={() => setNewTaskDialogOpen(true)}
             periods={periods}
           />
         </div>
       </div>
-
-      {/* 新建任务弹窗 */}
-      <NewTaskDialog
-        open={newTaskDialogOpen}
-        onClose={() => setNewTaskDialogOpen(false)}
-        periods={periods}
-        venues={venues}
-      />
 
       {/* 编辑弹窗 */}
       <EditTaskDialog
