@@ -51,6 +51,7 @@ interface ParsedRow {
   weeks: string
   venueName: string
   type: Task['type']
+  courseId?: string
   classId?: string
   facultyId?: string
   venueId?: string
@@ -436,6 +437,7 @@ export default function ImportScheduleDrawer({
         weeks: weeksRaw ? (weeksRaw.endsWith('周') ? weeksRaw : `${weeksRaw}周`) : '-',
         venueName: venue?.name || venueRaw || '-',
         type: parseNature(natureRaw),
+        courseId: course?.id,
         classId: cls?.id,
         facultyId: fac?.id,
         venueId,
@@ -460,6 +462,7 @@ export default function ImportScheduleDrawer({
       const cls = classes.find((c) => c.id === r.classId)!
       const fac = faculty.find((f) => f.id === r.facultyId)!
       const venue = venues.find((v) => v.id === r.venueId)!
+      const ver = r.courseId ? courseVersions[r.courseId] : undefined
       return {
         id: `imported-${Date.now()}-${i}`,
         code: `T-${cls.code}-${Date.now()}-${i}`,
@@ -469,6 +472,7 @@ export default function ImportScheduleDrawer({
         status: 'draft',
         termId: 't1',
         courseName: r.courseName,
+        courseVersion: ver ? `v${ver}` : undefined,
         classId: cls.id,
         className: cls.name,
         facultyId: fac.id,

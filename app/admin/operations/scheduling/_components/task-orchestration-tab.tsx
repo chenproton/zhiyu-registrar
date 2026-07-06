@@ -517,11 +517,14 @@ function EditTaskDialog({
 
   const sceneName = isScene ? getMockSceneName(positionName) : ''
 
+  const versionRow = task.courseVersion ? { label: '版本号', value: <Badge variant="secondary" className="text-xs h-5">v{task.courseVersion}</Badge> } : null
+
   const viewRows = isScene
     ? [
         { label: '课时类型', value: <Badge variant="outline" className="text-xs h-5 border-orange-300 text-orange-600">岗位场景</Badge> },
         { label: '关联岗位', value: positionName },
         { label: '关联场景', value: sceneName },
+        ...(versionRow ? [versionRow] : []),
         { label: '参与班级', value: classes.find((c) => c.id === task.classId)?.name ?? task.className },
         { label: '任课教师', value: (() => {
           const f = faculty.find((x) => x.id === task.facultyId)
@@ -533,6 +536,7 @@ function EditTaskDialog({
     : [
         { label: '课时类型', value: <Badge variant="default" className="text-xs h-5">课程</Badge> },
         { label: '关联课程', value: trainingPrograms[0]?.courses.find((c) => c.id === task.externalPlatformId)?.name ?? task.courseName },
+        ...(versionRow ? [versionRow] : []),
         { label: '参与班级', value: classes.find((c) => c.id === task.classId)?.name ?? task.className },
         { label: '任课教师', value: (() => {
           const f = faculty.find((x) => x.id === task.facultyId)
