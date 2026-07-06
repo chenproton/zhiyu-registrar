@@ -308,12 +308,12 @@ export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {
       </div>
 
       {/* Right: Settings Panel */}
-      <Card className="w-[360px] flex-shrink-0 overflow-auto">
-        <CardContent className="p-4 space-y-5">
+      <Card className="w-[260px] flex-shrink-0 overflow-auto">
+        <CardContent className="p-4 space-y-4">
           {/* Period counts */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">排课节次设置</h4>
-            <div className="grid grid-cols-2 gap-3">
+            <h4 className="text-sm font-semibold mb-2">排课节次设置</h4>
+            <div className="space-y-2">
               <NumberField
                 label="早自习"
                 value={settings.morningSelfCount}
@@ -341,39 +341,38 @@ export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {
 
           {/* Duration settings */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">课程时间设置</h4>
+            <h4 className="text-sm font-semibold mb-2">课程时间设置</h4>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">早自习</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">早自习</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.morningSelfDuration} onChange={(v) => updateSetting('morningSelfDuration', v)} />
                   <DurationRow label="课间时长" value={settings.morningSelfBreak} onChange={(v) => updateSetting('morningSelfBreak', v)} />
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">上午</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">上午</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.morningClassDuration} onChange={(v) => updateSetting('morningClassDuration', v)} />
                   <DurationRow label="课间时长" value={settings.morningBreakDuration} onChange={(v) => updateSetting('morningBreakDuration', v)} />
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">下午</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">下午</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.afternoonClassDuration} onChange={(v) => updateSetting('afternoonClassDuration', v)} />
                   <DurationRow label="课间时长" value={settings.afternoonBreakDuration} onChange={(v) => updateSetting('afternoonBreakDuration', v)} />
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">晚自习</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">晚自习</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.eveningDuration} onChange={(v) => updateSetting('eveningDuration', v)} />
                   <DurationRow label="课间时长" value={settings.eveningBreak} onChange={(v) => updateSetting('eveningBreak', v)} />
                 </div>
               </div>
             </div>
           </div>
-
 
         </CardContent>
       </Card>
