@@ -57,6 +57,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import * as XLSX from 'xlsx'
 import {
   classes,
   faculty,
@@ -1199,6 +1200,21 @@ export default function TaskOrchestrationTab({
     setLocalTasks(importedTasks?.length ? importedTasks : tasks)
   }, [importedTasks])
 
+  const downloadTemplate = () => {
+    const headers = ['课程名称', '教学班', '主讲教师', '星期', '节次', '周次', '场地', '课程性质']
+    const sampleData = [
+      ['计算机网络技术', '软件工程2029-1班', '张教授', '周一', '1-2节', '1-16周', 'A101', '传统'],
+      ['Web前端开发', '软件工程2029-2班', '李老师', '周三', '3-4节', '1-16周', 'B201', '传统'],
+      ['Java程序设计', '软件工程2029-1班', '王老师', '周五', '5-6节', '3-18周', 'C101', '场景'],
+    ]
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleData])
+    ws['!cols'] = headers.map(() => ({ wch: 18 }))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, '课表导入模板')
+    XLSX.writeFile(wb, '课表导入模板.xlsx')
+    toast.success('课表导入模板已下载')
+  }
+
   const gradeData = grades.find((g) => g.id === selectedGrade)
   const gradeClassIds = useMemo(
     () => (gradeData ? classes.filter((c) => c.gradeId === selectedGrade).map((c) => c.id) : []),
@@ -1345,6 +1361,15 @@ export default function TaskOrchestrationTab({
           {/* 顶部工具栏 */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={downloadTemplate}
+              >
+                <Download className="h-4 w-4" />
+                下载导入模板
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
