@@ -487,31 +487,39 @@ export default function ImportScheduleDrawer({
                   )}
                 </div>
 
-                {headers.length > 0 && (
-                  <Card>
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        列字段对应
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 pt-0 space-y-3">
-                      {[
-                        { label: '课程名', value: courseCol, onChange: setCourseCol },
-                        { label: '班级', value: classCol, onChange: setClassCol },
-                        { label: '教师', value: teacherCol, onChange: setTeacherCol },
-                        { label: '星期', value: dayCol, onChange: setDayCol },
-                        { label: '节次', value: periodCol, onChange: setPeriodCol },
-                        { label: '周次', value: weeksCol, onChange: setWeeksCol },
-                        { label: '场地', value: venueCol, onChange: setVenueCol },
-                        { label: '课程性质', value: natureCol, onChange: setNatureCol },
-                      ].map((col) => (
+                <Card>
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      列字段对应
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 pt-0 space-y-3">
+                    {[
+                      { label: '课程名', value: courseCol, onChange: setCourseCol },
+                      { label: '班级', value: classCol, onChange: setClassCol },
+                      { label: '教师', value: teacherCol, onChange: setTeacherCol },
+                      { label: '星期', value: dayCol, onChange: setDayCol },
+                      { label: '节次', value: periodCol, onChange: setPeriodCol },
+                      { label: '周次', value: weeksCol, onChange: setWeeksCol },
+                      { label: '场地', value: venueCol, onChange: setVenueCol },
+                      { label: '课程性质', value: natureCol, onChange: setNatureCol },
+                    ].map((col) => {
+                      const hasHeaders = headers.length > 0
+                      return (
                         <div
                           key={col.label}
                           className="flex items-center justify-between p-3 border rounded-lg"
                         >
                           <div className="space-y-0.5">
                             <div className="text-sm font-medium">系统字段：{col.label}</div>
-                            {col.value ? (
+                            {!hasHeaders ? (
+                              <Badge
+                                variant="outline"
+                                className="gap-1 text-muted-foreground text-[10px]"
+                              >
+                                请导入表格进行配置
+                              </Badge>
+                            ) : col.value ? (
                               <Badge
                                 variant="outline"
                                 className="gap-1 text-green-600 border-green-300 text-[10px]"
@@ -529,9 +537,13 @@ export default function ImportScheduleDrawer({
                               </Badge>
                             )}
                           </div>
-                          <Select value={col.value} onValueChange={col.onChange}>
+                          <Select
+                            value={col.value}
+                            onValueChange={col.onChange}
+                            disabled={!hasHeaders}
+                          >
                             <SelectTrigger className="w-[200px] h-9 text-xs">
-                              <SelectValue placeholder="选择 Excel 列" />
+                              <SelectValue placeholder={hasHeaders ? '选择 Excel 列' : '无可用列'} />
                             </SelectTrigger>
                             <SelectContent>
                               {headers.map((h) => (
@@ -542,10 +554,10 @@ export default function ImportScheduleDrawer({
                             </SelectContent>
                           </Select>
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                )}
+                      )
+                    })}
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
 
