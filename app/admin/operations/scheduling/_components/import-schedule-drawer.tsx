@@ -622,7 +622,6 @@ export default function ImportScheduleDrawer({
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center px-1 mb-1">
                       <span className="text-xs font-semibold text-muted-foreground flex-1">当前系统</span>
-                      <span className="text-xs font-semibold text-muted-foreground w-[120px] text-center">版本号</span>
                       <span className="text-xs font-semibold text-muted-foreground w-[220px] text-center">Excel 识别结果</span>
                     </div>
                     {coursePool.length === 0 ? (
@@ -637,32 +636,32 @@ export default function ImportScheduleDrawer({
                             key={course.id}
                             className="flex items-center gap-3 p-3 border rounded-lg"
                           >
-                            <div className="flex-1 space-y-0.5">
-                              <div className="text-sm font-medium">{course.name}</div>
+                            <div className="flex-1 flex items-center gap-2 min-w-0">
+                              <span className="text-sm font-medium truncate">{course.name}</span>
+                              <Select
+                                value={ver}
+                                onValueChange={(v) => setCourseVersions((prev) => ({ ...prev, [course.id]: v }))}
+                              >
+                                <SelectTrigger className="w-[90px] h-7 text-xs">
+                                  <SelectValue placeholder="版本" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {versions.map((v) => (
+                                    <SelectItem key={v} value={v}>v{v}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                               {extVal && ver ? (
-                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
+                                <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px] shrink-0">
                                   <CheckCircle2 className="h-3 w-3" />
                                   已关联
                                 </Badge>
                               ) : (
-                                <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 text-[10px]">
+                                <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 text-[10px] shrink-0">
                                   待配置
                                 </Badge>
                               )}
                             </div>
-                            <Select
-                              value={ver}
-                              onValueChange={(v) => setCourseVersions((prev) => ({ ...prev, [course.id]: v }))}
-                            >
-                              <SelectTrigger className="w-[120px] h-9 text-xs">
-                                <SelectValue placeholder="版本" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {versions.map((v) => (
-                                  <SelectItem key={v} value={v}>v{v}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
                             <Select
                               value={extVal}
                               onValueChange={(val) =>
