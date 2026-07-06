@@ -582,8 +582,8 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                       <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
+                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                     </div>
                     {externalCourseValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到课程数据</p>
@@ -655,8 +655,8 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                       <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
+                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                     </div>
                     {externalClassValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到班级数据</p>
@@ -728,8 +728,8 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                       <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
+                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                     </div>
                     {externalTeacherValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到教师数据</p>
@@ -801,8 +801,8 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                       <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
+                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                     </div>
                     {externalVenueValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到场地数据</p>
@@ -874,8 +874,8 @@ export default function ImportScheduleDrawer({
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
                     <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                       <span className="text-xs font-semibold text-muted-foreground">Excel 识别结果</span>
+                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
                     </div>
                     {externalPeriodValues.length === 0 ? (
                       <p className="text-sm text-muted-foreground">未识别到节次数据</p>
