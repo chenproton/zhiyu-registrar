@@ -620,9 +620,10 @@ export default function ImportScheduleDrawer({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 pt-0 space-y-3">
-                    <div className="flex items-center justify-between px-1 mb-1">
-                      <span className="text-xs font-semibold text-muted-foreground">当前系统</span>
-                      <span className="text-xs font-semibold text-muted-foreground">选择版本号</span>
+                    <div className="flex items-center px-1 mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground flex-1">当前系统</span>
+                      <span className="text-xs font-semibold text-muted-foreground w-[120px] text-center">版本号</span>
+                      <span className="text-xs font-semibold text-muted-foreground w-[220px] text-center">Excel 识别结果</span>
                     </div>
                     {coursePool.length === 0 ? (
                       <p className="text-sm text-muted-foreground">暂无系统课程数据</p>
@@ -630,21 +631,22 @@ export default function ImportScheduleDrawer({
                       coursePool.map((course) => {
                         const ver = courseVersions[course.id] || ''
                         const versions = courseVersionOptions[course.id] || []
+                        const extVal = courseReverseMap.get(course.id) || ''
                         return (
                           <div
                             key={course.id}
-                            className="flex items-center justify-between p-3 border rounded-lg"
+                            className="flex items-center gap-3 p-3 border rounded-lg"
                           >
-                            <div className="space-y-0.5">
+                            <div className="flex-1 space-y-0.5">
                               <div className="text-sm font-medium">{course.name}</div>
-                              {ver ? (
+                              {extVal && ver ? (
                                 <Badge variant="outline" className="gap-1 text-green-600 border-green-300 text-[10px]">
                                   <CheckCircle2 className="h-3 w-3" />
-                                  版本 {ver}
+                                  已关联
                                 </Badge>
                               ) : (
                                 <Badge variant="outline" className="gap-1 text-amber-600 border-amber-300 text-[10px]">
-                                  未选择版本
+                                  待配置
                                 </Badge>
                               )}
                             </div>
@@ -652,12 +654,32 @@ export default function ImportScheduleDrawer({
                               value={ver}
                               onValueChange={(v) => setCourseVersions((prev) => ({ ...prev, [course.id]: v }))}
                             >
-                              <SelectTrigger className="w-[140px] h-9 text-xs">
-                                <SelectValue placeholder="选择版本" />
+                              <SelectTrigger className="w-[120px] h-9 text-xs">
+                                <SelectValue placeholder="版本" />
                               </SelectTrigger>
                               <SelectContent>
                                 {versions.map((v) => (
                                   <SelectItem key={v} value={v}>v{v}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select
+                              value={extVal}
+                              onValueChange={(val) =>
+                                setCourseMapping((prev) => {
+                                  const next = { ...prev }
+                                  Object.keys(next).forEach((k) => { if (next[k] === course.id) delete next[k] })
+                                  if (val) next[val] = course.id
+                                  return next
+                                })
+                              }
+                            >
+                              <SelectTrigger className="w-[220px] h-9 text-xs">
+                                <SelectValue placeholder="关联 Excel 课程" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {externalCourseValues.map((v) => (
+                                  <SelectItem key={v} value={v}>{v}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
