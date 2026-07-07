@@ -35,6 +35,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { FilterBar } from '@/components/shared/filter-bar'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Plus, ChevronsUpDown, Check, Users, GraduationCap, BookOpen, UserMinus, UserCheck, Upload, Download, Award, ChevronRight, ChevronDown } from 'lucide-react'
 import { students, classes, majors, departments, grades } from '@/lib/mock-data'
 import { toast } from 'sonner'
@@ -57,8 +58,8 @@ function StudentsPageContent() {
   const [editOpen, setEditOpen] = useState(false)
   const [selectedStudent, setSelectedStudent] = useState<typeof students[0] | null>(null)
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null)
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([])
 
-  // 从 URL 读取 classId
   useEffect(() => {
     const classIdFromUrl = searchParams.get('classId')
     if (classIdFromUrl) {
@@ -66,7 +67,6 @@ function StudentsPageContent() {
     }
   }, [searchParams])
 
-  // 班级 Combobox
   const [createClassOpen, setCreateClassOpen] = useState(false)
   const [editClassOpen, setEditClassOpen] = useState(false)
   const [createClassId, setCreateClassId] = useState('')
@@ -109,7 +109,6 @@ function StudentsPageContent() {
     setEditOpen(true)
   }
 
-  // 组织架构树数据
   const treeData = useMemo(() => {
     return departments.map(dept => {
       const deptMajors = majors.filter(m => m.departmentId === dept.id)
@@ -117,16 +116,12 @@ function StudentsPageContent() {
         ...dept,
         majors: deptMajors.map(major => {
           const majorClasses = classes.filter(c => c.majorId === major.id)
-          const gradeIds = [...new Set(majorClasses.map(c => c.gradeId))]
           return {
             ...major,
-            grades: gradeIds.map(gid => {
-              const grade = grades.find(g => g.id === gid)!
-              return {
-                ...grade,
-                classes: majorClasses.filter(c => c.gradeId === gid)
-              }
-            })
+            classes: majorClasses.map(c => ({
+              ...c,
+              gradeName: grades.find(g => g.id === c.gradeId)?.name || ''
+            }))
           }
         })
       }
@@ -160,7 +155,6 @@ function StudentsPageContent() {
         </div>
       </div>
 
-      {/* 统计卡片 */}
       <div className="grid gap-4 md:grid-cols-5">
         <Card>
           <CardContent className="flex items-center justify-between p-4">
@@ -220,7 +214,6 @@ function StudentsPageContent() {
       </div>
 
       <div className="flex gap-4 items-start">
-        {/* 左侧组织架构树 */}
         <Card className="w-64 shrink-0">
           <CardContent className="p-4">
             <h3 className="text-sm font-semibold mb-3">组织架构</h3>
@@ -248,7 +241,6 @@ function StudentsPageContent() {
           </CardContent>
         </Card>
 
-        {/* 右侧内容 */}
         <div className="flex-1 space-y-4">
           <Card>
             <CardContent className="pt-6">
@@ -286,14 +278,23 @@ function StudentsPageContent() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={filteredStudents.length > 0 && selectedStudents.length === filteredStudents.length}
+                        onCheckedChange={() => {
+                          if (selectedStudents.length === filteredStudents.length) {
+                            setSelectedStudents([])
+                          } else {
+                            setSelectedStudents(filteredStudents.map(s => s.id))
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead>学号</TableHead>
                     <TableHead>姓名</TableHead>
-                    <TableHead>性别</TableHead>
                     <TableHead>所属院系</TableHead>
                     <TableHead>专业</TableHead>
                     <TableHead>班级</TableHead>
-                    <TableHead>学历层次</TableHead>
-                    <TableHead>学位</TableHead>
                     <TableHead>状态</TableHead>
                     <TableHead className="text-right">操作</TableHead>
                   </TableRow>
@@ -303,14 +304,21 @@ function StudentsPageContent() {
                     const info = getClassInfo(s.classId)
                     return (
                       <TableRow key={s.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedStudents.includes(s.id)}
+                            onCheckedChange={() => {
+                              setSelectedStudents(prev =>
+                                prev.includes(s.id) ? prev.filter(i => i !== s.id) : [...prev, s.id]
+                              )
+                            }}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{s.studentId}</TableCell>
                         <TableCell>{s.name}</TableCell>
-                        <TableCell>{s.gender}</TableCell>
                         <TableCell>{info.dept?.name || '—'}</TableCell>
                         <TableCell>{info.major?.name || '—'}</TableCell>
                         <TableCell>{info.cls?.name || '—'}</TableCell>
-                        <TableCell>{s.educationLevel}</TableCell>
-                        <TableCell>{s.degreeType || '—'}</TableCell>
                         <TableCell>
                           <Badge variant={statusColor[s.status] as any}>{s.status}</Badge>
                         </TableCell>
@@ -322,7 +330,7 @@ function StudentsPageContent() {
                   })}
                   {filteredStudents.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         暂无数据
                       </TableCell>
                     </TableRow>
@@ -334,24 +342,20 @@ function StudentsPageContent() {
         </div>
       </div>
 
-      {/* 新生录入弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>新生录入</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>学号</Label><Input placeholder="请输入学号" /></div>
-              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" /></div>
+              <div className="space-y-2"><Label>学号 <span className="text-destructive">*</span></Label><Input placeholder="请输入学号" /></div>
+              <div className="space-y-2"><Label>姓名 <span className="text-destructive">*</span></Label><Input placeholder="请输入姓名" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>性别</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
-              </div>
+              <div className="space-y-2"><Label>密码 <span className="text-destructive">*</span></Label><Input type="password" placeholder="请输入密码" /></div>
               <div className="space-y-2"><Label>状态</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
+                  <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
               </div>
             </div>
-            {/* 班级选择 - 可搜索 */}
             <div className="space-y-2">
               <Label>所属班级</Label>
               <Popover open={createClassOpen} onOpenChange={setCreateClassOpen}>
@@ -392,7 +396,6 @@ function StudentsPageContent() {
                 </PopoverContent>
               </Popover>
             </div>
-            {/* 院系和专业只读显示 */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>所属院系</Label>
@@ -403,14 +406,7 @@ function StudentsPageContent() {
                 <Input value={createClassInfo.major?.name || '—'} readOnly className="bg-muted" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>学历层次</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择学历" /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
-              </div>
-              <div className="space-y-2"><Label>学位</Label>
-                <Select><SelectTrigger><SelectValue placeholder="选择学位" /></SelectTrigger><SelectContent><SelectItem value="学士">学士</SelectItem><SelectItem value="无">无</SelectItem></SelectContent></Select>
-              </div>
-            </div>
+
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
@@ -419,7 +415,6 @@ function StudentsPageContent() {
         </DialogContent>
       </Dialog>
 
-      {/* 编辑学生弹窗 */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>编辑学生 — {selectedStudent?.name}</DialogTitle></DialogHeader>
@@ -430,14 +425,11 @@ function StudentsPageContent() {
                 <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedStudent.name} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>性别</Label>
-                  <Select defaultValue={selectedStudent.gender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
-                </div>
+                <div className="space-y-2"><Label>密码</Label><Input type="password" placeholder="留空不修改密码" /></div>
                 <div className="space-y-2"><Label>状态</Label>
-                  <Select defaultValue={selectedStudent.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
+                    <Select defaultValue={selectedStudent.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在籍">在籍</SelectItem><SelectItem value="休学">休学</SelectItem><SelectItem value="退学">退学</SelectItem><SelectItem value="毕业">毕业</SelectItem><SelectItem value="结业">结业</SelectItem></SelectContent></Select>
                 </div>
               </div>
-              {/* 班级选择 - 可搜索 */}
               <div className="space-y-2">
                 <Label>所属班级</Label>
                 <Popover open={editClassOpen} onOpenChange={setEditClassOpen}>
@@ -478,7 +470,6 @@ function StudentsPageContent() {
                   </PopoverContent>
                 </Popover>
               </div>
-              {/* 院系和专业只读显示 */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>所属院系</Label>
@@ -489,14 +480,7 @@ function StudentsPageContent() {
                   <Input value={editClassInfo.major?.name || '—'} readOnly className="bg-muted" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>学历层次</Label>
-                  <Select defaultValue={selectedStudent.educationLevel}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="中专">中专</SelectItem><SelectItem value="大专">大专</SelectItem><SelectItem value="本科">本科</SelectItem></SelectContent></Select>
-                </div>
-                <div className="space-y-2"><Label>学位</Label>
-                  <Select defaultValue={selectedStudent.degreeType || '无'}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="学士">学士</SelectItem><SelectItem value="无">无</SelectItem></SelectContent></Select>
-                </div>
-              </div>
+
             </div>
           )}
           <DialogFooter>
@@ -517,7 +501,6 @@ export default function StudentsPage() {
   )
 }
 
-// 树形组件
 function DeptNode({ dept, selectedClassId, onSelectClass }: { dept: any, selectedClassId: string | null, onSelectClass: (id: string | null) => void }) {
   const [open, setOpen] = useState(false)
   return (
@@ -550,38 +533,18 @@ function MajorNode({ major, selectedClassId, onSelectClass }: { major: any, sele
         </button>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="ml-4 space-y-1">
-          {major.grades.map((grade: any) => (
-            <GradeNode key={grade.id} grade={grade} selectedClassId={selectedClassId} onSelectClass={onSelectClass} />
-          ))}
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
-  )
-}
-
-function GradeNode({ grade, selectedClassId, onSelectClass }: { grade: any, selectedClassId: string | null, onSelectClass: (id: string | null) => void }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <button className="flex items-center w-full px-2 py-1.5 text-sm rounded-md hover:bg-muted transition-colors">
-          {open ? <ChevronDown className="h-3.5 w-3.5 mr-1 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 mr-1 shrink-0" />}
-          <span className="truncate">{grade.name}</span>
-        </button>
-      </CollapsibleTrigger>
-      <CollapsibleContent>
         <div className="ml-4 space-y-0.5">
-          {grade.classes.map((cls: any) => (
+          {major.classes.map((cls: any) => (
             <button
               key={cls.id}
               onClick={() => onSelectClass(cls.id)}
               className={cn(
-                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors truncate',
+                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors truncate flex items-center gap-1',
                 selectedClassId === cls.id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
               )}
             >
-              {cls.name}
+              <span className="truncate">{cls.name}</span>
+              <span className="shrink-0 text-[10px] px-1 rounded bg-muted-foreground/10">{cls.gradeName}</span>
             </button>
           ))}
         </div>

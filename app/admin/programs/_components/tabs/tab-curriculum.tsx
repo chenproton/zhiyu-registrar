@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -32,24 +32,8 @@ function findSyllabusId(courseName: string): string | null {
   return ALL_SYLLABUS_IDS[hash % ALL_SYLLABUS_IDS.length] ?? null
 }
 
-// 模拟场景库（用于下拉搜索选择）
-const mockScenes = [
-  { code: 'PRAC001', name: '企业认知实习' },
-  { code: 'PRAC002', name: '专业综合实训' },
-  { code: 'PRAC003', name: '企业顶岗实习' },
-  { code: 'PRAC004', name: '毕业设计（论文）' },
-  { code: 'PRAC005', name: '创新创业实践' },
-  { code: 'PRAC006', name: '开源项目实战' },
-  { code: 'PRAC007', name: '软件开发实训' },
-  { code: 'PRAC008', name: '网络工程实训' },
-  { code: 'PRAC009', name: '数据挖掘实践' },
-  { code: 'PRAC010', name: '智能系统开发' },
-  { code: 'PRAC101', name: '认识实习' },
-  { code: 'PRAC102', name: '程序设计课程设计' },
-  { code: 'PRAC103', name: '数据结构课程设计' },
-  { code: 'PRAC201', name: '企业项目实战' },
-  { code: 'PRAC301', name: '创新创业实践' },
-]
+// 模拟岗位课时库（用于下拉搜索选择）
+const mockScenes = positions.map((p) => ({ code: p.code, name: p.name }))
 
 const emptyCourse = (defaults?: Partial<CoursePlan>): CoursePlan => ({
   id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -64,6 +48,7 @@ const emptyCourse = (defaults?: Partial<CoursePlan>): CoursePlan => ({
   courseType: '课程',
   subCategory: '必修',
   courseTypeLabel: defaultCourseTypes[0],
+  scenes: [],
   ...defaults,
 })
 
@@ -80,20 +65,40 @@ export default function TabCurriculum({
   const [activeFilter, setActiveFilter] = useState<string>('全部')
   const [typeConfigOpen, setTypeConfigOpen] = useState(false)
   const [courseTypes, setCourseTypes] = useState<string[]>(defaultCourseTypes)
-  // 跟踪哪些场景行处于"新建"输入模式（true=输入框，false=下拉选择）
-  const [sceneEditMode, setSceneEditMode] = useState<Record<string, boolean>>({})
   const [libraryOpen, setLibraryOpen] = useState(false)
   const [selectedLibraryIds, setSelectedLibraryIds] = useState<Set<string>>(new Set())
   const [librarySearch, setLibrarySearch] = useState('')
   const [libraryCategory, setLibraryCategory] = useState<string>('全部')
 
-  // 岗位场景导入弹窗
+  // 新增课程弹窗
+  const [newCourseOpen, setNewCourseOpen] = useState(false)
+  const [newCourseForm, setNewCourseForm] = useState<{ name: string; code: string; credits: number; hours: number; courseTypeLabel: string }>({
+    name: '', code: '', credits: 0, hours: 0, courseTypeLabel: defaultCourseTypes[0],
+  })
+
+  const addNewCourse = () => {
+    if (!newCourseForm.name.trim()) {
+      toast({ title: '请输入课程名称', variant: 'destructive' })
+      return
+    }
+    updateCurriculum([...curriculum, emptyCourse({
+      name: newCourseForm.name,
+      code: newCourseForm.code,
+      credits: newCourseForm.credits,
+      hours: newCourseForm.hours,
+      courseTypeLabel: newCourseForm.courseTypeLabel,
+    })])
+    setNewCourseOpen(false)
+    setNewCourseForm({ name: '', code: '', credits: 0, hours: 0, courseTypeLabel: defaultCourseTypes[0] })
+    toast({ title: `已添加课程：${newCourseForm.name}` })
+  }
+
+  // 岗位导入弹窗
   const [positionSceneOpen, setPositionSceneOpen] = useState(false)
   const [selectedPositionId, setSelectedPositionId] = useState<string>('')
-  const [selectedSceneIds, setSelectedSceneIds] = useState<Set<string>>(new Set())
   const [positionSearch, setPositionSearch] = useState('')
 
-  // 从所有人培方案的 curriculum 中提取唯一课程，构建课程库
+  // 从所有人培方案的 curriculum 中提取唯一课程课时，构建课程课时库
   const mockCourseLibrary = useMemo(() => {
     const map = new Map<string, { id: string; name: string; code: string; credits: number; hours: number; type: string }>()
     trainingPrograms.forEach((tp) => {
@@ -160,7 +165,7 @@ export default function TabCurriculum({
     const existingNames = new Set(curriculum.map((c) => c.name))
     const toAdd = mockCourseLibrary.filter((c) => selectedLibraryIds.has(c.id) && !existingNames.has(c.name))
     if (toAdd.length === 0) {
-      toast({ title: '所选课程已存在或为空', variant: 'destructive' })
+      toast({ title: '所选课程课时已存在或为空', variant: 'destructive' })
       return
     }
     const newCourses: CoursePlan[] = toAdd.map((c) =>
@@ -175,7 +180,7 @@ export default function TabCurriculum({
     updateCurriculum([...curriculum, ...newCourses])
     setLibraryOpen(false)
     setSelectedLibraryIds(new Set())
-    toast({ title: `成功添加 ${toAdd.length} 门课程` })
+    toast({ title: `成功添加 ${toAdd.length} 门课程课时` })
   }
 
   const filteredPositions = useMemo(() => {
@@ -184,51 +189,41 @@ export default function TabCurriculum({
     return positions.filter((p) => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q))
   }, [positionSearch])
 
-  const scenesForPosition = useMemo(() => {
-    if (!selectedPositionId) return []
-    return sceneSyllabuses.filter((s) => s.mappedPositionId === selectedPositionId)
-  }, [selectedPositionId])
-
-  const toggleSceneSelection = (sceneId: string) => {
-    setSelectedSceneIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(sceneId)) next.delete(sceneId)
-      else next.add(sceneId)
-      return next
-    })
-  }
-
   const handleImportScenes = () => {
-    const existingNames = new Set(curriculum.map((c) => c.name))
-    const toAdd = scenesForPosition.filter((s) => selectedSceneIds.has(s.id) && !existingNames.has(s.courseName))
-    if (toAdd.length === 0) {
-      toast({ title: '所选场景已存在或为空', variant: 'destructive' })
+    if (!selectedPositionId) {
+      toast({ title: '请选择岗位', variant: 'destructive' })
       return
     }
-    const newScenes: CoursePlan[] = toAdd.map((s) =>
-      emptyCourse({
-        name: s.courseName,
-        code: s.courseCode || '',
-        credits: s.credits || 0,
-        hours: s.totalHours || 0,
-        nature: '场景',
-        assessment: '考查',
-        courseType: '场景',
-        subCategory: '场景',
-        courseTypeLabel: '',
-      })
-    )
-    updateCurriculum([...curriculum, ...newScenes])
+    const position = positions.find((p) => p.id === selectedPositionId)
+    if (!position) {
+      toast({ title: '岗位不存在', variant: 'destructive' })
+      return
+    }
+    const existingNames = new Set(curriculum.map((c) => c.name))
+    if (existingNames.has(position.name)) {
+      toast({ title: '该岗位已存在', variant: 'destructive' })
+      return
+    }
+    const newScene: CoursePlan = emptyCourse({
+      name: position.name,
+      code: position.code,
+      credits: 0,
+      hours: 0,
+      nature: '场景',
+      assessment: '考查',
+      courseType: '场景',
+      subCategory: '场景',
+      courseTypeLabel: '',
+    })
+    updateCurriculum([...curriculum, newScene])
     setPositionSceneOpen(false)
-    setSelectedSceneIds(new Set())
     setSelectedPositionId('')
-    toast({ title: `成功导入 ${toAdd.length} 个场景` })
+    toast({ title: `成功加入岗位：${position.name}` })
   }
 
   const filteredCourses = useMemo(() => {
     if (activeFilter === '全部') return curriculum
     if (activeFilter === '场景') return curriculum.filter((c) => c.courseType === '场景')
-    if (activeFilter === '混合式') return curriculum.filter((c) => c.courseType === '混合式')
     return curriculum.filter((c) => c.courseTypeLabel === activeFilter)
   }, [curriculum, activeFilter])
 
@@ -263,12 +258,12 @@ export default function TabCurriculum({
   }
 
   const addType = () => {
-    setCourseTypes([...courseTypes, `新课程类型${courseTypes.length + 1}`])
+    setCourseTypes([...courseTypes, `新课程课时类型${courseTypes.length + 1}`])
   }
 
   const removeType = (idx: number) => {
     if (courseTypes.length <= 1) {
-      toast({ title: '至少保留一个课程类型', variant: 'destructive' })
+      toast({ title: '至少保留一个课程课时类型', variant: 'destructive' })
       return
     }
     const removedName = courseTypes[idx]
@@ -282,15 +277,13 @@ export default function TabCurriculum({
     if (activeFilter === removedName) setActiveFilter('全部')
   }
 
-  // 场景选择器组件
+  // 岗位课时选择器组件
   function SceneSearchSelect({
     value,
     onSelect,
-    onNewScene,
   }: {
     value: { code: string; name: string }
     onSelect: (scene: { code: string; name: string }) => void
-    onNewScene: () => void
   }) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState('')
@@ -306,63 +299,133 @@ export default function TabCurriculum({
     const selectedScene = mockScenes.find((s) => s.code === value.code && s.name === value.name)
 
     return (
-      <div className="flex items-center gap-2">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="flex-1 justify-between font-normal h-8 text-xs"
-            >
-              <span className={cn('truncate', !selectedScene && 'text-muted-foreground')}>
-                {selectedScene ? `${selectedScene.name} (${selectedScene.code})` : '选择场景...'}
-              </span>
-              <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[280px] p-0" align="start">
-            <Command>
-              <CommandInput
-                placeholder="搜索场景名称或编码..."
-                value={search}
-                onValueChange={setSearch}
-              />
-              <CommandList>
-                <CommandEmpty>未找到匹配的场景</CommandEmpty>
-                <CommandGroup>
-                  {filtered.map((scene) => (
-                    <CommandItem
-                      key={scene.code}
-                      value={scene.code}
-                      onSelect={() => {
-                        onSelect(scene)
-                        setOpen(false)
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <Check
-                        className={cn(
-                          'mr-2 h-4 w-4 shrink-0',
-                          value.code === scene.code ? 'opacity-100' : 'opacity-0'
-                        )}
-                      />
-                      <div className="flex flex-col">
-                        <span className="text-sm">{scene.name}</span>
-                        <span className="text-xs text-muted-foreground">{scene.code}</span>
-                      </div>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        <Button variant="outline" size="sm" className="h-8 text-xs shrink-0" onClick={onNewScene}>
-          <Plus className="h-3 w-3 mr-1" />
-          新建场景
-        </Button>
-      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal h-8 text-xs"
+          >
+            <span className={cn('truncate', !selectedScene && 'text-muted-foreground')}>
+              {selectedScene ? `${selectedScene.name} (${selectedScene.code})` : '选择岗位课时...'}
+            </span>
+            <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[280px] p-0" align="start">
+          <Command>
+            <CommandInput
+              placeholder="搜索岗位课时名称或编码..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>未找到匹配的岗位课时</CommandEmpty>
+              <CommandGroup>
+                {filtered.map((scene) => (
+                  <CommandItem
+                    key={scene.code}
+                    value={scene.code}
+                    onSelect={() => {
+                      onSelect(scene)
+                      setOpen(false)
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4 shrink-0',
+                        value.code === scene.code ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm">{scene.name}</span>
+                      <span className="text-xs text-muted-foreground">{scene.code}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    )
+  }
+
+  // 课程课时选择器组件
+  function CourseSearchSelect({
+    value,
+    onSelect,
+  }: {
+    value: { code: string; name: string }
+    onSelect: (course: { name: string; code: string; credits: number; hours: number; type: string }) => void
+  }) {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
+
+    const filtered = useMemo(() => {
+      if (!search.trim()) return mockCourseLibrary
+      const q = search.toLowerCase()
+      return mockCourseLibrary.filter(
+        (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+      )
+    }, [search])
+
+    const selectedCourse = mockCourseLibrary.find((c) => c.code === value.code && c.name === value.name)
+
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal h-8 text-xs"
+          >
+            <span className={cn('truncate', !selectedCourse && 'text-muted-foreground')}>
+              {selectedCourse ? `${selectedCourse.name} (${selectedCourse.code})` : '选择课程课时...'}
+            </span>
+            <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[400px] p-0" align="start">
+          <Command>
+            <CommandInput
+              placeholder="搜索课程课时名称或代码..."
+              value={search}
+              onValueChange={setSearch}
+            />
+            <CommandList>
+              <CommandEmpty>未找到匹配的课程课时</CommandEmpty>
+              <CommandGroup>
+                {filtered.map((course) => (
+                  <CommandItem
+                    key={course.id}
+                    value={course.code}
+                    onSelect={() => {
+                      onSelect(course)
+                      setOpen(false)
+                    }}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        'mr-2 h-4 w-4 shrink-0',
+                        value.code === course.code ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-sm">{course.name}</span>
+                      <span className="text-xs text-muted-foreground">{course.code} · {course.type}</span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     )
   }
 
@@ -380,14 +443,7 @@ export default function TabCurriculum({
         size="sm"
         onClick={() => setActiveFilter('场景')}
       >
-        场景 ({curriculum.filter((c) => c.courseType === '场景').length})
-      </Button>
-      <Button
-        variant={activeFilter === '混合式' ? 'default' : 'outline'}
-        size="sm"
-        onClick={() => setActiveFilter('混合式')}
-      >
-        混合式 ({curriculum.filter((c) => c.courseType === '混合式').length})
+        岗位课时 ({curriculum.filter((c) => c.courseType === '场景').length})
       </Button>
       {courseTypes.map((type) => {
         const count = curriculum.filter((c) => c.courseTypeLabel === type).length
@@ -407,18 +463,6 @@ export default function TabCurriculum({
 
   const toolbarButtons = (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={() => { setPositionSceneOpen(true); setSelectedPositionId(''); setSelectedSceneIds(new Set()); setPositionSearch('') }}>
-        <Briefcase className="h-4 w-4 mr-1" />
-        岗位场景导入
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
-        <Upload className="h-4 w-4 mr-1" />
-        导入
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => toast({ title: '导出功能使用现有组件样式即可' })}>
-        <Download className="h-4 w-4 mr-1" />
-        导出
-      </Button>
       <Button variant="outline" size="sm" onClick={() => { setLibraryOpen(true); setSelectedLibraryIds(new Set()); setLibrarySearch(''); setLibraryCategory('全部') }}>
         <Library className="h-4 w-4 mr-1" />
         课程库管理
@@ -438,12 +482,10 @@ export default function TabCurriculum({
           <TableHeader>
             <TableRow>
               <TableHead className="w-24"></TableHead>
-              <TableHead className="w-44">课程类型</TableHead>
-              <TableHead className="w-28">课程（场景）代码</TableHead>
-              <TableHead className="w-48">课程（场景）名称</TableHead>
-              <TableHead className="w-20">学分</TableHead>
+              <TableHead className="w-44">课程课时类型</TableHead>
+              <TableHead>课时名称/代码</TableHead>
+              <TableHead className="w-24">学分</TableHead>
               <TableHead className="w-24">课时（学时）</TableHead>
-              <TableHead className="w-32">线上/线下学时</TableHead>
               <TableHead className="w-24">性质</TableHead>
               <TableHead className="w-32"></TableHead>
             </TableRow>
@@ -453,9 +495,124 @@ export default function TabCurriculum({
               const realIndex = curriculum.findIndex((item) => item.id === c.id)
               const syllabusId = c.name ? findSyllabusId(c.name) : null
               const isScene = c.courseType === '场景'
-              const isNewSceneMode = sceneEditMode[c.id] || false
 
-              return (
+              return isScene ? (
+                <React.Fragment key={c.id}>
+                  {/* 岗位课时主行：所有输入框水平对齐 */}
+                  <TableRow className="align-middle">
+                    {/* 类型切换（无列名） */}
+                    <TableCell>
+                      <Select
+                        value={c.courseType || '课程'}
+                        onValueChange={(v) => {
+                          const isSceneNew = v === '场景'
+                          updateCourse(realIndex, {
+                            courseType: v as '课程' | '场景',
+                            courseTypeLabel: isSceneNew ? '' : (c.courseTypeLabel || courseTypes[0]),
+                          })
+                        }}
+                      >
+                        <SelectTrigger className="h-8 text-xs w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="课程">课程课时</SelectItem>
+                          <SelectItem value="场景">岗位课时</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+
+                    {/* 课程课时类型 */}
+                    <TableCell>
+                      <span className="text-xs text-muted-foreground">-</span>
+                    </TableCell>
+
+                    {/* 课时名称/代码 */}
+                    <TableCell>
+                      <SceneSearchSelect
+                        value={{ code: c.code, name: c.name }}
+                        onSelect={(scene) => {
+                          updateCourse(realIndex, { code: scene.code, name: scene.name })
+                        }}
+                      />
+                    </TableCell>
+
+                    {/* 学分 */}
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={c.credits}
+                        onChange={(e) => updateCourse(realIndex, { credits: Number(e.target.value) })}
+                        className="h-8 text-xs w-24"
+                      />
+                    </TableCell>
+
+                    {/* 课时（学时） */}
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={c.hours}
+                        onChange={(e) => updateCourse(realIndex, { hours: Number(e.target.value) })}
+                        className="h-8 text-xs"
+                      />
+                    </TableCell>
+
+                    {/* 性质 */}
+                    <TableCell>
+                      <Select
+                        value={c.subCategory || courseNatures[0] || '必修'}
+                        onValueChange={(v) => updateCourse(realIndex, { subCategory: v })}
+                      >
+                        <SelectTrigger className="h-8 text-xs w-24">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {courseNatures.map((n) => (
+                            <SelectItem key={n} value={n}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+
+                    {/* 操作 */}
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {c.name && syllabusId ? (
+                          <a
+                            href={`/admin/operations/syllabus/${syllabusId}?edit=1`}
+                            className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                          >
+                            进入详细配置
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">进入详细配置</span>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => removeCourse(realIndex)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+
+                  {/* 场景名称行：不与其他列对齐 */}
+                  <TableRow className="border-b">
+                      <TableCell colSpan={7} className="py-2">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 pl-1">
+                          {Array.from({ length: 3 + ((c.code?.length ?? 0) % 3) }, (_, i) => i + 1).map((i) => (
+                            <span key={i} className="text-xs text-muted-foreground">
+                              · 相关实践场景名称{i}
+                            </span>
+                          ))}
+                        </div>
+                      </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ) : (
                 <TableRow key={c.id}>
                   {/* 类型切换（无列名） */}
                   <TableCell>
@@ -463,103 +620,54 @@ export default function TabCurriculum({
                       value={c.courseType || '课程'}
                       onValueChange={(v) => {
                         const isSceneNew = v === '场景'
-                        const isHybridNew = v === '混合式'
                         updateCourse(realIndex, {
-                          courseType: v as '课程' | '场景' | '混合式',
-                          nature: isHybridNew ? '混合式' : c.nature,
+                          courseType: v as '课程' | '场景',
                           courseTypeLabel: isSceneNew ? '' : (c.courseTypeLabel || courseTypes[0]),
                         })
-                        if (isSceneNew) {
-                          setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))
-                        }
                       }}
                     >
                       <SelectTrigger className="h-8 text-xs w-24">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="课程">课程</SelectItem>
-                        <SelectItem value="场景">场景</SelectItem>
-                        <SelectItem value="混合式">混合式</SelectItem>
+                        <SelectItem value="课程">课程课时</SelectItem>
+                        <SelectItem value="场景">岗位课时</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
 
-                  {/* 课程类型 */}
+                  {/* 课程课时类型 */}
                   <TableCell>
-                    {isScene ? (
-                      <span className="text-xs text-muted-foreground">-</span>
-                    ) : (
-                      <Select
-                        value={c.courseTypeLabel || ''}
-                        onValueChange={(v) => updateCourse(realIndex, { courseTypeLabel: v })}
-                      >
-                        <SelectTrigger className="h-8 text-xs w-40">
-                          <SelectValue placeholder="-" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {courseTypes.map((t) => (
-                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <Select
+                      value={c.courseTypeLabel || ''}
+                      onValueChange={(v) => updateCourse(realIndex, { courseTypeLabel: v })}
+                    >
+                      <SelectTrigger className="h-8 text-xs w-40">
+                        <SelectValue placeholder="-" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {courseTypes.map((t) => (
+                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
 
-                  {/* 课程（场景）代码 + 名称 */}
-                  {isScene ? (
-                    <TableCell colSpan={2}>
-                      {isNewSceneMode ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={c.code}
-                            onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                            className="h-8 text-xs w-28"
-                            placeholder="场景编码"
-                          />
-                          <Input
-                            value={c.name}
-                            onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
-                            className="h-8 text-xs flex-1"
-                            placeholder="场景名称"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 text-xs shrink-0"
-                            onClick={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: false }))}
-                          >
-                            取消
-                          </Button>
-                        </div>
-                      ) : (
-                        <SceneSearchSelect
-                          value={{ code: c.code, name: c.name }}
-                          onSelect={(scene) => {
-                            updateCourse(realIndex, { code: scene.code, name: scene.name })
-                          }}
-                          onNewScene={() => setSceneEditMode((prev) => ({ ...prev, [c.id]: true }))}
-                        />
-                      )}
-                    </TableCell>
-                  ) : (
-                    <>
-                      <TableCell>
-                        <Input
-                          value={c.code}
-                          onChange={(e) => updateCourse(realIndex, { code: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={c.name}
-                          onChange={(e) => updateCourse(realIndex, { name: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </TableCell>
-                    </>
-                  )}
+                  {/* 课时名称/代码 */}
+                  <TableCell>
+                    <CourseSearchSelect
+                      value={{ code: c.code, name: c.name }}
+                      onSelect={(course) => {
+                        updateCourse(realIndex, {
+                          name: course.name,
+                          code: course.code,
+                          credits: course.credits,
+                          hours: course.hours,
+                          courseTypeLabel: course.type,
+                        })
+                      }}
+                    />
+                  </TableCell>
 
                   {/* 学分 */}
                   <TableCell>
@@ -567,7 +675,7 @@ export default function TabCurriculum({
                       type="number"
                       value={c.credits}
                       onChange={(e) => updateCourse(realIndex, { credits: Number(e.target.value) })}
-                      className="h-8 text-xs"
+                      className="h-8 text-xs w-24"
                     />
                   </TableCell>
 
@@ -581,35 +689,11 @@ export default function TabCurriculum({
                     />
                   </TableCell>
 
-                  {/* 线上/线下学时（混合式） */}
-                  <TableCell>
-                    {c.courseType === '混合式' ? (
-                      <div className="flex gap-2">
-                        <Input
-                          type="number"
-                          value={c.onlineHours || 0}
-                          onChange={(e) => updateCourse(realIndex, { onlineHours: Number(e.target.value) })}
-                          className="h-8 text-xs w-16"
-                          placeholder="线上"
-                        />
-                        <Input
-                          type="number"
-                          value={c.offlineHours || 0}
-                          onChange={(e) => updateCourse(realIndex, { offlineHours: Number(e.target.value) })}
-                          className="h-8 text-xs w-16"
-                          placeholder="线下"
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-
                   {/* 性质 */}
                   <TableCell>
                     <Select
-                      value={c.nature || c.subCategory || courseNatures[0] || '必修'}
-                      onValueChange={(v) => updateCourse(realIndex, { nature: v as CoursePlan['nature'], subCategory: v })}
+                      value={c.subCategory || courseNatures[0] || '必修'}
+                      onValueChange={(v) => updateCourse(realIndex, { subCategory: v })}
                     >
                       <SelectTrigger className="h-8 text-xs w-24">
                         <SelectValue />
@@ -630,10 +714,10 @@ export default function TabCurriculum({
                           href={`/admin/operations/syllabus/${syllabusId}?edit=1`}
                           className="text-xs text-blue-600 hover:underline whitespace-nowrap"
                         >
-                          配置课程（能力）目标
+                          进入详细配置
                         </a>
                       ) : (
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">配置课程（能力）目标</span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">进入详细配置</span>
                       )}
                       <Button
                         variant="ghost"
@@ -653,10 +737,10 @@ export default function TabCurriculum({
       </div>
 
       <Button variant="outline" size="sm" onClick={addCourse}>
-        <Plus className="h-4 w-4 mr-1" /> 添加课程
+        <Plus className="h-4 w-4 mr-1" /> 添加课时
       </Button>
 
-      {/* 课程类型管理弹窗 */}
+      {/* 课程课时类型管理弹窗 */}
       <Dialog open={typeConfigOpen} onOpenChange={setTypeConfigOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -690,14 +774,30 @@ export default function TabCurriculum({
         </DialogContent>
       </Dialog>
 
-      {/* 课程库管理弹窗 */}
+      {/* 课程课时库管理弹窗 */}
       <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
         <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="flex items-center gap-2">
-              <Library className="h-5 w-5" />
-              课程库管理
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="flex items-center gap-2">
+                <Library className="h-5 w-5" />
+                课程库管理
+              </DialogTitle>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setNewCourseOpen(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  新增
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toast({ title: '导入功能使用现有组件样式即可' })}>
+                  <Upload className="h-4 w-4 mr-1" />
+                  导入
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => toast({ title: '导出功能使用现有组件样式即可' })}>
+                  <Download className="h-4 w-4 mr-1" />
+                  导出
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
 
           <div className="px-6 space-y-3">
@@ -705,7 +805,7 @@ export default function TabCurriculum({
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="搜索课程名称或代码..."
+                placeholder="搜索课程课时名称或代码..."
                 value={librarySearch}
                 onChange={(e) => setLibrarySearch(e.target.value)}
                 className="pl-9 h-9 text-sm"
@@ -728,16 +828,16 @@ export default function TabCurriculum({
             </div>
 
             <div className="text-xs text-muted-foreground">
-              已选 <span className="font-medium text-foreground">{selectedLibraryIds.size}</span> 门课程 ·
+              已选 <span className="font-medium text-foreground">{selectedLibraryIds.size}</span> 门课程课时 ·
               共 <span className="font-medium text-foreground">{filteredLibrary.length}</span> 门
             </div>
           </div>
 
-          {/* 课程列表 */}
+          {/* 课程课时列表 */}
           <div className="px-6 pb-2">
             <div className="border rounded-md overflow-hidden">
               <div className="grid grid-cols-[1fr_100px_80px_80px_60px] gap-2 px-3 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b">
-                <span>课程名称</span>
+                <span>课程课时名称</span>
                 <span className="text-center">代码</span>
                 <span className="text-center">学分</span>
                 <span className="text-center">学时</span>
@@ -745,7 +845,7 @@ export default function TabCurriculum({
               </div>
               <div className="max-h-[320px] overflow-y-auto">
                 {filteredLibrary.length === 0 && (
-                  <div className="text-sm text-muted-foreground text-center py-8">未找到匹配的课程</div>
+                  <div className="text-sm text-muted-foreground text-center py-8">未找到匹配的课程课时</div>
                 )}
                 {filteredLibrary.map((course) => {
                   const alreadyExists = curriculum.some((c) => c.name === course.name)
@@ -790,19 +890,67 @@ export default function TabCurriculum({
               清空选择
             </Button>
             <Button size="sm" onClick={addFromLibrary} disabled={selectedLibraryIds.size === 0}>
-              添加选中课程 ({selectedLibraryIds.size})
+              添加选中课程课时 ({selectedLibraryIds.size})
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* 岗位场景导入弹窗 */}
+      {/* 新增课程弹窗 */}
+      <Dialog open={newCourseOpen} onOpenChange={setNewCourseOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>新增课程</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-sm">课程名称</Label>
+              <Input value={newCourseForm.name} onChange={(e) => setNewCourseForm({ ...newCourseForm, name: e.target.value })} placeholder="请输入课程名称" className="h-9 text-sm" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm">课程代码</Label>
+                <Input value={newCourseForm.code} onChange={(e) => setNewCourseForm({ ...newCourseForm, code: e.target.value })} placeholder="选填" className="h-9 text-sm" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">课程类型</Label>
+                <Select value={newCourseForm.courseTypeLabel} onValueChange={(v) => setNewCourseForm({ ...newCourseForm, courseTypeLabel: v })}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courseTypes.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm">学分</Label>
+                <Input type="number" value={newCourseForm.credits} onChange={(e) => setNewCourseForm({ ...newCourseForm, credits: Number(e.target.value) })} className="h-9 text-sm" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm">学时</Label>
+                <Input type="number" value={newCourseForm.hours} onChange={(e) => setNewCourseForm({ ...newCourseForm, hours: Number(e.target.value) })} className="h-9 text-sm" />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" size="sm" onClick={() => setNewCourseOpen(false)}>取消</Button>
+            <Button size="sm" onClick={addNewCourse}>确认添加</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 岗位导入弹窗 */}
       <Dialog open={positionSceneOpen} onOpenChange={setPositionSceneOpen}>
         <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
-              岗位场景导入
+              岗位导入
             </DialogTitle>
           </DialogHeader>
 
@@ -819,7 +967,7 @@ export default function TabCurriculum({
                   className="pl-9 h-9 text-sm"
                 />
               </div>
-              <div className="border rounded-md overflow-hidden max-h-[180px] overflow-y-auto">
+              <div className="border rounded-md overflow-hidden max-h-[360px] overflow-y-auto">
                 {filteredPositions.length === 0 && (
                   <div className="text-sm text-muted-foreground text-center py-4">未找到匹配的岗位</div>
                 )}
@@ -830,7 +978,7 @@ export default function TabCurriculum({
                       'flex items-center justify-between px-3 py-2 text-sm cursor-pointer border-b last:border-b-0 transition-colors',
                       selectedPositionId === pos.id ? 'bg-primary/10' : 'hover:bg-muted/50'
                     )}
-                    onClick={() => { setSelectedPositionId(pos.id); setSelectedSceneIds(new Set()) }}
+                    onClick={() => setSelectedPositionId(pos.id)}
                   >
                     <div className="flex items-center gap-2">
                       <div className={cn(
@@ -846,75 +994,12 @@ export default function TabCurriculum({
                 ))}
               </div>
             </div>
-
-            {/* 场景列表 */}
-            {selectedPositionId && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm">场景列表</Label>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 text-xs"
-                    onClick={() => {
-                      if (selectedSceneIds.size === scenesForPosition.length) {
-                        setSelectedSceneIds(new Set())
-                      } else {
-                        setSelectedSceneIds(new Set(scenesForPosition.map((s) => s.id)))
-                      }
-                    }}
-                  >
-                    {selectedSceneIds.size === scenesForPosition.length ? '取消全选' : '全选'}
-                  </Button>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  已选 <span className="font-medium text-foreground">{selectedSceneIds.size}</span> 个场景 ·
-                  共 <span className="font-medium text-foreground">{scenesForPosition.length}</span> 个
-                </div>
-                <div className="border rounded-md overflow-hidden max-h-[240px] overflow-y-auto">
-                  {scenesForPosition.length === 0 && (
-                    <div className="text-sm text-muted-foreground text-center py-4">该岗位暂无场景</div>
-                  )}
-                  {scenesForPosition.map((scene) => {
-                    const alreadyExists = curriculum.some((c) => c.name === scene.courseName)
-                    const isSelected = selectedSceneIds.has(scene.id)
-                    return (
-                      <div
-                        key={scene.id}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 text-sm border-b last:border-b-0 transition-colors',
-                          isSelected ? 'bg-primary/5' : 'hover:bg-muted/50',
-                          alreadyExists && 'opacity-50'
-                        )}
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          disabled={alreadyExists}
-                          onCheckedChange={() => toggleSceneSelection(scene.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium truncate">{scene.courseName}</span>
-                            {alreadyExists && (
-                              <Badge variant="outline" className="text-[10px] shrink-0">已添加</Badge>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground mt-0.5">
-                            {scene.courseCode || '-'} · {scene.credits || 0}学分 · {scene.totalHours || 0}学时
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={() => setPositionSceneOpen(false)}>取消</Button>
-            <Button size="sm" onClick={handleImportScenes} disabled={selectedSceneIds.size === 0}>
-              导入选中场景 ({selectedSceneIds.size})
+            <Button size="sm" onClick={handleImportScenes} disabled={!selectedPositionId}>
+              加入选中岗位
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -927,7 +1012,7 @@ export default function TabCurriculum({
       <div className="flex items-center justify-between mb-4 pb-2 border-b">
         <div className="flex items-center gap-2">
           <LayoutList className="h-5 w-5 text-primary" />
-          <h2 className="text-lg font-bold">课程（场景）设置</h2>
+          <h2 className="text-lg font-bold">教学进程总体安排</h2>
         </div>
         {toolbarButtons}
       </div>

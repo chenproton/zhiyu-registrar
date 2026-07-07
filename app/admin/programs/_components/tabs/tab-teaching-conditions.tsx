@@ -349,6 +349,7 @@ function VenueFormDialog({
   const [form, setForm] = useState<Venue>(
     initial || {
       id: `v-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+      code: '',
       name: '',
       type: '教室',
       capacity: 0,

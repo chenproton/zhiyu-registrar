@@ -36,7 +36,7 @@ const fixedSections = [
   { id: 'basic', label: '基本信息', icon: BookOpen },
   { id: 'career', label: '职业面向', icon: Briefcase },
   { id: 'specs', label: '培养目标与规格', icon: Target },
-  { id: 'curriculum', label: '课程（场景）设置', icon: LayoutList },
+  { id: 'curriculum', label: '教学进程总体安排', icon: LayoutList },
   { id: 'faculty', label: '师资队伍', icon: Users },
   { id: 'conditions', label: '教学条件', icon: School },
 ]

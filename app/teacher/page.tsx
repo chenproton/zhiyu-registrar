@@ -65,7 +65,7 @@ export default function TeacherDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold">教师工作台</h1>
           <p className="text-muted-foreground mt-1">
-            欢迎回来，{currentTeacher.name} {teacherInfo?.title} · {teacherInfo?.teachingQualifications.join('、')}
+            欢迎回来，{currentTeacher.name} {teacherInfo?.title} · {teacherInfo?.positions?.join('、') || ''}
           </p>
         </div>
         <div className="text-sm text-muted-foreground">

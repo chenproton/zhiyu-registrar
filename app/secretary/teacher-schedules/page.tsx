@@ -47,7 +47,7 @@ export default function SecretaryTeacherSchedulesPage() {
           </div>
           {selectedFacultyInfo && (
             <p className="text-sm text-muted-foreground">
-              当前选中：{selectedFacultyInfo.name} · {selectedFacultyInfo.title} · {selectedFacultyInfo.teachingQualifications.join('、')}
+              当前选中：{selectedFacultyInfo.name} · {selectedFacultyInfo.positions?.join('、') || ''}
             </p>
           )}
         </CardHeader>

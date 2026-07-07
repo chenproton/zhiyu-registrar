@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import ClassScheduleTab from './_components/class-schedule-tab'
 import CourseManagementTab from './_components/course-management-tab'
 import TeachingPlanTab from './_components/teaching-plan-tab'
 import TaskOrchestrationTab from './_components/task-orchestration-tab'
+import VenuePeriodConfigTab from './_components/venue-period-config-tab'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
@@ -66,13 +66,12 @@ import {
   Download,
   Search,
   X,
-  Save,
 } from 'lucide-react'
 import {
   classSchedules,
   classes,
   faculty,
-  venues,
+  venues as mockVenues,
   departments,
   majors,
   grades,
@@ -81,10 +80,12 @@ import {
   trainingPrograms,
   tasks,
   allPeriods,
+  venueTypes as mockVenueTypes,
   type Task,
   type ClassSchedule,
   type ClassPeriod,
   type CourseAssignment,
+  type Venue,
   courseAssignments,
 } from '@/lib/mock-data'
 
@@ -92,9 +93,9 @@ import {
 // 步骤导航组件
 // ============================================
 const steps = [
-  { id: 'schedule', label: '教学节次配置', icon: Clock },
-  { id: 'orchestration', label: '导入排课结果', icon: Settings2 },
-  { id: 'export', label: '课表打印', icon: Download },
+  { id: 'import', label: '场地节次配置', icon: MapPin },
+  { id: 'custom', label: '自定义排课', icon: Settings2 },
+  { id: 'export', label: '课表同步推送', icon: Download },
 ]
 
 function StepNav({
@@ -249,7 +250,7 @@ function ScheduleGrid({
                     <div className="flex items-center gap-1 flex-wrap">
                       {task.type === 'scene' && (
                         <Badge variant="outline" className="text-[10px] h-4 border-orange-200 text-orange-600">
-                          场景
+                          岗位
                         </Badge>
                       )}
                       {hasConflict && (
@@ -480,7 +481,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="traditional">传统教学</SelectItem>
-                    <SelectItem value="scene">场景教学</SelectItem>
+                    <SelectItem value="scene">岗位教学</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -553,7 +554,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
                   <SelectValue placeholder="选择场地" />
                 </SelectTrigger>
                 <SelectContent>
-                  {venues.map((v) => (
+                  {mockVenues.map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -575,7 +576,7 @@ function NewTaskDialog({ open, onClose }: { open: boolean; onClose: () => void }
 }
 
 // ============================================
-// Step 5: 课表导出
+// Step 4: 课表导出
 // ============================================
 function ExportTab({ selectedGrade }: { selectedGrade: string }) {
   const [exportType, setExportType] = useState('class')
@@ -752,7 +753,7 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
   )
 
   // 场地课表
-  const venueItems = venues
+  const venueItems = mockVenues
     .filter((v) => gradeTasks.some((t) => t.venueId === v.id))
     .map((v) => ({ id: v.id, name: v.name }))
   const venueTable = renderPeriodTable(
@@ -846,9 +847,13 @@ function ExportTab({ selectedGrade }: { selectedGrade: string }) {
           </CardTitle>
           <div className="flex items-center gap-2">
             <Input placeholder="输入名称查询" className="w-[200px]" />
-            <Button className="gap-1" onClick={() => toast('导出Excel成功')}>
+            <Button className="gap-1" onClick={() => toast('已下载当前课表')}>
               <Download className="h-4 w-4" />
-              导出Excel
+              下载当前课表
+            </Button>
+            <Button className="gap-1" variant="outline" onClick={() => toast('当前学期课表推送已执行')}>
+              <Upload className="h-4 w-4" />
+              当前学期课表推送
             </Button>
           </div>
         </CardHeader>
@@ -875,6 +880,14 @@ export default function SchedulingCenterPage() {
   const [selectedMajorId, setSelectedMajorId] = useState<string>('m1')
   const [selectedSemester, setSelectedSemester] = useState<string>('all')
 
+  // 导入的排课结果提升到页面级，便于步骤间共享
+  const [importedTasks, setImportedTasks] = useState<Task[]>([])
+
+  // 场地和节次配置提升到页面级，便于步骤间共享
+  const [venues, setVenues] = useState<Venue[]>(mockVenues)
+  const [venueTypes, setVenueTypes] = useState<string[]>(mockVenueTypes)
+  const [periods, setPeriods] = useState<string[]>([...allPeriods])
+
   // 根据专业自动匹配培养方案（模拟对应关系）
   const matchedProgram = useMemo(() => {
     if (!selectedMajorId) return null
@@ -896,6 +909,17 @@ export default function SchedulingCenterPage() {
     return majors.filter((m) => m.departmentId === selectedDept)
   }, [selectedDept])
 
+  // 专业过滤年级
+  const matchedGrades = useMemo(() => {
+    if (!selectedMajorId) return []
+    const validEntryYears = new Set(
+      trainingPrograms
+        .filter((tp) => tp.majorId === selectedMajorId)
+        .map((tp) => tp.entryYear)
+    )
+    return grades.filter((g) => validEntryYears.has(g.entryYear))
+  }, [selectedMajorId])
+
   // 学期选项
   const semesterOptions = useMemo(() => {
     if (!matchedProgram) return []
@@ -907,21 +931,13 @@ export default function SchedulingCenterPage() {
       {/* 页面头部 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">教学任务管理</h1>
-          <p className="text-muted-foreground">教学任务全流程管理：从节次配置到课表导出的统一工作区</p>
+          <h1 className="text-2xl font-bold">排课课表管理</h1>
+          <p className="text-muted-foreground">排课课表管理：从节次配置到课表同步推送的统一工作区</p>
         </div>
         {matchedProgram && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => toast.info('外部排课系统对接功能正在开发中')}>
               外部排课系统对接
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => toast.success('已暂存为草稿')}>
-              <Save className="h-4 w-4 mr-1" />
-              暂存草稿
-            </Button>
-            <Button size="sm" onClick={() => toast.success('培养方案排课已保存')}>
-              <CheckCircle2 className="h-4 w-4 mr-1" />
-              保存培养方案排课
             </Button>
           </div>
         )}
@@ -953,40 +969,20 @@ export default function SchedulingCenterPage() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">选择年级</Label>
-              <Select
-                value={selectedGradeId}
-                onValueChange={(v) => {
-                  setSelectedGradeId(v)
-                  setSelectedMajorId('')
-                  setSelectedSemester('all')
-                }}
-                disabled={!selectedDept}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={selectedDept ? '请选择年级' : '先选院系'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {grades.map((g) => (
-                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
               <Label className="text-xs">选择专业</Label>
               <Select
                 value={selectedMajorId}
                 onValueChange={(v) => {
                   setSelectedMajorId(v)
+                  setSelectedGradeId('')
                   setSelectedSemester('all')
                 }}
-                disabled={!selectedGradeId || matchedMajors.length === 0}
+                disabled={!selectedDept || matchedMajors.length === 0}
               >
                 <SelectTrigger className="w-[220px]">
                   <SelectValue placeholder={
-                    !selectedGradeId
-                      ? '先选年级'
+                    !selectedDept
+                      ? '先选院系'
                       : matchedMajors.length === 0
                         ? '无可用专业'
                         : '请选择专业'
@@ -995,6 +991,32 @@ export default function SchedulingCenterPage() {
                 <SelectContent>
                   {matchedMajors.map((m) => (
                     <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">选择年级</Label>
+              <Select
+                value={selectedGradeId}
+                onValueChange={(v) => {
+                  setSelectedGradeId(v)
+                  setSelectedSemester('all')
+                }}
+                disabled={!selectedMajorId || matchedGrades.length === 0}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={
+                    !selectedMajorId
+                      ? '先选专业'
+                      : matchedGrades.length === 0
+                        ? '无可用年级'
+                        : '请选择年级'
+                  } />
+                </SelectTrigger>
+                <SelectContent>
+                  {matchedGrades.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1036,8 +1058,27 @@ export default function SchedulingCenterPage() {
           </div>
         ) : (
           <>
-            {currentStep === 0 && <ClassScheduleTab />}
-            {currentStep === 1 && <TaskOrchestrationTab selectedGrade={selectedGrade} />}
+            {currentStep === 0 && (
+              <VenuePeriodConfigTab
+                venues={venues}
+                venueTypes={venueTypes}
+                onVenuesChange={(v, vt) => {
+                  setVenues(v)
+                  setVenueTypes(vt)
+                }}
+                onPeriodsChange={setPeriods}
+              />
+            )}
+            {currentStep === 1 && (
+              <TaskOrchestrationTab
+                selectedGrade={selectedGrade}
+                importedTasks={importedTasks}
+                venues={venues}
+                venueTypes={venueTypes}
+                periods={periods}
+                hideManagementButtons
+              />
+            )}
             {currentStep === 2 && <ExportTab selectedGrade={selectedGrade} />}
           </>
         )}

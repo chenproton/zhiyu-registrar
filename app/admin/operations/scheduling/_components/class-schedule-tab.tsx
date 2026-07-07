@@ -32,7 +32,7 @@ interface ScheduleCell {
   endTime: string
 }
 
-interface PeriodRow {
+export interface PeriodRow {
   id: string
   name: string
   sequence: number
@@ -168,49 +168,21 @@ const defaultSettings: PeriodSettings = {
 }
 
 // ==================== Main Component ====================
-export default function ClassScheduleTab() {
+interface ClassScheduleTabProps {
+  onChange?: (rows: PeriodRow[]) => void
+}
+
+export default function ClassScheduleTab({ onChange }: ClassScheduleTabProps = {}) {
   const [settings, setSettings] = useState<PeriodSettings>(defaultSettings)
   const [rows, setRows] = useState<PeriodRow[]>(() => generateRows(defaultSettings))
-  const [editOpen, setEditOpen] = useState(false)
-  const [editingCell, setEditingCell] = useState<{ rowId: string; dayOfWeek: number } | null>(null)
-  const [formStart, setFormStart] = useState('08:00')
-  const [formEnd, setFormEnd] = useState('08:45')
   const [showHelp, setShowHelp] = useState(false)
 
   const handleSettingsChange = useCallback((next: PeriodSettings) => {
     setSettings(next)
-    setRows(generateRows(next))
-  }, [])
-
-  const handleCellClick = (row: PeriodRow, dayOfWeek: number) => {
-    const cell = row.cells.find((c) => c.dayOfWeek === dayOfWeek)
-    if (cell) {
-      setEditingCell({ rowId: row.id, dayOfWeek })
-      setFormStart(cell.startTime)
-      setFormEnd(cell.endTime)
-      setEditOpen(true)
-    }
-  }
-
-  const handleSaveCell = () => {
-    if (!editingCell) return
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === editingCell.rowId
-          ? {
-              ...row,
-              cells: row.cells.map((cell) =>
-                cell.dayOfWeek === editingCell.dayOfWeek
-                  ? { ...cell, startTime: formStart, endTime: formEnd }
-                  : cell
-              ),
-            }
-          : row
-      )
-    )
-    setEditOpen(false)
-    toast.success('时间设置已保存')
-  }
+    const nextRows = generateRows(next)
+    setRows(nextRows)
+    onChange?.(nextRows)
+  }, [onChange])
 
   const updateSetting = <K extends keyof PeriodSettings>(key: K, value: PeriodSettings[K]) => {
     handleSettingsChange({ ...settings, [key]: value })
@@ -264,8 +236,7 @@ export default function ClassScheduleTab() {
                       {row.cells.map((cell) => (
                         <td
                           key={cell.dayOfWeek}
-                          className="border p-1.5 cursor-pointer hover:bg-muted/30 transition-colors"
-                          onClick={() => handleCellClick(row, cell.dayOfWeek)}
+                          className="border p-1.5"
                         >
                           <div
                             className={cn(
@@ -299,12 +270,12 @@ export default function ClassScheduleTab() {
       </div>
 
       {/* Right: Settings Panel */}
-      <Card className="w-[360px] flex-shrink-0 overflow-auto">
-        <CardContent className="p-4 space-y-5">
+      <Card className="w-[260px] flex-shrink-0 overflow-auto">
+        <CardContent className="p-4 space-y-4">
           {/* Period counts */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">排课节次设置</h4>
-            <div className="grid grid-cols-2 gap-3">
+            <h4 className="text-sm font-semibold mb-2">排课节次设置</h4>
+            <div className="space-y-2">
               <NumberField
                 label="早自习"
                 value={settings.morningSelfCount}
@@ -332,32 +303,32 @@ export default function ClassScheduleTab() {
 
           {/* Duration settings */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">课程时间设置</h4>
+            <h4 className="text-sm font-semibold mb-2">课程时间设置</h4>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">早自习</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">早自习</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.morningSelfDuration} onChange={(v) => updateSetting('morningSelfDuration', v)} />
                   <DurationRow label="课间时长" value={settings.morningSelfBreak} onChange={(v) => updateSetting('morningSelfBreak', v)} />
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">上午</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">上午</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.morningClassDuration} onChange={(v) => updateSetting('morningClassDuration', v)} />
                   <DurationRow label="课间时长" value={settings.morningBreakDuration} onChange={(v) => updateSetting('morningBreakDuration', v)} />
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">下午</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">下午</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.afternoonClassDuration} onChange={(v) => updateSetting('afternoonClassDuration', v)} />
                   <DurationRow label="课间时长" value={settings.afternoonBreakDuration} onChange={(v) => updateSetting('afternoonBreakDuration', v)} />
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1.5">晚自习</p>
-                <div className="space-y-2">
+                <p className="text-xs text-muted-foreground mb-1">晚自习</p>
+                <div className="space-y-1.5">
                   <DurationRow label="节次时长" value={settings.eveningDuration} onChange={(v) => updateSetting('eveningDuration', v)} />
                   <DurationRow label="课间时长" value={settings.eveningBreak} onChange={(v) => updateSetting('eveningBreak', v)} />
                 </div>
@@ -365,36 +336,8 @@ export default function ClassScheduleTab() {
             </div>
           </div>
 
-
         </CardContent>
       </Card>
-
-      {/* Cell Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>设置节次时间</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>开始时间</Label>
-                <Input type="time" value={formStart} onChange={(e) => setFormStart(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>结束时间</Label>
-                <Input type="time" value={formEnd} onChange={(e) => setFormEnd(e.target.value)} />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleSaveCell}>保存</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Help Dialog */}
       <Dialog open={showHelp} onOpenChange={setShowHelp}>
@@ -405,7 +348,6 @@ export default function ClassScheduleTab() {
           <div className="space-y-3 text-sm text-muted-foreground py-2">
             <p>1. 在右侧面板配置各时段的节次数量，左侧表格会自动生成。</p>
             <p>2. 可设置课程时长、课间时长等参数，系统会自动推算每个节次的时间段。</p>
-            <p>3. 点击表格中的任意单元格，可单独调整该节次在当天的起止时间。</p>
             
           </div>
           <DialogFooter>

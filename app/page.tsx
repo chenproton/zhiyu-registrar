@@ -61,7 +61,7 @@ export default function LandingPage() {
   const totalStudents = classes.reduce((sum, c) => sum + c.studentCount, 0)
   const activeStudents = students.filter((s) => s.status === '在籍').length
   const totalFaculty = faculty.length
-  const enterpriseMentors = faculty.filter((f) => f.isEnterpriseMentor).length
+  const enterpriseMentors = 0
   const totalDepartments = departments.length
   const totalMajors = majors.length
   const totalClasses = classes.length

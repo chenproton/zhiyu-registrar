@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   Table,
   TableBody,
@@ -28,59 +30,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { FilterBar } from '@/components/shared/filter-bar'
-import { Plus, Users, GraduationCap, HardHat, Building2, Upload, Download, ShieldCheck, FileText, Search, Trash2, Paperclip } from 'lucide-react'
-import { faculty, departments, facultyRoles } from '@/lib/mock-data'
+import { Plus, Upload, Download, Lock, FolderTree, ChevronRight, ChevronDown, ChevronsUpDown } from 'lucide-react'
+import { faculty, facultyRoles, departments, majors } from '@/lib/mock-data'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+
+const allPositions = ['院长', '副院长', '系主任', '副系主任', '教研室主任', '专业负责人', '教授', '副教授', '讲师', '助教', '实验员', '行政人员', '企业导师', '研究员']
 
 export default function FacultyPage() {
+  const [facultyList, setFacultyList] = useState([...faculty])
   const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState<Record<string, string>>({ department: 'all', status: 'all' })
-  const [facultyTab, setFacultyTab] = useState<'all' | 'teacher' | 'mentor'>('all')
+  const [filters, setFilters] = useState<Record<string, string>>({ status: 'all' })
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [selectedFaculty, setSelectedFaculty] = useState<typeof faculty[0] | null>(null)
-  const [facultyList, setFacultyList] = useState(faculty)
+  const [selectedDeptId, setSelectedDeptId] = useState<string | null>(null)
+  const [deptPopoverOpen, setDeptPopoverOpen] = useState(false)
+  const [editDeptPopoverOpen, setEditDeptPopoverOpen] = useState(false)
+  const [formDepartmentId, setFormDepartmentId] = useState('')
+  const [editDepartmentId, setEditDepartmentId] = useState('')
+  const [formEmployeeId, setFormEmployeeId] = useState('')
+  const [formName, setFormName] = useState('')
+  const [formPassword, setFormPassword] = useState('')
 
-  // create form
-  const [cEmployeeId, setCEmployeeId] = useState('')
-  const [cName, setCName] = useState('')
-  const [cGender, setCGender] = useState('男')
-  const [cDept, setCDept] = useState('')
-  const [cTitle, setCTitle] = useState('')
-  const [cEducation, setCEducation] = useState('')
-  const [cRoles, setCRoles] = useState<string[]>([])
-  const [cStatus, setCStatus] = useState('在职')
-
-  // edit form
-  const [eEmployeeId, setEEmployeeId] = useState('')
-  const [eName, setEName] = useState('')
-  const [eGender, setEGender] = useState('男')
-  const [eDept, setEDept] = useState('')
-  const [eTitle, setETitle] = useState('')
-  const [eEducation, setEEducation] = useState('')
-  const [eRoles, setERoles] = useState<string[]>([])
-  const [eStatus, setEStatus] = useState('在职')
-
-  // 聘任企业导师弹窗
-  const [hireMentorOpen, setHireMentorOpen] = useState(false)
-  const [mentorSearch, setMentorSearch] = useState('')
-  const [selectedMentorCandidate, setSelectedMentorCandidate] = useState<typeof faculty[0] | null>(null)
-  const [mentorCompany, setMentorCompany] = useState('')
-  const [mentorPosition, setMentorPosition] = useState('')
-  const [mentorYears, setMentorYears] = useState('')
-  const [mentorField, setMentorField] = useState('')
-
-  // 补充协议管理弹窗
-  const [agreementOpen, setAgreementOpen] = useState(false)
-  const [agreementFaculty, setAgreementFaculty] = useState<typeof faculty[0] | null>(null)
-  const [newAgreementName, setNewAgreementName] = useState('')
-  const [newAgreementCompany, setNewAgreementCompany] = useState('')
-  const [newAgreementStart, setNewAgreementStart] = useState('')
-  const [newAgreementEnd, setNewAgreementEnd] = useState('')
-  const [agreementFiles, setAgreementFiles] = useState<{ name: string; size: number }[]>([])
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const deptTree = useMemo(() => departments.map(d => ({
+    ...d,
+    majors: majors.filter(m => m.departmentId === d.id)
+  })), [])
 
   const filtered = useMemo(() => {
     return facultyList.filter((f) => {
@@ -88,147 +66,18 @@ export default function FacultyPage() {
         const s = search.toLowerCase()
         if (!f.name.toLowerCase().includes(s) && !f.employeeId.toLowerCase().includes(s)) return false
       }
-      if (filters.department !== 'all' && f.departmentId !== filters.department) return false
       if (filters.status !== 'all' && f.status !== filters.status) return false
-      if (facultyTab === 'teacher' && f.isEnterpriseMentor) return false
-      if (facultyTab === 'mentor' && !f.isEnterpriseMentor) return false
+      if (selectedDeptId && f.departmentId !== selectedDeptId) return false
       return true
     })
-  }, [search, filters, facultyTab, facultyList])
-
-  const stats = useMemo(() => {
-    const all = facultyList.length
-    const mentors = facultyList.filter((f) => f.isEnterpriseMentor).length
-    const active = facultyList.filter((f) => f.status === '在职').length
-    const companies = new Set(facultyList.filter((f) => f.isEnterpriseMentor).map((f) => f.enterpriseInfo?.company).filter(Boolean)).size
-    return { all, mentors, active, companies }
-  }, [facultyList])
-
-  const openCreate = () => {
-    setCEmployeeId('')
-    setCName('')
-    setCGender('男')
-    setCDept(departments[0]?.id || '')
-    setCTitle('')
-    setCEducation('')
-    setCRoles([])
-    setCStatus('在职')
-    setCreateOpen(true)
-  }
-
-  const handleCreate = () => {
-    if (!cEmployeeId.trim() || !cName.trim() || !cDept) {
-      toast.error('请填写完整信息')
-      return
-    }
-    setFacultyList((prev) => [...prev, {
-      id: `faculty-${Date.now()}`,
-      employeeId: cEmployeeId.trim(),
-      name: cName.trim(),
-      gender: cGender,
-      departmentId: cDept,
-      title: cTitle.trim(),
-      education: cEducation.trim(),
-      roles: cRoles,
-      status: cStatus as any,
-      isEnterpriseMentor: false,
-    }])
-    toast.success('新建教师成功')
-    setCreateOpen(false)
-  }
-
-  const openEdit = (f: typeof faculty[0]) => {
-    setSelectedFaculty(f)
-    setEEmployeeId(f.employeeId)
-    setEName(f.name)
-    setEGender(f.gender)
-    setEDept(f.departmentId)
-    setETitle(f.title)
-    setEEducation(f.education)
-    setERoles(f.roles || [])
-    setEStatus(f.status)
-    setEditOpen(true)
-  }
-
-  const handleSaveEdit = () => {
-    if (!selectedFaculty || !eEmployeeId.trim() || !eName.trim() || !eDept) {
-      toast.error('请填写完整信息')
-      return
-    }
-    setFacultyList((prev) => prev.map((f) => f.id === selectedFaculty.id ? {
-      ...f,
-      employeeId: eEmployeeId.trim(),
-      name: eName.trim(),
-      gender: eGender,
-      departmentId: eDept,
-      title: eTitle.trim(),
-      education: eEducation.trim(),
-      roles: eRoles,
-      status: eStatus as any,
-    } : f))
-    toast.success('保存成功')
-    setEditOpen(false)
-  }
-
-  const handleHireMentor = () => {
-    if (!selectedMentorCandidate) return
-    if (!mentorCompany.trim() || !mentorPosition.trim() || !mentorYears.trim() || !mentorField.trim()) {
-      toast.error('请填写完整企业信息')
-      return
-    }
-    setFacultyList((prev) => prev.map((f) => f.id === selectedMentorCandidate.id ? {
-      ...f,
-      isEnterpriseMentor: true,
-      enterpriseInfo: {
-        company: mentorCompany.trim(),
-        position: mentorPosition.trim(),
-        years: mentorYears.trim(),
-        field: mentorField.trim(),
-      },
-    } : f))
-    toast.success(`已成功聘任 ${selectedMentorCandidate.name} 为企业导师`)
-    setHireMentorOpen(false)
-    setSelectedMentorCandidate(null)
-    setMentorCompany('')
-    setMentorPosition('')
-    setMentorYears('')
-    setMentorField('')
-  }
-
-  const handleAddAgreement = () => {
-    if (!agreementFaculty) return
-    if (!newAgreementName.trim() || !newAgreementCompany.trim() || !newAgreementStart || !newAgreementEnd) {
-      toast.error('请填写完整的协议信息')
-      return
-    }
-    setFacultyList((prev) => prev.map((f) => f.id === agreementFaculty.id ? {
-      ...f,
-      agreements: [
-        ...(f.agreements || []),
-        {
-          id: `agreement-${Date.now()}`,
-          name: newAgreementName.trim(),
-          company: newAgreementCompany.trim(),
-          startDate: newAgreementStart,
-          endDate: newAgreementEnd,
-          status: '有效' as const,
-        },
-      ],
-    } : f))
-    toast.success('添加补充协议成功')
-    setNewAgreementName('')
-    setNewAgreementCompany('')
-    setNewAgreementStart('')
-    setNewAgreementEnd('')
-    setAgreementFiles([])
-  }
+  }, [search, filters, facultyList, selectedDeptId])
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">师资管理</h1>
-          <p className="text-muted-foreground">维护教师档案、授课资格与企业导师信息</p>
+          <p className="text-muted-foreground">维护教师档案与角色职位信息</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => toast.success('导入功能使用现有组件样式即可')}>
@@ -237,175 +86,132 @@ export default function FacultyPage() {
           <Button variant="outline" size="sm" onClick={() => toast.success('导出功能使用现有组件样式即可')}>
             <Download className="h-4 w-4 mr-2" />导出
           </Button>
-          <Button variant="outline" size="sm" onClick={() => toast.success('批量授权功能使用现有组件样式即可')}>
-            <ShieldCheck className="h-4 w-4 mr-2" />批量授权
-          </Button>
-          <Button variant="outline" onClick={() => {
-            setMentorSearch('')
-            setSelectedMentorCandidate(null)
-            setMentorCompany('')
-            setMentorPosition('')
-            setMentorYears('')
-            setMentorField('')
-            setHireMentorOpen(true)
-          }}>
-            <HardHat className="h-4 w-4 mr-2" />聘任企业导师
-          </Button>
-          <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
+
+          <Button onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-2" />新建教师</Button>
         </div>
       </div>
 
-      {/* 统计卡片 */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">教师总数</p>
-              <p className="text-2xl font-bold">{stats.all}</p>
-            </div>
-            <div className="rounded-full p-2 bg-blue-500">
-              <Users className="h-4 w-4 text-white" />
-            </div>
+      <div className="flex gap-4 items-start">
+        <Card className="w-64 shrink-0">
+          <CardContent className="p-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
+              <FolderTree className="h-4 w-4" />组织架构
+            </h3>
+            <ScrollArea className="h-[500px]">
+              <div className="space-y-1">
+                <button
+                  onClick={() => setSelectedDeptId(null)}
+                  className={cn(
+                    'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+                    selectedDeptId === null ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+                  )}
+                >
+                  全部教职工
+                </button>
+                {departments.map((dept) => (
+                  <DeptTreeNode
+                    key={dept.id}
+                    deptId={dept.id}
+                    deptName={dept.name}
+                    selected={selectedDeptId === dept.id}
+                    onSelect={setSelectedDeptId}
+                  />
+                ))}
+              </div>
+            </ScrollArea>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">企业导师</p>
-              <p className="text-2xl font-bold">{stats.mentors}</p>
-            </div>
-            <div className="rounded-full p-2 bg-purple-500">
-              <HardHat className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">在职教师</p>
-              <p className="text-2xl font-bold">{stats.active}</p>
-            </div>
-            <div className="rounded-full p-2 bg-green-500">
-              <GraduationCap className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center justify-between p-4">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">涉及企业</p>
-              <p className="text-2xl font-bold">{stats.companies}</p>
-            </div>
-            <div className="rounded-full p-2 bg-amber-500">
-              <Building2 className="h-4 w-4 text-white" />
-            </div>
-          </CardContent>
-        </Card>
+
+        <div className="flex-1 space-y-4">
+          <Card>
+            <CardContent className="pt-6">
+              <FilterBar
+                searchPlaceholder="搜索教师姓名或工号..."
+                searchValue={search}
+                onSearchChange={setSearch}
+                filters={[
+                  {
+                    key: 'status',
+                    label: '全部状态',
+                    options: [
+                      { value: '在职', label: '在职' },
+                      { value: '离职', label: '离职' },
+                      { value: '外聘', label: '外聘' },
+                    ],
+                  },
+                ]}
+                filterValues={filters}
+                onFilterChange={(key, value) => setFilters((p) => ({ ...p, [key]: value }))}
+                onClearFilters={() => { setSearch(''); setFilters({ status: 'all' }); setSelectedDeptId(null) }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>工号</TableHead>
+                    <TableHead>姓名</TableHead>
+                    <TableHead>所属部门</TableHead>
+                    <TableHead>关联角色</TableHead>
+                    <TableHead>职位</TableHead>
+                    <TableHead>状态</TableHead>
+                    <TableHead className="text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((f) => (
+                    <TableRow key={f.id}>
+                      <TableCell className="font-medium">{f.employeeId}</TableCell>
+                      <TableCell>{f.name}</TableCell>
+                      <TableCell>{departments.find((d) => d.id === f.departmentId)?.name || '—'}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {f.roles?.map((r) => (
+                            <Badge key={r} variant="outline" className="text-[10px]">{r}</Badge>
+                          )) || <span className="text-muted-foreground text-xs">—</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {f.positions && f.positions.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {f.positions.map((p, i) => (
+                              <Badge key={i} variant="secondary" className="text-[10px]">{p}</Badge>
+                            ))}
+                          </div>
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button variant="ghost" size="sm" onClick={() => { setSelectedFaculty(f); setEditDepartmentId(f.departmentId); setEditOpen(true) }}>编辑</Button>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setFacultyList((prev) => prev.map((item) => item.id === f.id ? { ...item, password: '123456' } : item))
+                            toast.success(`已重置 ${f.name} 的密码`)
+                          }}>
+                            <Lock className="h-3.5 w-3.5 mr-1" />重置密码
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        暂无数据
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      <Tabs value={facultyTab} onValueChange={(v) => setFacultyTab(v as 'all' | 'teacher' | 'mentor')}>
-        <TabsList>
-          <TabsTrigger value="all">全部师资</TabsTrigger>
-          <TabsTrigger value="teacher">普通教师</TabsTrigger>
-          <TabsTrigger value="mentor">企业导师</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
-      <Card>
-        <CardContent className="pt-6">
-          <FilterBar
-            searchPlaceholder="搜索教师姓名或工号..."
-            searchValue={search}
-            onSearchChange={setSearch}
-            filters={[
-              {
-                key: 'department',
-                label: '全部院系',
-                options: departments.map((d) => ({ value: d.id, label: d.name })),
-              },
-              {
-                key: 'status',
-                label: '全部状态',
-                options: [
-                  { value: '在职', label: '在职' },
-                  { value: '离职', label: '离职' },
-                  { value: '外聘', label: '外聘' },
-                ],
-              },
-            ]}
-            filterValues={filters}
-            onFilterChange={(key, value) => setFilters((p) => ({ ...p, [key]: value }))}
-            onClearFilters={() => { setSearch(''); setFilters({ department: 'all', status: 'all' }) }}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>工号</TableHead>
-                <TableHead>姓名</TableHead>
-                <TableHead>性别</TableHead>
-                <TableHead>所属院系</TableHead>
-                <TableHead>职称</TableHead>
-                <TableHead>学历</TableHead>
-                <TableHead>企业导师</TableHead>
-                <TableHead>关联角色</TableHead>
-                <TableHead>状态</TableHead>
-                <TableHead className="text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((f) => (
-                <TableRow key={f.id}>
-                  <TableCell className="font-medium">{f.employeeId}</TableCell>
-                  <TableCell>{f.name}</TableCell>
-                  <TableCell>{f.gender}</TableCell>
-                  <TableCell>{departments.find((d) => d.id === f.departmentId)?.name}</TableCell>
-                  <TableCell>{f.title}</TableCell>
-                  <TableCell>{f.education}</TableCell>
-                  <TableCell>
-                    {f.isEnterpriseMentor ? (
-                      <Badge variant="default" className="text-xs">是</Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {f.roles?.map((r) => (
-                        <Badge key={r} variant="outline" className="text-[10px]">{r}</Badge>
-                      )) || <span className="text-muted-foreground text-xs">—</span>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={f.status === '在职' ? 'default' : 'secondary'}>{f.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {f.isEnterpriseMentor && (
-                        <Button variant="ghost" size="sm" onClick={() => { setAgreementFaculty(f); setAgreementOpen(true) }}>
-                          <FileText className="h-3.5 w-3.5 mr-1" />补充协议管理
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(f)}>编辑</Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filtered.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                    暂无数据
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
 
       {/* 新建教师弹窗 */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -413,40 +219,91 @@ export default function FacultyPage() {
           <DialogHeader><DialogTitle>新建教师</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>工号</Label><Input placeholder="请输入工号" value={cEmployeeId} onChange={(e) => setCEmployeeId(e.target.value)} /></div>
-              <div className="space-y-2"><Label>姓名</Label><Input placeholder="请输入姓名" value={cName} onChange={(e) => setCName(e.target.value)} /></div>
+              <div className="space-y-2"><Label>工号 <span className="text-destructive">*</span></Label><Input value={formEmployeeId} onChange={(e) => setFormEmployeeId(e.target.value)} placeholder="请输入工号" required /></div>
+              <div className="space-y-2"><Label>姓名 <span className="text-destructive">*</span></Label><Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="请输入姓名" required /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>性别</Label>
-                <Select value={cGender} onValueChange={setCGender}><SelectTrigger><SelectValue placeholder="选择性别" /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
+              <div className="space-y-2"><Label>密码</Label><Input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} placeholder="请输入密码" /></div>
+              <div className="space-y-2">
+                <Label>所属部门 <span className="text-destructive">*</span></Label>
+                <Popover open={deptPopoverOpen} onOpenChange={setDeptPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {formDepartmentId ? (departments.find(d=>d.id===formDepartmentId)?.name || '—') : '选择组织节点...'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[350px] p-2">
+                    <ScrollArea className="h-64">
+                      <button
+                        onClick={() => { setFormDepartmentId(''); setDeptPopoverOpen(false) }}
+                        className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-muted mb-1"
+                      >
+                        清空选择
+                      </button>
+                      {deptTree.map(dept => (
+                        <DeptTreeItem
+                          key={dept.id}
+                          dept={dept}
+                          selectedId={formDepartmentId}
+                          onSelect={(id) => { setFormDepartmentId(id); setDeptPopoverOpen(false) }}
+                        />
+                      ))}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
               </div>
-              <div className="space-y-2"><Label>所属院系</Label>
-                <Select value={cDept} onValueChange={setCDept}><SelectTrigger><SelectValue placeholder="选择院系" /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>职称</Label><Input placeholder="如 副教授" value={cTitle} onChange={(e) => setCTitle(e.target.value)} /></div>
-              <div className="space-y-2"><Label>学历</Label><Input placeholder="如 博士" value={cEducation} onChange={(e) => setCEducation(e.target.value)} /></div>
             </div>
             <div className="space-y-2">
               <Label>关联角色（可多选）</Label>
               <div className="flex flex-wrap gap-2">
                 {facultyRoles.map((role) => (
                   <label key={role} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
-                    <input type="checkbox" className="h-3.5 w-3.5" checked={cRoles.includes(role)} onChange={(e) => setCRoles((prev) => e.target.checked ? [...prev, role] : prev.filter((r) => r !== role))} />
+                    <input type="checkbox" className="h-3.5 w-3.5" />
                     <span className="text-xs">{role}</span>
                   </label>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
+              <Label>职位（可多选）</Label>
+              <div className="flex flex-wrap gap-2">
+                {allPositions.map((pos) => (
+                  <label key={pos} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
+                    <input type="checkbox" className="h-3.5 w-3.5" />
+                    <span className="text-xs">{pos}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
               <Label>状态</Label>
-              <Select value={cStatus} onValueChange={setCStatus}><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
+              <Select><SelectTrigger><SelectValue placeholder="选择状态" /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>取消</Button>
-            <Button onClick={handleCreate}>保存</Button>
+            <Button onClick={() => {
+              if (!formEmployeeId.trim()) { toast.error('请输入工号'); return }
+              if (!formName.trim()) { toast.error('请输入姓名'); return }
+              if (!formDepartmentId) { toast.error('请选择所属部门'); return }
+              setFacultyList((prev) => [...prev, {
+                id: `f${Date.now()}`,
+                employeeId: formEmployeeId.trim(),
+                name: formName.trim(),
+                password: formPassword || '123456',
+                departmentId: formDepartmentId,
+                roles: [],
+                positions: [],
+                status: '在职',
+              }])
+              toast.success('新建教师成功')
+              setFormEmployeeId('')
+              setFormName('')
+              setFormPassword('')
+              setFormDepartmentId('')
+              setCreateOpen(false)
+            }}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -458,249 +315,131 @@ export default function FacultyPage() {
           {selectedFaculty && (
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>工号</Label><Input value={eEmployeeId} onChange={(e) => setEEmployeeId(e.target.value)} /></div>
-                <div className="space-y-2"><Label>姓名</Label><Input value={eName} onChange={(e) => setEName(e.target.value)} /></div>
+                <div className="space-y-2"><Label>工号</Label><Input defaultValue={selectedFaculty.employeeId} /></div>
+                <div className="space-y-2"><Label>姓名</Label><Input defaultValue={selectedFaculty.name} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>性别</Label>
-                  <Select value={eGender} onValueChange={setEGender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="男">男</SelectItem><SelectItem value="女">女</SelectItem></SelectContent></Select>
-                </div>
-                <div className="space-y-2"><Label>所属院系</Label>
-                  <Select value={eDept} onValueChange={setEDept}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{departments.map((d) => (<SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>))}</SelectContent></Select>
-                </div>
+                <div className="space-y-2"><Label>密码</Label><Input type="password" defaultValue={selectedFaculty.password} /></div>
+              <div className="space-y-2">
+                <Label>所属部门</Label>
+                <Popover open={editDeptPopoverOpen} onOpenChange={setEditDeptPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      {editDepartmentId ? (departments.find(d=>d.id===editDepartmentId)?.name || '—') : '选择组织节点...'}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[350px] p-2">
+                    <ScrollArea className="h-64">
+                      <button
+                        onClick={() => { setEditDepartmentId(''); setEditDeptPopoverOpen(false) }}
+                        className="w-full text-left px-2 py-1.5 text-sm rounded-md hover:bg-muted mb-1"
+                      >
+                        清空选择
+                      </button>
+                      {deptTree.map(dept => (
+                        <DeptTreeItem
+                          key={dept.id}
+                          dept={dept}
+                          selectedId={editDepartmentId}
+                          onSelect={(id) => { setEditDepartmentId(id); setEditDeptPopoverOpen(false) }}
+                        />
+                      ))}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>职称</Label><Input value={eTitle} onChange={(e) => setETitle(e.target.value)} /></div>
-                <div className="space-y-2"><Label>学历</Label><Input value={eEducation} onChange={(e) => setEEducation(e.target.value)} /></div>
-              </div>
+            </div>
               <div className="space-y-2">
                 <Label>关联角色（可多选）</Label>
                 <div className="flex flex-wrap gap-2">
                   {facultyRoles.map((role) => (
                     <label key={role} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
-                      <input type="checkbox" className="h-3.5 w-3.5" checked={eRoles.includes(role)} onChange={(e) => setERoles((prev) => e.target.checked ? [...prev, role] : prev.filter((r) => r !== role))} />
+                      <input type="checkbox" className="h-3.5 w-3.5" defaultChecked={selectedFaculty.roles?.includes(role)} />
                       <span className="text-xs">{role}</span>
                     </label>
                   ))}
                 </div>
               </div>
               <div className="space-y-2">
+                <Label>职位（可多选）</Label>
+                <div className="flex flex-wrap gap-2">
+                  {allPositions.map((pos) => (
+                    <label key={pos} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:bg-muted transition-colors">
+                      <input type="checkbox" className="h-3.5 w-3.5" defaultChecked={selectedFaculty.positions?.includes(pos)} />
+                      <span className="text-xs">{pos}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label>状态</Label>
-                <Select value={eStatus} onValueChange={setEStatus}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
+                <Select defaultValue={selectedFaculty.status}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="在职">在职</SelectItem><SelectItem value="离职">离职</SelectItem><SelectItem value="外聘">外聘</SelectItem></SelectContent></Select>
               </div>
             </div>
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditOpen(false)}>取消</Button>
-            <Button onClick={handleSaveEdit}>保存</Button>
+            <Button onClick={() => { toast.success('保存成功'); setEditOpen(false) }}>保存</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
 
-      {/* 聘任企业导师弹窗 */}
-      <Dialog open={hireMentorOpen} onOpenChange={setHireMentorOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>聘任企业导师</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* 搜索 */}
-            <div className="space-y-2">
-              <Label>搜索教师</Label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder="输入姓名或工号搜索..."
-                  value={mentorSearch}
-                  onChange={(e) => setMentorSearch(e.target.value)}
-                />
-              </div>
-            </div>
+function DeptTreeNode({ deptId, deptName, selected, onSelect }: { deptId: string; deptName: string; selected: boolean; onSelect: (id: string) => void }) {
+  return (
+    <button
+      onClick={() => onSelect(deptId)}
+      className={cn(
+        'w-full text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+        selected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+      )}
+    >
+      {deptName}
+    </button>
+  )
+}
 
-            {/* 候选教师列表 */}
-            <div className="space-y-2">
-              <Label>选择教师（仅显示非企业导师）</Label>
-              <div className="border rounded-md overflow-hidden">
-                <div className="max-h-[240px] overflow-y-auto">
-                  {faculty
-                    .filter((f) => !f.isEnterpriseMentor)
-                    .filter((f) => {
-                      if (!mentorSearch.trim()) return true
-                      const q = mentorSearch.toLowerCase()
-                      return f.name.toLowerCase().includes(q) || f.employeeId.toLowerCase().includes(q)
-                    })
-                    .map((f) => {
-                      const dept = departments.find((d) => d.id === f.departmentId)
-                      const isSelected = selectedMentorCandidate?.id === f.id
-                      return (
-                        <div
-                          key={f.id}
-                          className={`flex items-center justify-between px-3 py-2.5 cursor-pointer transition-colors border-b last:border-b-0 ${
-                            isSelected ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-muted'
-                          }`}
-                          onClick={() => setSelectedMentorCandidate(f)}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-muted-foreground'}`}>
-                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-sm font-medium">{f.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {f.employeeId} · {dept?.name || '-'} · {f.title}
-                              </div>
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="text-[10px] shrink-0">{f.education}</Badge>
-                        </div>
-                      )
-                    })}
-                  {faculty.filter((f) => !f.isEnterpriseMentor).length === 0 && (
-                    <div className="text-center text-muted-foreground text-sm py-6">暂无可聘任教师</div>
-                  )}
-                  {faculty.filter((f) => !f.isEnterpriseMentor).length > 0 &&
-                    faculty
-                      .filter((f) => !f.isEnterpriseMentor)
-                      .filter((f) => {
-                        if (!mentorSearch.trim()) return true
-                        const q = mentorSearch.toLowerCase()
-                        return f.name.toLowerCase().includes(q) || f.employeeId.toLowerCase().includes(q)
-                      }).length === 0 && (
-                      <div className="text-center text-muted-foreground text-sm py-6">未找到匹配的教师</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* 选中后显示企业信息表单 */}
-            {selectedMentorCandidate && (
-              <div className="space-y-3 border rounded-md p-3 bg-muted/30">
-                <div className="text-sm font-medium flex items-center gap-2">
-                  <HardHat className="h-4 w-4 text-primary" />
-                  为 <span className="text-primary">{selectedMentorCandidate.name}</span> 填写企业信息
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">企业名称</Label>
-                    <Input value={mentorCompany} onChange={(e) => setMentorCompany(e.target.value)} placeholder="如 华为技术有限公司" className="h-8 text-sm" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">担任职位</Label>
-                    <Input value={mentorPosition} onChange={(e) => setMentorPosition(e.target.value)} placeholder="如 高级工程师" className="h-8 text-sm" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">从业年限</Label>
-                    <Input value={mentorYears} onChange={(e) => setMentorYears(e.target.value)} placeholder="如 8" className="h-8 text-sm" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">技术领域</Label>
-                    <Input value={mentorField} onChange={(e) => setMentorField(e.target.value)} placeholder="如 网络工程" className="h-8 text-sm" />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setHireMentorOpen(false)}>取消</Button>
-            <Button
-              disabled={!selectedMentorCandidate}
-              onClick={handleHireMentor}
+function DeptTreeItem({ dept, selectedId, onSelect }: { dept: { id: string; name: string; majors: { id: string; name: string }[] }; selectedId: string; onSelect: (id: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const isSelected = selectedId === dept.id
+  return (
+    <div>
+      <div className="flex items-center">
+        {dept.majors.length > 0 && (
+          <button onClick={() => setOpen(!open)} className="p-0.5 hover:bg-muted rounded">
+            {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+          </button>
+        )}
+        <button
+          onClick={() => onSelect(dept.id)}
+          className={cn(
+            'flex-1 text-left px-2 py-1.5 text-sm rounded-md transition-colors',
+            isSelected ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+          )}
+        >
+          <FolderTree className="h-3.5 w-3.5 inline mr-1.5" />
+          {dept.name}
+        </button>
+      </div>
+      {open && dept.majors.length > 0 && (
+        <div className="ml-5 border-l border-border pl-3 space-y-0.5">
+          {dept.majors.map(major => (
+            <button
+              key={major.id}
+              onClick={() => onSelect(dept.id)}
+              className={cn(
+                'w-full text-left px-2 py-1 text-xs rounded-md transition-colors text-muted-foreground',
+                selectedId === dept.id ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
+              )}
             >
-              确认聘任
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* 补充协议管理弹窗 */}
-      <Dialog open={agreementOpen} onOpenChange={setAgreementOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>补充协议管理 — {agreementFaculty?.name}</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-2">
-            {agreementFaculty?.agreements && agreementFaculty.agreements.length > 0 ? (
-              <div className="space-y-2">
-                {agreementFaculty.agreements.map((ag) => (
-                  <div key={ag.id} className="flex items-center justify-between p-3 border rounded-md">
-                    <div className="space-y-0.5">
-                      <div className="font-medium text-sm">{ag.name}</div>
-                      <div className="text-xs text-muted-foreground">{ag.company} · {ag.startDate} 至 {ag.endDate}</div>
-                    </div>
-                    <Badge variant={ag.status === '有效' ? 'default' : 'secondary'}>{ag.status}</Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-muted-foreground py-4 text-sm">暂无补充协议</div>
-            )}
-            <div className="border-t pt-4 space-y-3">
-              <div className="text-sm font-medium">新增协议</div>
-              <div className="space-y-2"><Label>协议名称</Label><Input value={newAgreementName} onChange={(e) => setNewAgreementName(e.target.value)} placeholder="请输入协议名称" /></div>
-              <div className="space-y-2"><Label>合作企业</Label><Input value={newAgreementCompany} onChange={(e) => setNewAgreementCompany(e.target.value)} placeholder="请输入合作企业" /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>开始日期</Label><Input type="date" value={newAgreementStart} onChange={(e) => setNewAgreementStart(e.target.value)} /></div>
-                <div className="space-y-2"><Label>结束日期</Label><Input type="date" value={newAgreementEnd} onChange={(e) => setNewAgreementEnd(e.target.value)} /></div>
-              </div>
-
-              {/* 附件上传 */}
-              <div className="space-y-2">
-                <Label>附件</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    const files = Array.from(e.target.files || [])
-                    if (files.length === 0) return
-                    const newFiles = files.map((f) => ({ name: f.name, size: f.size }))
-                    setAgreementFiles((prev) => [...prev, ...newFiles])
-                    toast.success(`已添加 ${files.length} 个附件`)
-                    if (fileInputRef.current) fileInputRef.current.value = ''
-                  }}
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-1"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Upload className="h-4 w-4" />
-                  本地上传附件
-                </Button>
-                {agreementFiles.length > 0 && (
-                  <div className="space-y-1.5">
-                    {agreementFiles.map((file, idx) => (
-                      <div key={idx} className="flex items-center justify-between px-2.5 py-1.5 rounded-md border text-sm">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Paperclip className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate" title={file.name}>{file.name}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {(file.size / 1024).toFixed(1)} KB
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 shrink-0"
-                          onClick={() => setAgreementFiles((prev) => prev.filter((_, i) => i !== idx))}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Button className="w-full" onClick={handleAddAgreement}>添加协议</Button>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAgreementOpen(false)}>关闭</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              {major.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
